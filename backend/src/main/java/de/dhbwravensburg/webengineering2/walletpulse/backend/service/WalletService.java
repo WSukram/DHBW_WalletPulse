@@ -19,5 +19,10 @@ public class WalletService {
     public List<Wallet> getAllWallets() {
        return walletRepository.findAll();
     }
+
+    public Wallet createWallet(Wallet wallet) {
+        return walletRepository.save(wallet);
+    }
+
 }
 

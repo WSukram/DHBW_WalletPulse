@@ -1,10 +1,12 @@
 package de.dhbwravensburg.webengineering2.walletpulse.backend.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 import java.util.List;
 
+@NotBlank
 @Entity
 @Getter
 @Setter
