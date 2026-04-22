@@ -1,4 +1,4 @@
-package de.dhbwravensburg.webengeneering2.walletpulse.backend.entity;
+package de.dhbwravensburg.webengineering2.walletpulse.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
