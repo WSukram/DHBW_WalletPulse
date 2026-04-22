@@ -1,4 +1,4 @@
-package de.dhbwravensburg.webengeneering2.walletpulse.backend;
+package de.dhbwravensburg.webengineering2.walletpulse.backend;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
