@@ -6,7 +6,6 @@ import lombok.*;
 
 import java.util.List;
 
-@NotBlank
 @Entity
 @Getter
 @Setter
@@ -19,10 +18,12 @@ public class Wallet {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "Wallet name must not be blank")
     @Column(nullable = false)
     private String name;
 
-    // Relation: A wallet holds multiple assets
-    @OneToMany(mappedBy = "wallet", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "wallet",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
     private List<Asset> assets;
 }
