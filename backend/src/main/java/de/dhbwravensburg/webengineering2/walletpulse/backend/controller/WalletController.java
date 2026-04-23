@@ -2,6 +2,8 @@ package de.dhbwravensburg.webengineering2.walletpulse.backend.controller;
 
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Wallet;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.service.WalletService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -26,8 +28,24 @@ public class WalletController {
     }
 
     @PostMapping
-    public Wallet createWallet(@RequestBody Wallet wallet) {
+    public Wallet createWallet(@Valid @RequestBody Wallet wallet) {
         return walletService.createWallet(wallet);
     }
+
+    @PutMapping("/{id}")
+    public Wallet updateWallet(
+            @PathVariable Long id,
+            @Valid @RequestBody Wallet updatedWallet) {
+
+        return walletService.updateWallet(id, updatedWallet);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteWallet(@PathVariable Long id) {
+        walletService.deleteWallet(id);
+    }
+
+
 
 }
