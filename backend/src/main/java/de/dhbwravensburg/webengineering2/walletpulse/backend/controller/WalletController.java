@@ -2,11 +2,9 @@ package de.dhbwravensburg.webengineering2.walletpulse.backend.controller;
 
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Wallet;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.service.WalletService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.lang.reflect.Array;
 import java.util.List;
 
 @RestController
@@ -28,4 +26,10 @@ public class WalletController {
     public Wallet getWalletById(@PathVariable Long id) {
         return walletService.getWalletById(id);
     }
+
+    @PostMapping
+    public Wallet createWallet(@RequestBody Wallet wallet) {
+        return walletService.createWallet(wallet);
+    }
+
 }
