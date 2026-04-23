@@ -1,6 +1,7 @@
 package de.dhbwravensburg.webengineering2.walletpulse.backend.service;
 
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Wallet;
+import de.dhbwravensburg.webengineering2.walletpulse.backend.exception.ResourceNotFoundException;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.WalletRepository;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +26,9 @@ public class WalletService {
     }
 
     public Wallet getWalletById(Long id) {
-        return walletRepository.findById(id).orElse(null);
+        return walletRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Wallet with id " + id + " not found"));
     }
 
     public void deleteWallet(Long id) {

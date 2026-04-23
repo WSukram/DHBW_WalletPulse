@@ -3,8 +3,6 @@ package de.dhbwravensburg.webengineering2.walletpulse.backend.controller;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Wallet;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.service.WalletService;
 import org.springframework.web.bind.annotation.*;
-
-import java.lang.reflect.Array;
 import java.util.List;
 
 @RestController
