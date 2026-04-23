@@ -79,9 +79,9 @@ class WalletServiceTest {
         when(walletRepository.save(wallet))
                 .thenReturn(wallet);
 
-        verify(walletRepository).save(wallet);
-
         Wallet result = walletService.createWallet(wallet);
+
+        verify(walletRepository).save(wallet);
 
         assertEquals("New Wallet", result.getName());
     }
