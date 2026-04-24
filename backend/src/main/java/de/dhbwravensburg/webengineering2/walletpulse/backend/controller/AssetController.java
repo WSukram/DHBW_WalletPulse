@@ -33,7 +33,7 @@ public class AssetController {
     public List<AssetResponse> getAssetsByWalletId(@PathVariable Long walletId) {
         return assetService.getAssetsByWalletId(walletId)
                 .stream()
-                .map(this::toResponse)
+                .map(assetService::mapToPortfolioResponse)
                 .toList();
     }
 
@@ -44,7 +44,7 @@ public class AssetController {
             @ApiResponse(responseCode = "404", description = "Asset nicht gefunden")
     })
     public AssetResponse getAssetById(@PathVariable Long assetId) {
-        return toResponse(assetService.getAssetById(assetId));
+        return assetService.mapToPortfolioResponse(assetService.getAssetById(assetId));
     }
 
     @PostMapping("/api/wallets/{walletId}/assets")
@@ -59,7 +59,7 @@ public class AssetController {
             @Parameter(description = "ID der Wallet", example = "1") @PathVariable Long walletId,
             @Valid @RequestBody AssetRequest request) {
         Asset created = assetService.createAsset(walletId, request.coinId());
-        return toResponse(created);
+        return assetService.mapToPortfolioResponse(created);
     }
 
     @PutMapping("/api/assets/{assetId}")
@@ -73,7 +73,7 @@ public class AssetController {
             @Parameter(description = "ID des Assets", example = "10") @PathVariable Long assetId,
             @Valid @RequestBody AssetRequest request) {
         Asset updated = assetService.updateAsset(assetId, request.coinId());
-        return toResponse(updated);
+        return assetService.mapToPortfolioResponse(updated);
     }
 
     @DeleteMapping("/api/assets/{assetId}")
@@ -86,13 +86,4 @@ public class AssetController {
     public void deleteAsset(@Parameter(description = "ID des Assets", example = "10") @PathVariable Long assetId) {
         assetService.deleteAsset(assetId);
     }
-
-    private AssetResponse toResponse(Asset asset) {
-        return new AssetResponse(
-                asset.getId(),
-                asset.getCoinId(),
-                asset.getWallet().getId()
-        );
-    }
 }
-
