@@ -1,6 +1,8 @@
 package de.dhbwravensburg.webengineering2.walletpulse.backend.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -23,14 +25,17 @@ public class Transaction {
     private Asset asset;
 
     // Amount (e.g. 0.5 BTC)
+    @Positive(message = "Amount must be greater than zero")
     @Column(nullable = false)
     private double amount;
 
     // Purchase price per unit
+    @Positive(message = "Buy price must be greater than zero")
     @Column(nullable = false)
     private double buyPrice;
 
     // Purchase date
+    @NotNull(message = "Date must not be null")
     @Column(nullable = false)
     private LocalDate date;
 }
