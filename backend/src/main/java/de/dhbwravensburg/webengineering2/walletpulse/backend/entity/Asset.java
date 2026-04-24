@@ -1,6 +1,7 @@
 package de.dhbwravensburg.webengineering2.walletpulse.backend.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 import java.util.List;
@@ -18,6 +19,7 @@ public class Asset {
     private Long id;
 
     // z. B. "bitcoin", "ethereum"
+    @NotBlank(message = "Coin id must not be blank")
     @Column(nullable = false)
     private String coinId;
 
