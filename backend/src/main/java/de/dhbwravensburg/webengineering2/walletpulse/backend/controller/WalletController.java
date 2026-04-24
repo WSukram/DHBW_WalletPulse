@@ -2,6 +2,7 @@ package de.dhbwravensburg.webengineering2.walletpulse.backend.controller;
 
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Wallet;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.service.WalletService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -9,6 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/wallets")
+@Tag(name = "Wallets", description = "CRUD-Endpunkte für Wallets")
 public class WalletController {
 
     private final WalletService walletService;

@@ -10,3 +10,8 @@ Webanwendung zur Verwaltung eines Krypto-Portfolios mit Gewinn- und Verlustberec
 
 ## Architektur
 Frontend (React) ↔ Backend (Spring Boot) ↔ Drittanbieter API
+
+## API-Dokumentation (Swagger)
+- OpenAPI JSON: `/v3/api-docs`
+- Swagger UI: `/swagger-ui/index.html`
+
