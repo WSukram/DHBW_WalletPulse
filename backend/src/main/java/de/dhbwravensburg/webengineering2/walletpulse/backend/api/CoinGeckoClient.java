@@ -3,6 +3,8 @@ package de.dhbwravensburg.webengineering2.walletpulse.backend.api;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,9 @@ public class CoinGeckoClient {
     @Value("${coingecko.api.url:https://api.coingecko.com/api/v3}")
     private String apiUrl;
 
+    @Value("${coingecko.api.key:}")
+    private String apiKey;
+
     public CoinGeckoClient(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
@@ -31,11 +36,17 @@ public class CoinGeckoClient {
     public BigDecimal getCurrentPriceInEur(String coinId) {
         String url = String.format("%s/simple/price?ids=%s&vs_currencies=eur", apiUrl, coinId);
 
+        HttpHeaders headers = new HttpHeaders();
+        if (apiKey != null && !apiKey.isEmpty()) {
+            headers.set("x-cg-demo-api-key", apiKey);
+        }
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
         try {
             ResponseEntity<Map<String, Map<String, BigDecimal>>> response = restTemplate.exchange(
                     url,
                     HttpMethod.GET,
-                    null,
+                    entity,
                     new ParameterizedTypeReference<>() {}
             );
 
