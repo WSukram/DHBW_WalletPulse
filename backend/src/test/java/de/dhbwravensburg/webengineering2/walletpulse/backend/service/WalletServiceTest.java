@@ -7,6 +7,9 @@ import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.WalletRe
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.AssetResponse;
+import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.WalletPortfolioResponse;
+import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Asset;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -22,6 +25,9 @@ class WalletServiceTest {
 
     @Mock
     private WalletRepository walletRepository;
+
+    @Mock
+    private AssetService assetService;
 
     @InjectMocks
     private WalletService walletService;
@@ -105,6 +111,29 @@ class WalletServiceTest {
         assertEquals("Updated Wallet", result.getName());
     }
 
+    @Test
+    void shouldReturnWalletPortfolio() {
+        Wallet wallet = new Wallet();
+        wallet.setId(1L);
+        wallet.setName("My Portfolio");
 
+        Asset a1 = new Asset();
+        a1.setId(10L);
 
+        wallet.setAssets(List.of(a1));
+
+        AssetResponse ar1 = new AssetResponse(10L, "bitcoin", 1L, 1.0, 50000.0, 60000.0, 60000.0, 10000.0);
+
+        when(walletRepository.findById(1L)).thenReturn(java.util.Optional.of(wallet));
+        when(assetService.mapToPortfolioResponse(a1)).thenReturn(ar1);
+
+        WalletPortfolioResponse result = walletService.getWalletPortfolio(1L);
+
+        assertEquals(1L, result.id());
+        assertEquals("My Portfolio", result.name());
+        assertEquals(50000.0, result.totalInvested());
+        assertEquals(60000.0, result.totalCurrentValue());
+        assertEquals(10000.0, result.totalProfit());
+        assertEquals(1, result.assets().size());
+    }
 }
