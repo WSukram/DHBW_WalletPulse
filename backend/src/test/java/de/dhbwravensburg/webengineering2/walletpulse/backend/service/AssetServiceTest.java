@@ -5,6 +5,9 @@ import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Wallet;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.exception.ResourceNotFoundException;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.AssetRepository;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.WalletRepository;
+import de.dhbwravensburg.webengineering2.walletpulse.backend.api.CoinGeckoClient;
+import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.AssetResponse;
+import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Transaction;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -27,6 +30,9 @@ class AssetServiceTest {
 
     @Mock
     private WalletRepository walletRepository;
+
+    @Mock
+    private CoinGeckoClient coinGeckoClient;
 
     @InjectMocks
     private AssetService assetService;
@@ -115,5 +121,37 @@ class AssetServiceTest {
 
         verify(assetRepository).delete(existing);
     }
-}
 
+    @Test
+    void shouldMapPortfolioResponseCorrectly() {
+        Wallet wallet = new Wallet();
+        wallet.setId(1L);
+
+        Asset asset = new Asset();
+        asset.setId(11L);
+        asset.setCoinId("bitcoin");
+        asset.setWallet(wallet);
+
+        Transaction t1 = new Transaction();
+        t1.setAmount(0.5);
+        t1.setBuyPrice(50000.0); // Invested = 25000
+
+        Transaction t2 = new Transaction();
+        t2.setAmount(0.5);
+        t2.setBuyPrice(60000.0); // Invested = 30000
+
+        asset.setTransactions(List.of(t1, t2));
+
+        when(coinGeckoClient.getCurrentPriceInEur("bitcoin")).thenReturn(new java.math.BigDecimal("70000.0"));
+
+        AssetResponse response = assetService.mapToPortfolioResponse(asset);
+
+        assertEquals(11L, response.id());
+        assertEquals("bitcoin", response.coinId());
+        assertEquals(1.0, response.totalAmount());
+        assertEquals(55000.0, response.totalInvested()); // 25000 + 30000
+        assertEquals(70000.0, response.currentPrice());
+        assertEquals(70000.0, response.currentValue()); // 1.0 * 70000
+        assertEquals(15000.0, response.profit()); // 70000 - 55000
+    }
+}
