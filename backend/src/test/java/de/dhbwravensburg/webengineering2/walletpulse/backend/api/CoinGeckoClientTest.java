@@ -50,7 +50,7 @@ class CoinGeckoClientTest {
         when(restTemplate.exchange(
                 eq("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur"),
                 eq(HttpMethod.GET),
-                isNull(),
+                any(),
                 any(ParameterizedTypeReference.class)
         )).thenReturn(new ResponseEntity<>(simulatedResponse, HttpStatus.OK));
 
@@ -70,7 +70,7 @@ class CoinGeckoClientTest {
         when(restTemplate.exchange(
                 eq("https://api.coingecko.com/api/v3/simple/price?ids=unknown-coin&vs_currencies=eur"),
                 eq(HttpMethod.GET),
-                isNull(),
+                any(),
                 any(ParameterizedTypeReference.class)
         )).thenReturn(new ResponseEntity<>(simulatedResponse, HttpStatus.OK));
 
