@@ -2,6 +2,7 @@ package de.dhbwravensburg.webengineering2.walletpulse.backend.api;
 
 import de.dhbwravensburg.webengineering2.walletpulse.backend.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -33,6 +34,7 @@ public class CoinGeckoClient {
      * Ruft den aktuellen Preis eines Coins in Euro (EUR) ab.
      * Beispiel-Aufruf an CoinGecko: /simple/price?ids=bitcoin&vs_currencies=eur
      */
+    @Cacheable(value = "coinPrices", key = "#coinId")
     public BigDecimal getCurrentPriceInEur(String coinId) {
         String url = String.format("%s/simple/price?ids=%s&vs_currencies=eur", apiUrl, coinId);
 
