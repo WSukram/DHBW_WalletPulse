@@ -3,6 +3,7 @@ import MainLayout from './components/layout/MainLayout'
 import Dashboard from './pages/Dashboard'
 import Wallet from './pages/Wallet'
 import Assets from './pages/Assets'
+import History from './pages/History'
 
 function App() {
   return (
@@ -15,7 +16,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/assets" element={<Assets />} />
-        <Route path="/history" element={<div className="p-6"><h2 className="text-2xl">History Page</h2></div>} />
+        <Route path="/history" element={<History />} />
         <Route path="/analytics" element={<div className="p-6"><h2 className="text-2xl">Analytics Page</h2></div>} />
         <Route path="/security" element={<div className="p-6"><h2 className="text-2xl">Security Page</h2></div>} />
       </Route>
