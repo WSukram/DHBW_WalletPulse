@@ -6,12 +6,18 @@ import Assets from './pages/Assets'
 import History from './pages/History'
 import Analytics from './pages/Analytics'
 import Security from './pages/Security'
+import Login from "./pages/Login.jsx";
+import Register from "./pages/Register.jsx";
+import Home from "./pages/Home.jsx";
+
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<div className="flex items-center justify-center h-screen"><h1 className="text-3xl text-primary font-bold">Homepage (Landing)</h1></div>} />
-      <Route path="/login" element={<div className="flex items-center justify-center h-screen"><h1 className="text-3xl text-primary font-bold">Login Screen</h1></div>} />
+      {/* Public Routes */}
+      <Route path="/" element={<Home />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
 
       {/* App Routes wrapped in the MainLayout */}
       <Route element={<MainLayout />}>
