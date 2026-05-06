@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import MainLayout from './components/layout/MainLayout'
 import Dashboard from './pages/Dashboard'
+import Wallet from './pages/Wallet'
 
 function App() {
   return (
@@ -11,7 +12,7 @@ function App() {
       {/* App Routes wrapped in the MainLayout */}
       <Route element={<MainLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/wallet" element={<div className="p-6"><h2 className="text-2xl">Wallet Page</h2></div>} />
+        <Route path="/wallet" element={<Wallet />} />
         <Route path="/assets" element={<div className="p-6"><h2 className="text-2xl">Assets Page</h2></div>} />
         <Route path="/history" element={<div className="p-6"><h2 className="text-2xl">History Page</h2></div>} />
         <Route path="/analytics" element={<div className="p-6"><h2 className="text-2xl">Analytics Page</h2></div>} />
