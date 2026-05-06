@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard'
 import Wallet from './pages/Wallet'
 import Assets from './pages/Assets'
 import History from './pages/History'
+import Analytics from './pages/Analytics'
 
 function App() {
   return (
@@ -17,7 +18,7 @@ function App() {
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/assets" element={<Assets />} />
         <Route path="/history" element={<History />} />
-        <Route path="/analytics" element={<div className="p-6"><h2 className="text-2xl">Analytics Page</h2></div>} />
+        <Route path="/analytics" element={<Analytics />} />
         <Route path="/security" element={<div className="p-6"><h2 className="text-2xl">Security Page</h2></div>} />
       </Route>
     </Routes>
