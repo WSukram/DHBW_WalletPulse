@@ -41,6 +41,11 @@ frontend/dist/
 frontend/import_frontend/
 
 ############################
+# Claude
+############################
+CLAUDE.md
+
+############################
 # Build Files
 ############################
 build/
