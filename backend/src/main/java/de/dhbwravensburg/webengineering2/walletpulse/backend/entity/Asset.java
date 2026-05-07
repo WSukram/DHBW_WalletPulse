@@ -1,5 +1,6 @@
 package de.dhbwravensburg.webengineering2.walletpulse.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -26,6 +27,7 @@ public class Asset {
     // Relation to Wallet (Many assets belong to one wallet)
     @ManyToOne
     @JoinColumn(name = "wallet_id", nullable = false)
+    @JsonIgnore
     private Wallet wallet;
 
     // Relation to Transaction
