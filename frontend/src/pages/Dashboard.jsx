@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useApp } from '../context/AppContext';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -37,8 +38,7 @@ const Dashboard = () => {
       .catch(() => setSaving(false));
   };
 
-  const formatCurrency = (value) =>
-    new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }).format(value ?? 0);
+  const { formatCurrency } = useApp();
 
   const calcPercent = (profit, invested) => {
     if (!invested || invested === 0) return 0;

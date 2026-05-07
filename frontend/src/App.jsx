@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom'
+import { AppProvider } from './context/AppContext'
 import MainLayout from './components/layout/MainLayout'
 import Dashboard from './pages/Dashboard'
 import Wallet from './pages/Wallet'
@@ -13,6 +14,7 @@ import Home from "./pages/Home.jsx";
 
 function App() {
   return (
+    <AppProvider>
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<Home />} />
@@ -29,6 +31,7 @@ function App() {
         <Route path="/security" element={<Security />} />
       </Route>
     </Routes>
+    </AppProvider>
   )
 }
 

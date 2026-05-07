@@ -1,8 +1,28 @@
 import React, { useState } from 'react';
-
+import { useApp } from '../context/AppContext';
 
 const Security = () => {
-  const [activeTheme, setActiveTheme] = useState('Dark');
+  const { currency, setCurrency, theme, setTheme } = useApp();
+
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [pwError, setPwError] = useState('');
+  const [pwSuccess, setPwSuccess] = useState('');
+
+  const handlePasswordUpdate = () => {
+    setPwError('');
+    setPwSuccess('');
+    if (!currentPassword) { setPwError('Current password is required.'); return; }
+    if (newPassword.length < 12) { setPwError('New password must be at least 12 characters.'); return; }
+    if (newPassword !== confirmPassword) { setPwError('Passwords do not match.'); return; }
+    setPwSuccess('Password updated successfully.');
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+  };
+
+  const inputCls = 'w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all';
 
   return (
     <div className="flex-1 overflow-y-auto p-lg lg:p-layout-margin bg-background">
@@ -28,11 +48,11 @@ const Security = () => {
                   <span className="material-symbols-outlined text-sm text-on-surface">edit</span>
                 </button>
               </div>
-              <h3 className="font-heading-md text-heading-md text-on-surface">Alex Mercer</h3>
-              <p className="font-body-md text-body-md text-on-surface-variant">alex.mercer@example.com</p>
+              <h3 className="font-heading-md text-heading-md text-on-surface">My Account</h3>
+              <p className="font-body-md text-body-md text-on-surface-variant">account@walletpulse.app</p>
               <div className="w-full mt-lg pt-lg border-t border-outline-variant flex justify-between items-center">
                 <span className="font-body-md text-body-md text-on-surface-variant">Account Status</span>
-                <span className="px-3 py-1 rounded-full bg-secondary-container/20 text-secondary font-label-sm text-label-sm border border-secondary/20">Verified Tier 2</span>
+                <span className="px-3 py-1 rounded-full bg-secondary-container/20 text-secondary font-label-sm text-label-sm border border-secondary/20">Active</span>
               </div>
             </section>
 
@@ -40,17 +60,27 @@ const Security = () => {
             <section className="bg-surface-container rounded-xl border border-outline-variant p-lg">
               <h3 className="font-heading-md text-heading-md text-on-surface mb-md">Preferences</h3>
               <div className="space-y-md">
+                {/* Currency */}
                 <div>
-                  <label className="block font-label-sm text-label-sm text-on-surface-variant mb-xs">Base Currency</label>
+                  <label className="block font-label-sm text-label-sm text-on-surface-variant mb-xs">Display Currency</label>
                   <div className="relative">
-                    <select className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none">
-                      <option>USD - US Dollar</option>
-                      <option>EUR - Euro</option>
-                      <option>BTC - Bitcoin</option>
+                    <select
+                      className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none"
+                      value={currency}
+                      onChange={(e) => setCurrency(e.target.value)}
+                    >
+                      <option value="EUR">EUR - Euro</option>
+                      <option value="USD">USD - US Dollar</option>
+                      <option value="BTC">BTC - Bitcoin</option>
                     </select>
                     <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
                   </div>
+                  <p className="text-xs text-on-surface-variant mt-1">
+                    {currency !== 'EUR' ? 'Values are converted from EUR using approximate rates.' : 'Prices sourced in EUR from CoinGecko.'}
+                  </p>
                 </div>
+
+                {/* Theme */}
                 <div>
                   <label className="block font-label-sm text-label-sm text-on-surface-variant mb-xs">Theme</label>
                   <div className="flex gap-2 p-1 bg-surface-container-lowest rounded-lg border border-outline-variant">
@@ -61,9 +91,9 @@ const Security = () => {
                     ].map(({ label, icon }) => (
                       <button
                         key={label}
-                        onClick={() => setActiveTheme(label)}
+                        onClick={() => setTheme(label)}
                         className={`flex-1 py-1.5 rounded font-label-sm text-label-sm flex items-center justify-center gap-2 transition-colors ${
-                          activeTheme === label
+                          theme === label
                             ? 'bg-surface-bright shadow-sm text-on-surface'
                             : 'text-on-surface-variant hover:text-on-surface'
                         }`}
@@ -78,9 +108,8 @@ const Security = () => {
             </section>
           </div>
 
-          {/* Right Column: Security & API */}
+          {/* Right Column: Security */}
           <div className="col-span-12 lg:col-span-8 space-y-layout-gutter">
-            {/* Security Details */}
             <section className="bg-surface-container rounded-xl border border-outline-variant">
               <div className="p-lg border-b border-outline-variant flex justify-between items-center">
                 <div>
@@ -89,7 +118,6 @@ const Security = () => {
                 </div>
               </div>
               <div className="p-lg space-y-xl">
-                {/* Password Change */}
                 <div>
                   <h4 className="font-data-mono text-data-mono text-on-surface mb-md">Change Password</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
@@ -97,36 +125,46 @@ const Security = () => {
                       <label className="block font-label-sm text-label-sm text-on-surface-variant">Current Password</label>
                       <input
                         type="password"
-                        defaultValue="********"
-                        className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                        className={inputCls}
+                        placeholder="Enter current password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
                       />
                     </div>
                     <div className="space-y-xs">
                       <label className="block font-label-sm text-label-sm text-on-surface-variant">New Password</label>
                       <input
                         type="password"
+                        className={inputCls}
                         placeholder="Min 12 characters"
-                        className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
                       />
                     </div>
                     <div className="space-y-xs">
                       <label className="block font-label-sm text-label-sm text-on-surface-variant">Confirm New Password</label>
                       <input
                         type="password"
+                        className={inputCls}
                         placeholder="Repeat new password"
-                        className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
                       />
                     </div>
                   </div>
+                  {pwError && <p className="mt-3 text-sm text-error">{pwError}</p>}
+                  {pwSuccess && <p className="mt-3 text-sm text-secondary">{pwSuccess}</p>}
                   <div className="mt-md flex justify-end">
-                    <button className="bg-primary-container text-on-primary-container px-lg py-sm rounded-lg font-label-sm text-label-sm hover:opacity-90 transition-opacity">
+                    <button
+                      onClick={handlePasswordUpdate}
+                      className="bg-primary-container text-on-primary-container px-lg py-sm rounded-lg font-label-sm text-label-sm hover:opacity-90 transition-opacity"
+                    >
                       Update Password
                     </button>
                   </div>
                 </div>
               </div>
             </section>
-
           </div>
 
         </div>

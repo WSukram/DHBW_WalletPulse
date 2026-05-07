@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useApp } from '../context/AppContext';
 
 const COIN_META = {
   bitcoin:  { name: 'Bitcoin',  symbol: 'BTC', color: '#F7931A', icon: '₿' },
@@ -15,9 +16,6 @@ const coinMeta = (coinId) =>
     icon: coinId[0].toUpperCase(),
   };
 
-const formatEur = (value) =>
-  new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value ?? 0);
-
 const formatDate = (dateStr) => {
   if (!dateStr) return '—';
   const d = new Date(dateStr);
@@ -30,6 +28,7 @@ const labelCls = 'block font-label-sm text-label-sm text-on-surface-variant mb-1
 const PAGE_SIZE = 10;
 
 const History = () => {
+  const { formatCurrency: formatEur } = useApp();
   const [wallets, setWallets] = useState([]);
   const [allTransactions, setAllTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);

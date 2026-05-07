@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
+import { useApp } from '../context/AppContext';
 
 const COIN_META = {
   bitcoin:  { name: 'Bitcoin',  symbol: 'BTC', color: '#F7931A', icon: '₿' },
@@ -14,9 +15,6 @@ const coinMeta = (coinId) =>
     color: '#888888',
     icon: coinId[0].toUpperCase(),
   };
-
-const formatEur = (value) =>
-  new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value ?? 0);
 
 const formatPct = (profit, invested) => {
   if (!invested || invested === 0) return '0.00%';
@@ -147,6 +145,7 @@ const pointsToPath = (points, key, minV, maxV, closed = false) => {
 };
 
 const Analytics = () => {
+  const { formatCurrency: formatEur } = useApp();
   const [portfolios, setPortfolios] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);

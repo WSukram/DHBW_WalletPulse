@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useLocation } from 'react-router-dom';
+import { useApp } from '../context/AppContext';
 
 const COIN_META = {
   bitcoin:  { name: 'Bitcoin',  symbol: 'BTC', icon: 'currency_bitcoin', color: '#F7931A' },
@@ -21,9 +22,6 @@ const coinMeta = (coinId) =>
     icon: 'generating_tokens',
     color: '#888888',
   };
-
-const formatEur = (value) =>
-  new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value ?? 0);
 
 const formatPct = (profit, invested) => {
   if (!invested || invested === 0) return '0.00%';
@@ -130,6 +128,7 @@ const labelCls = 'block font-label-sm text-label-sm text-on-surface-variant mb-1
 
 const Wallet = () => {
   const location = useLocation();
+  const { formatCurrency: formatEur } = useApp();
   const [portfolios, setPortfolios] = useState([]);
   const [selectedWalletId, setSelectedWalletId] = useState(null);
   const [transactions, setTransactions] = useState([]);
@@ -143,6 +142,15 @@ const Wallet = () => {
   const [showAddWallet, setShowAddWallet] = useState(false);
   const [newWalletName, setNewWalletName] = useState('');
   const [savingWallet, setSavingWallet] = useState(false);
+
+  // Delete Wallet modal state
+  const [deleteWallet, setDeleteWallet] = useState(null);
+  const [deletingWallet, setDeletingWallet] = useState(false);
+
+  // Edit Wallet modal state
+  const [editWallet, setEditWallet] = useState(null);
+  const [editWalletName, setEditWalletName] = useState('');
+  const [savingEditWallet, setSavingEditWallet] = useState(false);
 
   // Add Transaction modal state
   const [showAddTx, setShowAddTx] = useState(false);
@@ -202,6 +210,24 @@ const Wallet = () => {
       .then(() => loadPortfolios())
       .then((data) => { setPortfolios(data); setShowAddWallet(false); setNewWalletName(''); setSavingWallet(false); })
       .catch(() => setSavingWallet(false));
+  };
+
+  const handleEditWallet = () => {
+    if (!editWallet || !editWalletName.trim()) return;
+    setSavingEditWallet(true);
+    axios.put(`http://localhost:8080/api/wallets/${editWallet.id}`, { name: editWalletName.trim() })
+      .then(() => loadPortfolios())
+      .then((data) => { setPortfolios(data); setEditWallet(null); setEditWalletName(''); setSavingEditWallet(false); })
+      .catch(() => setSavingEditWallet(false));
+  };
+
+  const handleDeleteWallet = () => {
+    if (!deleteWallet) return;
+    setDeletingWallet(true);
+    axios.delete(`http://localhost:8080/api/wallets/${deleteWallet.id}`)
+      .then(() => loadPortfolios())
+      .then((data) => { setPortfolios(data); setDeleteWallet(null); setDeletingWallet(false); })
+      .catch(() => setDeletingWallet(false));
   };
 
   const openAddTx = () => {
@@ -299,7 +325,49 @@ const Wallet = () => {
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        {editWallet && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setEditWallet(null)}>
+          <div className="bg-surface-container rounded-xl p-6 w-full max-w-sm border border-outline-variant/30 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-heading-md text-heading-md text-on-surface mb-1">Rename Wallet</h3>
+            <p className="text-sm text-on-surface-variant mb-5">Enter a new name for "{editWallet.name}".</p>
+            <label className={labelCls}>Wallet Name</label>
+            <input
+              autoFocus
+              className={`${inputCls} mb-5`}
+              placeholder="e.g. Main Portfolio"
+              value={editWalletName}
+              onChange={(e) => setEditWalletName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleEditWallet()}
+            />
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setEditWallet(null)} className="px-4 py-2 rounded-lg text-on-surface-variant font-label-sm text-label-sm hover:text-on-surface transition-colors">Cancel</button>
+              <button onClick={handleEditWallet} disabled={savingEditWallet || !editWalletName.trim()} className="px-4 py-2 rounded-lg bg-primary text-on-primary font-label-sm text-label-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                {savingEditWallet ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteWallet && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setDeleteWallet(null)}>
+          <div className="bg-surface-container rounded-xl p-6 w-full max-w-sm border border-outline-variant/30 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-heading-md text-heading-md text-on-surface mb-1">Delete Wallet</h3>
+            <p className="text-sm text-on-surface-variant mb-2">
+              Are you sure you want to delete <span className="text-on-surface font-medium">"{deleteWallet.name}"</span>?
+            </p>
+            <p className="text-sm text-error mb-5">This will permanently remove the wallet and all its assets and transactions. This cannot be undone.</p>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setDeleteWallet(null)} className="px-4 py-2 rounded-lg text-on-surface-variant font-label-sm text-label-sm hover:text-on-surface transition-colors">Cancel</button>
+              <button onClick={handleDeleteWallet} disabled={deletingWallet} className="px-4 py-2 rounded-lg bg-error text-on-error font-label-sm text-label-sm hover:bg-error/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                {deletingWallet ? 'Deleting…' : 'Delete Wallet'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
             <h1 className="font-heading-lg text-heading-lg text-on-surface">My Wallets</h1>
             <p className="font-body-md text-body-md text-on-surface-variant mt-1">Select a wallet to view its portfolio details.</p>
@@ -344,7 +412,23 @@ const Wallet = () => {
                         </div>
                       </div>
                     </div>
-                    <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors text-[20px]">chevron_right</span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setEditWalletName(p.name); setEditWallet(p); }}
+                        className="p-1.5 rounded-lg text-on-surface-variant opacity-0 group-hover:opacity-100 hover:text-primary hover:bg-primary/10 transition-all"
+                        title="Rename wallet"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">edit</span>
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setDeleteWallet(p); }}
+                        className="p-1.5 rounded-lg text-on-surface-variant opacity-0 group-hover:opacity-100 hover:text-error hover:bg-error/10 transition-all"
+                        title="Delete wallet"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">delete</span>
+                      </button>
+                      <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors text-[20px]">chevron_right</span>
+                    </div>
                   </div>
                   <div className="space-y-3">
                     <div>
@@ -427,7 +511,7 @@ const Wallet = () => {
               </div>
               {txForm.amount && txForm.buyPrice && (
                 <div className="bg-surface-container-highest rounded-lg px-4 py-3 text-sm text-on-surface-variant">
-                  Total cost: <span className="font-data-mono text-on-surface">{new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(parseFloat(txForm.amount || 0) * parseFloat(txForm.buyPrice || 0))}</span>
+                  Total cost: <span className="font-data-mono text-on-surface">{formatEur(parseFloat(txForm.amount || 0) * parseFloat(txForm.buyPrice || 0))}</span>
                 </div>
               )}
               {txError && <p className="text-error text-sm font-label-sm">{txError}</p>}
