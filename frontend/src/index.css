@@ -2,6 +2,122 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Dark theme (default) ───────────────────────────────────────────────── */
+:root {
+  --wp-primary:                  195 192 255;
+  --wp-on-primary:               29  0   165;
+  --wp-primary-container:        79  70  229;
+  --wp-on-primary-container:     218 215 255;
+  --wp-primary-fixed:            226 223 255;
+  --wp-primary-fixed-dim:        195 192 255;
+  --wp-on-primary-fixed:         15  0   105;
+  --wp-on-primary-fixed-variant: 51  35  204;
+  --wp-inverse-primary:          77  68  227;
+
+  --wp-secondary:                   78  222 163;
+  --wp-on-secondary:                0   56  36;
+  --wp-secondary-container:         0   165 114;
+  --wp-on-secondary-container:      0   49  31;
+  --wp-secondary-fixed:             111 251 190;
+  --wp-secondary-fixed-dim:         78  222 163;
+  --wp-on-secondary-fixed:          0   33  19;
+  --wp-on-secondary-fixed-variant:  0   82  54;
+
+  --wp-tertiary:                   255 178 183;
+  --wp-on-tertiary:                103 0   27;
+  --wp-tertiary-container:         191 15  60;
+  --wp-on-tertiary-container:      255 208 210;
+  --wp-tertiary-fixed:             255 218 219;
+  --wp-tertiary-fixed-dim:         255 178 183;
+  --wp-on-tertiary-fixed:          64  0   13;
+  --wp-on-tertiary-fixed-variant:  146 0   42;
+
+  --wp-error:               255 180 171;
+  --wp-on-error:            105 0   5;
+  --wp-error-container:     147 0   10;
+  --wp-on-error-container:  255 218 214;
+
+  --wp-background:              11  19  38;
+  --wp-on-background:           218 226 253;
+  --wp-surface:                 11  19  38;
+  --wp-on-surface:              218 226 253;
+  --wp-surface-variant:         45  52  73;
+  --wp-on-surface-variant:      199 196 216;
+  --wp-surface-tint:            195 192 255;
+  --wp-inverse-surface:         218 226 253;
+  --wp-inverse-on-surface:      40  48  68;
+  --wp-surface-bright:          49  57  77;
+  --wp-surface-dim:             11  19  38;
+  --wp-surface-container:       23  31  51;
+  --wp-surface-container-low:   19  27  46;
+  --wp-surface-container-high:  34  42  61;
+  --wp-surface-container-highest: 45 52  73;
+  --wp-surface-container-lowest:  6  14  32;
+
+  --wp-outline:         145 143 161;
+  --wp-outline-variant: 70  69  85;
+
+  --wp-glass-bg: rgba(23, 31, 51, 0.6);
+}
+
+/* ─── Light theme (when .dark class is removed from <html>) ─────────────── */
+html:not(.dark) {
+  --wp-primary:                  77  68  227;
+  --wp-on-primary:               255 255 255;
+  --wp-primary-container:        226 223 255;
+  --wp-on-primary-container:     15  0   105;
+  --wp-primary-fixed:            226 223 255;
+  --wp-primary-fixed-dim:        195 192 255;
+  --wp-on-primary-fixed:         15  0   105;
+  --wp-on-primary-fixed-variant: 51  35  204;
+  --wp-inverse-primary:          195 192 255;
+
+  --wp-secondary:                   0   108 74;
+  --wp-on-secondary:                255 255 255;
+  --wp-secondary-container:         137 248 196;
+  --wp-on-secondary-container:      0   33  19;
+  --wp-secondary-fixed:             166 255 213;
+  --wp-secondary-fixed-dim:         137 248 196;
+  --wp-on-secondary-fixed:          0   33  19;
+  --wp-on-secondary-fixed-variant:  0   82  54;
+
+  --wp-tertiary:                   181 0   73;
+  --wp-on-tertiary:                255 255 255;
+  --wp-tertiary-container:         255 217 227;
+  --wp-on-tertiary-container:      62  0   33;
+  --wp-tertiary-fixed:             255 218 219;
+  --wp-tertiary-fixed-dim:         255 178 183;
+  --wp-on-tertiary-fixed:          64  0   13;
+  --wp-on-tertiary-fixed-variant:  146 0   42;
+
+  --wp-error:               186 26  26;
+  --wp-on-error:            255 255 255;
+  --wp-error-container:     255 218 214;
+  --wp-on-error-container:  65  0   2;
+
+  --wp-background:              255 251 255;
+  --wp-on-background:           28  27  31;
+  --wp-surface:                 255 251 255;
+  --wp-on-surface:              28  27  31;
+  --wp-surface-variant:         228 224 243;
+  --wp-on-surface-variant:      71  68  79;
+  --wp-surface-tint:            77  68  227;
+  --wp-inverse-surface:         49  48  51;
+  --wp-inverse-on-surface:      244 239 249;
+  --wp-surface-bright:          255 251 255;
+  --wp-surface-dim:             221 216 231;
+  --wp-surface-container:       241 236 249;
+  --wp-surface-container-low:   247 242 255;
+  --wp-surface-container-high:  236 230 246;
+  --wp-surface-container-highest: 230 224 240;
+  --wp-surface-container-lowest:  255 255 255;
+
+  --wp-outline:         122 119 137;
+  --wp-outline-variant: 203 199 219;
+
+  --wp-glass-bg: rgba(241, 236, 249, 0.75);
+}
+
 @layer base {
   body {
     @apply bg-background text-on-background font-sans;
@@ -14,7 +130,7 @@
 
 @layer components {
   .glass-panel {
-    background: rgba(23, 31, 51, 0.6);
+    background: var(--wp-glass-bg);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.05);

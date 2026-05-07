@@ -1,5 +1,6 @@
 package de.dhbwravensburg.webengineering2.walletpulse.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -22,6 +23,7 @@ public class Transaction {
     // Associated Assets
     @ManyToOne
     @JoinColumn(name = "asset_id", nullable = false)
+    @JsonIgnore
     private Asset asset;
 
     // Amount (e.g. 0.5 BTC)
