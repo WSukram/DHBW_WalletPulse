@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 
 const CURRENCIES = ['EUR', 'USD', 'BTC'];
@@ -46,9 +46,9 @@ const TopNav = () => {
       </div>
 
       {/* Center: Mobile brand */}
-      <div className="lg:hidden text-xl font-black text-on-surface flex-1 text-center">
+      <Link to="/" className="lg:hidden text-xl font-black text-on-surface flex-1 text-center">
         WalletPulse
-      </div>
+      </Link>
 
       {/* Right: Icons */}
       <div className="flex-1 flex justify-end items-center gap-1">

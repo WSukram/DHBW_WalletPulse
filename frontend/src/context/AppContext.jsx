@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const fmt = (value, currency) => {
@@ -24,8 +25,19 @@ const applyTheme = (theme) => {
   }
 };
 
+export const isTokenExpired = (token) => {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
+};
+
 const loadStoredUser = () => {
   try {
+    const token = localStorage.getItem('wp_token');
+    if (!token || isTokenExpired(token)) return null;
     const raw = localStorage.getItem('wp_user');
     return raw ? JSON.parse(raw) : null;
   } catch {
@@ -41,9 +53,10 @@ const savePreferencesToBackend = (currency, theme) => {
 export const AppContext = createContext(null);
 
 export const AppProvider = ({ children }) => {
+  const navigate = useNavigate();
   const storedUser = loadStoredUser();
-  const [currency, setCurrencyRaw] = useState(storedUser?.preferredCurrency ?? localStorage.getItem('wp_currency') ?? 'EUR');
-  const [theme, setThemeRaw] = useState(storedUser?.preferredTheme ?? localStorage.getItem('wp_theme') ?? 'Dark');
+  const [currency, setCurrencyRaw] = useState(storedUser?.preferredCurrency ?? 'EUR');
+  const [theme, setThemeRaw] = useState(storedUser?.preferredTheme ?? 'Dark');
   const [user, setUser] = useState(storedUser);
 
   const currencyRef = useRef(currency);
@@ -53,12 +66,44 @@ export const AppProvider = ({ children }) => {
     applyTheme(theme);
   }, []);
 
+  // Restore axios header if session is still valid
   useEffect(() => {
     const token = localStorage.getItem('wp_token');
-    if (token) {
+    if (token && !isTokenExpired(token)) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    } else if (token) {
+      // Token exists but is expired — clear everything silently
+      clearSession();
     }
   }, []);
+
+  // Intercept 401 responses and redirect to login
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      (res) => res,
+      (error) => {
+        if (error.response?.status === 401 && !error.config?.url?.includes('/api/auth/')) {
+          clearSession();
+          navigate('/login');
+        }
+        return Promise.reject(error);
+      }
+    );
+    return () => axios.interceptors.response.eject(interceptor);
+  }, [navigate]);
+
+  const clearSession = () => {
+    localStorage.removeItem('wp_token');
+    localStorage.removeItem('wp_user');
+    localStorage.removeItem('wp_currency');
+    localStorage.removeItem('wp_theme');
+    delete axios.defaults.headers.common['Authorization'];
+    setCurrencyRaw('EUR');
+    currencyRef.current = 'EUR';
+    setThemeRaw('Dark');
+    themeRef.current = 'Dark';
+    setUser(null);
+  };
 
   const setCurrency = (c) => {
     setCurrencyRaw(c);
@@ -96,16 +141,7 @@ export const AppProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('wp_token');
-    localStorage.removeItem('wp_user');
-    localStorage.removeItem('wp_currency');
-    localStorage.removeItem('wp_theme');
-    delete axios.defaults.headers.common['Authorization'];
-    setCurrencyRaw('EUR');
-    currencyRef.current = 'EUR';
-    setThemeRaw('Dark');
-    themeRef.current = 'Dark';
-    setUser(null);
+    clearSession();
   };
 
   const formatCurrency = (value) => fmt(value, currency);

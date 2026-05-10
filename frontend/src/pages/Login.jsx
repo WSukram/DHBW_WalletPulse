@@ -34,11 +34,11 @@ const Login = () => {
         <div className="bg-surface-container rounded-xl border border-white/10 p-lg sm:p-[32px] flex flex-col gap-lg">
           {/* Header */}
           <div className="flex flex-col items-center gap-sm text-center">
-            <div className="w-12 h-12 bg-primary-container rounded-lg flex items-center justify-center mb-xs">
+            <Link to="/" className="w-12 h-12 bg-primary-container rounded-lg flex items-center justify-center mb-xs hover:opacity-80 transition-opacity">
               <span className="material-symbols-outlined text-on-primary-container" style={{ fontSize: '28px' }}>
                 account_balance_wallet
               </span>
-            </div>
+            </Link>
             <h1 className="font-heading-lg text-heading-lg text-on-surface">Sign in to WalletPulse</h1>
             <p className="font-body-md text-body-md text-on-surface-variant">Access your high-fidelity crypto analytics</p>
           </div>

@@ -47,11 +47,11 @@ const Register = () => {
       <main className="w-full max-w-[480px] bg-surface-container border border-outline-variant/50 rounded-xl p-lg md:p-xl shadow-[0px_10px_30px_-5px_rgba(0,0,0,0.5)] relative z-10">
         {/* Header */}
         <header className="flex flex-col items-center gap-sm text-center mb-xl">
-          <div className="w-12 h-12 bg-primary-container rounded-lg flex items-center justify-center mb-xs">
+          <Link to="/" className="w-12 h-12 bg-primary-container rounded-lg flex items-center justify-center mb-xs hover:opacity-80 transition-opacity">
             <span className="material-symbols-outlined text-on-primary-container" style={{ fontSize: '28px' }}>
               account_balance_wallet
             </span>
-          </div>
+          </Link>
           <h1 className="font-heading-lg text-heading-lg text-on-surface">Create your Account</h1>
           <p className="font-body-md text-body-md text-on-surface-variant">Register to access your high-stakes portfolio.</p>
         </header>
