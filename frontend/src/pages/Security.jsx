@@ -1,25 +1,39 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import { useApp } from '../context/AppContext';
 
 const Security = () => {
-  const { currency, setCurrency, theme, setTheme } = useApp();
+  const { currency, setCurrency, theme, setTheme, user } = useApp();
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [pwError, setPwError] = useState('');
   const [pwSuccess, setPwSuccess] = useState('');
+  const [pwLoading, setPwLoading] = useState(false);
 
-  const handlePasswordUpdate = () => {
+  const handlePasswordUpdate = async (e) => {
+    e.preventDefault();
     setPwError('');
     setPwSuccess('');
-    if (!currentPassword) { setPwError('Current password is required.'); return; }
-    if (newPassword.length < 12) { setPwError('New password must be at least 12 characters.'); return; }
+    if (newPassword.length < 8) { setPwError('New password must be at least 8 characters.'); return; }
     if (newPassword !== confirmPassword) { setPwError('Passwords do not match.'); return; }
-    setPwSuccess('Password updated successfully.');
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
+
+    setPwLoading(true);
+    try {
+      await axios.put('http://localhost:8080/api/user/me/password', {
+        currentPassword,
+        newPassword,
+      });
+      setPwSuccess('Password updated successfully.');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      setPwError(err.response?.data?.error ?? 'Failed to update password.');
+    } finally {
+      setPwLoading(false);
+    }
   };
 
   const inputCls = 'w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-md py-sm text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all';
@@ -30,29 +44,32 @@ const Security = () => {
         {/* Page Header */}
         <div>
           <h2 className="font-heading-lg text-heading-lg text-on-background">Security &amp; Settings</h2>
-          <p className="font-body-md text-body-md text-on-surface-variant mt-sm">Manage your account preferences, API connections, and security protocols.</p>
+          <p className="font-body-md text-body-md text-on-surface-variant mt-sm">Manage your account preferences and security settings.</p>
         </div>
 
-        {/* Settings Bento Grid */}
         <div className="grid grid-cols-12 gap-layout-gutter">
 
-          {/* Left Column: Profile & Preferences */}
+          {/* Left Column: Account info & Preferences */}
           <div className="col-span-12 lg:col-span-4 space-y-layout-gutter">
-            {/* Profile Card */}
-            <section className="bg-surface-container rounded-xl border border-outline-variant p-lg flex flex-col items-center text-center">
-              <div className="relative mb-md">
-                <div className="w-24 h-24 rounded-full bg-surface-container-high border-2 border-surface-bright flex items-center justify-center">
-                  <span className="material-symbols-outlined text-[48px] text-on-surface-variant">account_circle</span>
+
+            {/* Account Card */}
+            <section className="bg-surface-container rounded-xl border border-outline-variant p-lg">
+              <h3 className="font-heading-md text-heading-md text-on-surface mb-md">My Account</h3>
+              <div className="space-y-sm">
+                <div>
+                  <p className="font-label-sm text-label-sm text-on-surface-variant">Name</p>
+                  <p className="font-body-md text-body-md text-on-surface mt-xs">
+                    {user ? `${user.firstName} ${user.lastName}` : '—'}
+                  </p>
                 </div>
-                <button className="absolute bottom-0 right-0 w-8 h-8 bg-surface-bright border border-outline-variant rounded-full flex items-center justify-center hover:bg-surface-variant transition-colors">
-                  <span className="material-symbols-outlined text-sm text-on-surface">edit</span>
-                </button>
-              </div>
-              <h3 className="font-heading-md text-heading-md text-on-surface">My Account</h3>
-              <p className="font-body-md text-body-md text-on-surface-variant">account@walletpulse.app</p>
-              <div className="w-full mt-lg pt-lg border-t border-outline-variant flex justify-between items-center">
-                <span className="font-body-md text-body-md text-on-surface-variant">Account Status</span>
-                <span className="px-3 py-1 rounded-full bg-secondary-container/20 text-secondary font-label-sm text-label-sm border border-secondary/20">Active</span>
+                <div>
+                  <p className="font-label-sm text-label-sm text-on-surface-variant">Email</p>
+                  <p className="font-body-md text-body-md text-on-surface mt-xs">{user?.email ?? '—'}</p>
+                </div>
+                <div className="pt-sm border-t border-outline-variant flex justify-between items-center">
+                  <span className="font-body-md text-body-md text-on-surface-variant">Account Status</span>
+                  <span className="px-3 py-1 rounded-full bg-secondary-container/20 text-secondary font-label-sm text-label-sm border border-secondary/20">Active</span>
+                </div>
               </div>
             </section>
 
@@ -108,62 +125,63 @@ const Security = () => {
             </section>
           </div>
 
-          {/* Right Column: Security */}
+          {/* Right Column: Change Password */}
           <div className="col-span-12 lg:col-span-8 space-y-layout-gutter">
             <section className="bg-surface-container rounded-xl border border-outline-variant">
-              <div className="p-lg border-b border-outline-variant flex justify-between items-center">
-                <div>
-                  <h3 className="font-heading-md text-heading-md text-on-surface">Security Details</h3>
-                  <p className="font-body-md text-body-md text-on-surface-variant mt-1">Manage your password and authentication methods.</p>
-                </div>
+              <div className="p-lg border-b border-outline-variant">
+                <h3 className="font-heading-md text-heading-md text-on-surface">Change Password</h3>
+                <p className="font-body-md text-body-md text-on-surface-variant mt-1">Update your password to keep your account secure.</p>
               </div>
-              <div className="p-lg space-y-xl">
-                <div>
-                  <h4 className="font-data-mono text-data-mono text-on-surface mb-md">Change Password</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
-                    <div className="space-y-xs md:col-span-2">
-                      <label className="block font-label-sm text-label-sm text-on-surface-variant">Current Password</label>
-                      <input
-                        type="password"
-                        className={inputCls}
-                        placeholder="Enter current password"
-                        value={currentPassword}
-                        onChange={(e) => setCurrentPassword(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-xs">
-                      <label className="block font-label-sm text-label-sm text-on-surface-variant">New Password</label>
-                      <input
-                        type="password"
-                        className={inputCls}
-                        placeholder="Min 12 characters"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-xs">
-                      <label className="block font-label-sm text-label-sm text-on-surface-variant">Confirm New Password</label>
-                      <input
-                        type="password"
-                        className={inputCls}
-                        placeholder="Repeat new password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                      />
-                    </div>
+              <form className="p-lg space-y-md" onSubmit={handlePasswordUpdate}>
+                <div className="space-y-xs">
+                  <label className="block font-label-sm text-label-sm text-on-surface-variant">Current Password</label>
+                  <input
+                    type="password"
+                    className={inputCls}
+                    placeholder="Enter current password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
+                  <div className="space-y-xs">
+                    <label className="block font-label-sm text-label-sm text-on-surface-variant">New Password</label>
+                    <input
+                      type="password"
+                      className={inputCls}
+                      placeholder="Min. 8 characters"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                    />
                   </div>
-                  {pwError && <p className="mt-3 text-sm text-error">{pwError}</p>}
-                  {pwSuccess && <p className="mt-3 text-sm text-secondary">{pwSuccess}</p>}
-                  <div className="mt-md flex justify-end">
-                    <button
-                      onClick={handlePasswordUpdate}
-                      className="bg-primary-container text-on-primary-container px-lg py-sm rounded-lg font-label-sm text-label-sm hover:opacity-90 transition-opacity"
-                    >
-                      Update Password
-                    </button>
+                  <div className="space-y-xs">
+                    <label className="block font-label-sm text-label-sm text-on-surface-variant">Confirm New Password</label>
+                    <input
+                      type="password"
+                      className={inputCls}
+                      placeholder="Repeat new password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                    />
                   </div>
                 </div>
-              </div>
+
+                {pwError && <p className="text-sm text-error">{pwError}</p>}
+                {pwSuccess && <p className="text-sm text-secondary">{pwSuccess}</p>}
+
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={pwLoading}
+                    className="bg-primary-container text-on-primary-container px-lg py-sm rounded-lg font-label-sm text-label-sm hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {pwLoading ? 'Updating...' : 'Update Password'}
+                  </button>
+                </div>
+              </form>
             </section>
           </div>
 

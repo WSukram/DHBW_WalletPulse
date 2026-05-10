@@ -1,5 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { isTokenExpired } from '../context/AppContext';
 
 const portfolioRows = [
   {
@@ -38,6 +39,13 @@ const features = [
 ];
 
 const Home = () => {
+  const navigate = useNavigate();
+
+  const handleEnter = () => {
+    const token = localStorage.getItem('wp_token');
+    navigate(token && !isTokenExpired(token) ? '/dashboard' : '/login');
+  };
+
   return (
     <div className="bg-surface-container-lowest text-on-surface min-h-screen flex flex-col font-sans">
       {/* Top Nav */}
@@ -70,12 +78,12 @@ const Home = () => {
                 <span className="material-symbols-outlined text-[20px]">settings</span>
               </button>
             </div>
-            <Link
-              to="/login"
+            <button
+              onClick={handleEnter}
               className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium tracking-tight px-4 py-2 rounded-md transition-colors shadow-[0_0_15px_rgba(79,70,229,0.3)]"
             >
               Connect Wallet
-            </Link>
+            </button>
           </div>
         </div>
       </header>
@@ -90,12 +98,12 @@ const Home = () => {
             High-fidelity analytics, historical cost tracking, and real-time insights for professional traders. Take control of your digital assets with unparalleled precision.
           </p>
           <div className="flex items-center justify-center gap-4">
-            <Link
-              to="/login"
+            <button
+              onClick={handleEnter}
               className="bg-primary text-on-primary font-label-sm text-label-sm px-8 py-4 rounded-full shadow-[0_0_25px_rgba(195,192,255,0.25)] hover:shadow-[0_0_40px_rgba(195,192,255,0.4)] transition-all transform hover:-translate-y-0.5"
             >
               START ANALYZING
-            </Link>
+            </button>
             <button className="border border-outline-variant text-on-surface font-label-sm text-label-sm px-8 py-4 rounded-full hover:bg-surface-container transition-colors">
               VIEW DEMO
             </button>
