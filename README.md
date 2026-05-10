@@ -6,7 +6,7 @@ Webanwendung zur Verwaltung eines Krypto-Portfolios mit Gewinn- und Verlustberec
 - Backend: Spring Boot (Java 21)
 - Frontend: React (Vite)
 - Datenbank: PostgreSQL
-- Externe APIs: CoinGecko, Etherscan
+- Externe APIs: CoinGecko, Etherscan (ETH), Blockstream (BTC), Helius (SOL)
 
 ## Architektur
 Frontend (React) ↔ Backend (Spring Boot) ↔ Drittanbieter API
@@ -75,4 +75,29 @@ Der Import ist idempotent — mehrmaliges Aufrufen fügt keine Duplikate ein.
 
 Für jeden importierten Kauf wird automatisch der historische EUR-Kurs zum Transaktionsdatum über CoinGecko abgerufen und als Kaufpreis gespeichert.
 
-> **Hinweis:** BTC- und SOL-Import sind in Entwicklung und werden in einer späteren Version hinzugefügt.
+---
+
+## Externe API: Blockstream (BTC Blockchain-Import)
+
+Für Bitcoin wird die kostenlose [Blockstream Esplora API](https://github.com/Blockstream/esplora/blob/master/API.md) verwendet. **Kein API-Key erforderlich.**
+
+- Setze `chainType=BTC` und deine Bitcoin-Adresse (z. B. `bc1q...` oder `1A2b3C...`) in der Wallet.
+- Rufe danach `POST /api/wallets/{id}/import` auf — fertig.
+
+---
+
+## Externe API: Helius (SOL Blockchain-Import)
+
+Für Solana wird die [Helius API](https://helius.dev) verwendet (Free Plan: 100.000 req/Monat).
+
+### API-Key einrichten
+
+1. Erstelle einen kostenlosen Account auf [helius.dev](https://helius.dev).
+2. Kopiere deinen API-Key aus dem Dashboard.
+3. Trage ihn in `backend/src/main/resources/application.properties` ein:
+   ```properties
+   helius.api.key=DEIN_HELIUS_KEY
+   ```
+
+- Setze `chainType=SOL` und deine Solana-Adresse in der Wallet.
+- Rufe `POST /api/wallets/{id}/import` auf.
