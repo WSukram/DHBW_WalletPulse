@@ -6,7 +6,7 @@ Webanwendung zur Verwaltung eines Krypto-Portfolios mit Gewinn- und Verlustberec
 - Backend: Spring Boot (Java 21)
 - Frontend: React (Vite)
 - Datenbank: PostgreSQL
-- Externe API: CoinGecko
+- Externe APIs: CoinGecko, Etherscan
 
 ## Architektur
 Frontend (React) ↔ Backend (Spring Boot) ↔ Drittanbieter API
@@ -29,4 +29,50 @@ Ohne Key ist die API stark ratenlimitiert (Rate-Limiting). Für eine robuste Ent
    ```properties
    coingecko.api.key=DEIN_GENERIERTER_DEMO_KEY
    ```
-Das Backend fügt diesen Key dann bei jedem Request automatisch als `x-cg-demo-api-key`-Header hinzu. Um das Limit der API zusätzlich zu schonen, werden abgefragte Preise in Spring Boot im RAM gecached.
+Das Backend fügt diesen Key dann bei jedem Request automatisch als `x-cg-demo-api-key`-Header hinzu. Um das Limit der API zusätzlich zu schonen, werden abgefragte Preise in Spring Boot im RAM gecached sowie historische Preise dauerhaft in der Datenbank gespeichert.
+
+---
+
+## Externe API: Etherscan (ETH Blockchain-Import)
+
+WalletPulse kann Transaktionen direkt von einer Ethereum-Wallet-Adresse importieren. Dafür wird die [Etherscan API](https://etherscan.io/apis) verwendet.
+
+### API-Key einrichten
+
+1. Erstelle einen kostenlosen Account auf [etherscan.io](https://etherscan.io).
+2. Gehe zu **My Account → API Keys** und erstelle einen neuen Key (Free Plan reicht aus: 5 req/s, 100.000 req/Tag).
+3. Öffne `backend/src/main/resources/application.properties` und trage den Key ein:
+   ```properties
+   etherscan.api.key=DEIN_ETHERSCAN_KEY
+   ```
+
+### Wallet für den Import konfigurieren
+
+Eine Wallet muss mit einer Blockchain-Adresse verknüpft sein, bevor sie importiert werden kann. Setze beim Erstellen oder Aktualisieren einer Wallet:
+- `chainType`: `ETH` (aktuell unterstützt; `BTC` und `SOL` folgen)
+- `chainAddress`: deine öffentliche Ethereum-Adresse (z. B. `0xAbCd...`)
+
+### Import auslösen
+
+```
+POST /api/wallets/{id}/import
+Authorization: Bearer <dein-JWT-Token>
+```
+
+Die Antwort zeigt, wie viele Transaktionen importiert, übersprungen (bereits vorhanden) oder fehlgeschlagen sind:
+```json
+{ "imported": 12, "skipped": 3, "failed": 0 }
+```
+
+Der Import ist idempotent — mehrmaliges Aufrufen fügt keine Duplikate ein.
+
+### Was wird importiert?
+
+| Typ | Beschreibung |
+|-----|-------------|
+| Native ETH | Eingehende ETH-Transfers |
+| ERC-20 Tokens | Eingehende Token-Transfers (USDC, USDT, DAI, WBTC, LINK, UNI u. v. m.) |
+
+Für jeden importierten Kauf wird automatisch der historische EUR-Kurs zum Transaktionsdatum über CoinGecko abgerufen und als Kaufpreis gespeichert.
+
+> **Hinweis:** BTC- und SOL-Import sind in Entwicklung und werden in einer späteren Version hinzugefügt.

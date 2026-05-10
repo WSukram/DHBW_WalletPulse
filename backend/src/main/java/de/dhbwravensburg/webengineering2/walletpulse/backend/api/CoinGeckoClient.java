@@ -13,6 +13,8 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 @Service
@@ -62,6 +64,40 @@ public class CoinGeckoClient {
 
         } catch (RestClientException e) {
             throw new RuntimeException("Fehler beim Abrufen der Daten von CoinGecko für: " + coinId, e);
+        }
+    }
+
+    public BigDecimal getHistoricalPriceInEur(String coinId, LocalDate date) {
+        String formattedDate = date.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+        String url = String.format("%s/coins/%s/history?date=%s&localization=false", apiUrl, coinId, formattedDate);
+
+        HttpHeaders headers = new HttpHeaders();
+        if (apiKey != null && !apiKey.isEmpty()) {
+            headers.set("x-cg-demo-api-key", apiKey);
+        }
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        try {
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    entity,
+                    new ParameterizedTypeReference<>() {}
+            );
+
+            Map<String, Object> body = response.getBody();
+            if (body != null && body.containsKey("market_data")) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> marketData = (Map<String, Object>) body.get("market_data");
+                @SuppressWarnings("unchecked")
+                Map<String, Object> currentPrice = (Map<String, Object>) marketData.get("current_price");
+                if (currentPrice != null && currentPrice.containsKey("eur")) {
+                    return new BigDecimal(currentPrice.get("eur").toString());
+                }
+            }
+            throw new ResourceNotFoundException("Historischer Preis für '" + coinId + "' am " + date + " nicht verfügbar.");
+        } catch (RestClientException e) {
+            throw new RuntimeException("Fehler beim Abrufen des historischen Preises von CoinGecko für: " + coinId, e);
         }
     }
 }
