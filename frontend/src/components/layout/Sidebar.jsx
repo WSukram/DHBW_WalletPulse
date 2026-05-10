@@ -1,8 +1,10 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { useApp } from '../../context/AppContext';
 
 const Sidebar = () => {
   const navigate = useNavigate();
+  const { logout } = useApp();
 
   const navLinkClass = (isActive) =>
     `flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all active:scale-95 ${
@@ -68,7 +70,10 @@ const Sidebar = () => {
           </div>
           <span>My Account</span>
         </button>
-        <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:text-error hover:bg-error/10 transition-all cursor-pointer active:scale-95 w-full text-left">
+        <button
+          onClick={() => { logout(); navigate('/login'); }}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:text-error hover:bg-error/10 transition-all cursor-pointer active:scale-95 w-full text-left"
+        >
           <span className="material-symbols-outlined text-[20px]">logout</span>
           <span>Logout</span>
         </button>
