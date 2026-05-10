@@ -1,8 +1,10 @@
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { useApp } from '../../context/AppContext';
 
 const Sidebar = () => {
   const navigate = useNavigate();
+  const { logout } = useApp();
 
   const navLinkClass = (isActive) =>
     `flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all active:scale-95 ${
@@ -14,7 +16,7 @@ const Sidebar = () => {
   return (
     <aside className="hidden lg:flex flex-col h-screen w-64 border-r border-outline-variant/30 bg-surface-container-low text-sm font-medium shrink-0">
       {/* Brand */}
-      <div className="px-6 py-6 flex items-center gap-3 border-b border-outline-variant/20">
+      <Link to="/" className="px-6 py-6 flex items-center gap-3 border-b border-outline-variant/20 hover:bg-surface-container-high transition-colors">
         <div className="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center shrink-0">
           <span
             className="material-symbols-outlined text-on-primary-container text-sm"
@@ -27,7 +29,7 @@ const Sidebar = () => {
           <h1 className="text-lg font-black text-on-surface">WalletPulse</h1>
           <p className="text-[10px] text-on-surface-variant uppercase tracking-wider">Terminal v1.0</p>
         </div>
-      </div>
+      </Link>
 
       {/* Nav links */}
       <nav className="flex-1 px-4 py-4 space-y-1">
@@ -68,7 +70,10 @@ const Sidebar = () => {
           </div>
           <span>My Account</span>
         </button>
-        <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:text-error hover:bg-error/10 transition-all cursor-pointer active:scale-95 w-full text-left">
+        <button
+          onClick={() => { logout(); navigate('/login'); }}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:text-error hover:bg-error/10 transition-all cursor-pointer active:scale-95 w-full text-left"
+        >
           <span className="material-symbols-outlined text-[20px]">logout</span>
           <span>Logout</span>
         </button>

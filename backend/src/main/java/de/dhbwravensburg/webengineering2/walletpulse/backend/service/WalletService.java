@@ -2,53 +2,56 @@ package de.dhbwravensburg.webengineering2.walletpulse.backend.service;
 
 import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.AssetResponse;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.WalletPortfolioResponse;
-import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Asset;
+import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.User;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Wallet;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.exception.ResourceNotFoundException;
+import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.UserRepository;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.WalletRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class WalletService {
 
     private final WalletRepository walletRepository;
+    private final UserRepository userRepository;
     private final AssetService assetService;
 
-    public WalletService(WalletRepository walletRepository, AssetService assetService) {
+    public WalletService(WalletRepository walletRepository, UserRepository userRepository, AssetService assetService) {
         this.walletRepository = walletRepository;
+        this.userRepository = userRepository;
         this.assetService = assetService;
     }
 
-    public List<Wallet> getAllWallets() {
-       return walletRepository.findAll();
+    public List<Wallet> getAllWallets(String ownerEmail) {
+        return walletRepository.findAllByOwnerEmail(ownerEmail);
     }
 
-    public Wallet createWallet(Wallet wallet) {
+    public Wallet createWallet(Wallet wallet, String ownerEmail) {
+        User owner = userRepository.findByEmail(ownerEmail).orElseThrow();
+        wallet.setOwner(owner);
         return walletRepository.save(wallet);
     }
 
-    public Wallet getWalletById(Long id) {
-        return walletRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Wallet with id " + id + " not found"));
+    public Wallet getWalletById(Long id, String ownerEmail) {
+        return walletRepository.findByIdAndOwnerEmail(id, ownerEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("Wallet with id " + id + " not found"));
     }
 
-    public void deleteWallet(Long id) {
-        walletRepository.deleteById(id);
+    public void deleteWallet(Long id, String ownerEmail) {
+        Wallet wallet = getWalletById(id, ownerEmail);
+        walletRepository.delete(wallet);
     }
 
-    public Wallet updateWallet(Long id, Wallet updatedWallet){
-        Wallet existing = getWalletById(id);
+    public Wallet updateWallet(Long id, Wallet updatedWallet, String ownerEmail) {
+        Wallet existing = getWalletById(id, ownerEmail);
         existing.setName(updatedWallet.getName());
         return walletRepository.save(existing);
     }
 
-    public WalletPortfolioResponse getWalletPortfolio(Long id) {
-        Wallet wallet = getWalletById(id);
+    public WalletPortfolioResponse getWalletPortfolio(Long id, String ownerEmail) {
+        Wallet wallet = getWalletById(id, ownerEmail);
 
         List<AssetResponse> assetResponses = wallet.getAssets() == null ? List.of() :
                 wallet.getAssets().stream()
@@ -69,4 +72,3 @@ public class WalletService {
         );
     }
 }
-

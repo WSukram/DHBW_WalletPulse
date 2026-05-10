@@ -10,7 +10,6 @@ import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.AssetRep
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.WalletRepository;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -26,36 +25,36 @@ public class AssetService {
         this.coinGeckoClient = coinGeckoClient;
     }
 
-    public List<Asset> getAssetsByWalletId(Long walletId) {
+    public List<Asset> getAssetsByWalletId(Long walletId, String ownerEmail) {
+        requireWalletOwnership(walletId, ownerEmail);
         return assetRepository.findByWalletId(walletId);
     }
 
-    public Asset getAssetById(Long assetId) {
-        return assetRepository.findById(assetId)
+    public Asset getAssetById(Long assetId, String ownerEmail) {
+        Asset asset = assetRepository.findById(assetId)
                 .orElseThrow(() -> new ResourceNotFoundException("Asset with id " + assetId + " not found"));
+        requireOwnership(asset, ownerEmail);
+        return asset;
     }
 
-    public Asset createAsset(Long walletId, String coinId) {
-        Wallet wallet = walletRepository.findById(walletId)
-                .orElseThrow(() -> new ResourceNotFoundException("Wallet with id " + walletId + " not found"));
-
+    public Asset createAsset(Long walletId, String coinId, String ownerEmail) {
+        Wallet wallet = requireWalletOwnership(walletId, ownerEmail);
         Asset asset = Asset.builder()
                 .coinId(coinId)
                 .wallet(wallet)
                 .build();
-
         return assetRepository.save(asset);
     }
 
-    public Asset updateAsset(Long assetId, String coinId) {
-        Asset existingAsset = getAssetById(assetId);
-        existingAsset.setCoinId(coinId);
-        return assetRepository.save(existingAsset);
+    public Asset updateAsset(Long assetId, String coinId, String ownerEmail) {
+        Asset existing = getAssetById(assetId, ownerEmail);
+        existing.setCoinId(coinId);
+        return assetRepository.save(existing);
     }
 
-    public void deleteAsset(Long assetId) {
-        Asset existingAsset = getAssetById(assetId);
-        assetRepository.delete(existingAsset);
+    public void deleteAsset(Long assetId, String ownerEmail) {
+        Asset existing = getAssetById(assetId, ownerEmail);
+        assetRepository.delete(existing);
     }
 
     public AssetResponse mapToPortfolioResponse(Asset asset) {
@@ -63,7 +62,6 @@ public class AssetService {
         try {
             currentPrice = coinGeckoClient.getCurrentPriceInEur(asset.getCoinId()).doubleValue();
         } catch (Exception e) {
-            // Ignore if price cannot be fetched (e.g., wrong coin ID or rate limit)
             System.err.println("Could not fetch price for " + asset.getCoinId() + ": " + e.getMessage());
         }
 
@@ -90,5 +88,20 @@ public class AssetService {
                 currentValue,
                 profit
         );
+    }
+
+    private Wallet requireWalletOwnership(Long walletId, String ownerEmail) {
+        Wallet wallet = walletRepository.findById(walletId)
+                .orElseThrow(() -> new ResourceNotFoundException("Wallet with id " + walletId + " not found"));
+        if (!wallet.getOwner().getEmail().equals(ownerEmail)) {
+            throw new ResourceNotFoundException("Wallet with id " + walletId + " not found");
+        }
+        return wallet;
+    }
+
+    private void requireOwnership(Asset asset, String ownerEmail) {
+        if (!asset.getWallet().getOwner().getEmail().equals(ownerEmail)) {
+            throw new ResourceNotFoundException("Asset with id " + asset.getId() + " not found");
+        }
     }
 }
