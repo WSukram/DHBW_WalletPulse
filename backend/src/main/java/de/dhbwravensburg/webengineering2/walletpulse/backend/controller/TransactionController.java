@@ -11,6 +11,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,8 +34,9 @@ public class TransactionController {
             @ApiResponse(responseCode = "404", description = "Asset nicht gefunden")
     })
     public List<TransactionResponse> getTransactionsByAssetId(
-            @Parameter(description = "ID des Assets", example = "10") @PathVariable Long assetId) {
-        return transactionService.getTransactionsByAssetId(assetId)
+            @Parameter(description = "ID des Assets", example = "10") @PathVariable Long assetId,
+            @AuthenticationPrincipal UserDetails user) {
+        return transactionService.getTransactionsByAssetId(assetId, user.getUsername())
                 .stream()
                 .map(this::toResponse)
                 .toList();
@@ -46,8 +49,9 @@ public class TransactionController {
             @ApiResponse(responseCode = "404", description = "Transaktion nicht gefunden")
     })
     public TransactionResponse getTransactionById(
-            @Parameter(description = "ID der Transaktion", example = "100") @PathVariable Long transactionId) {
-        return toResponse(transactionService.getTransactionById(transactionId));
+            @Parameter(description = "ID der Transaktion", example = "100") @PathVariable Long transactionId,
+            @AuthenticationPrincipal UserDetails user) {
+        return toResponse(transactionService.getTransactionById(transactionId, user.getUsername()));
     }
 
     @PostMapping("/api/assets/{assetId}/transactions")
@@ -60,12 +64,10 @@ public class TransactionController {
     })
     public TransactionResponse createTransaction(
             @Parameter(description = "ID des Assets", example = "10") @PathVariable Long assetId,
-            @Valid @RequestBody TransactionRequest request) {
+            @Valid @RequestBody TransactionRequest request,
+            @AuthenticationPrincipal UserDetails user) {
         Transaction created = transactionService.createTransaction(
-                assetId,
-                request.amount(),
-                request.buyPrice(),
-                request.date()
+                assetId, request.amount(), request.buyPrice(), request.date(), user.getUsername()
         );
         return toResponse(created);
     }
@@ -74,17 +76,14 @@ public class TransactionController {
     @Operation(summary = "Transaktion aktualisieren")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Transaktion aktualisiert"),
-            @ApiResponse(responseCode = "400", description = "Ungültige Anfrage"),
             @ApiResponse(responseCode = "404", description = "Transaktion nicht gefunden")
     })
     public TransactionResponse updateTransaction(
             @Parameter(description = "ID der Transaktion", example = "100") @PathVariable Long transactionId,
-            @Valid @RequestBody TransactionRequest request) {
+            @Valid @RequestBody TransactionRequest request,
+            @AuthenticationPrincipal UserDetails user) {
         Transaction updated = transactionService.updateTransaction(
-                transactionId,
-                request.amount(),
-                request.buyPrice(),
-                request.date()
+                transactionId, request.amount(), request.buyPrice(), request.date(), user.getUsername()
         );
         return toResponse(updated);
     }
@@ -97,8 +96,9 @@ public class TransactionController {
             @ApiResponse(responseCode = "404", description = "Transaktion nicht gefunden")
     })
     public void deleteTransaction(
-            @Parameter(description = "ID der Transaktion", example = "100") @PathVariable Long transactionId) {
-        transactionService.deleteTransaction(transactionId);
+            @Parameter(description = "ID der Transaktion", example = "100") @PathVariable Long transactionId,
+            @AuthenticationPrincipal UserDetails user) {
+        transactionService.deleteTransaction(transactionId, user.getUsername());
     }
 
     private TransactionResponse toResponse(Transaction transaction) {
@@ -111,5 +111,3 @@ public class TransactionController {
         );
     }
 }
-
-

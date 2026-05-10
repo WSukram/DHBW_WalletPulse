@@ -1,5 +1,6 @@
 package de.dhbwravensburg.webengineering2.walletpulse.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -21,6 +22,11 @@ public class Wallet {
     @NotBlank(message = "Wallet name must not be blank")
     @Column(nullable = false)
     private String name;
+
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "owner_id", nullable = false)
+    private User owner;
 
     @OneToMany(mappedBy = "wallet",
             cascade = CascadeType.ALL,
