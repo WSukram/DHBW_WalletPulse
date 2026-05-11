@@ -47,6 +47,8 @@ public class WalletService {
     public Wallet updateWallet(Long id, Wallet updatedWallet, String ownerEmail) {
         Wallet existing = getWalletById(id, ownerEmail);
         existing.setName(updatedWallet.getName());
+        existing.setChainType(updatedWallet.getChainType());
+        existing.setChainAddress(updatedWallet.getChainAddress());
         return walletRepository.save(existing);
     }
 
