@@ -17,7 +17,7 @@ public class EtherscanClient {
     @Value("${etherscan.api.key:}")
     private String apiKey;
 
-    @Value("${etherscan.api.url:https://api.etherscan.io/api}")
+    @Value("${etherscan.api.url:https://api.etherscan.io/v2/api}")
     private String apiUrl;
 
     public EtherscanClient(RestTemplate restTemplate) {
@@ -26,7 +26,7 @@ public class EtherscanClient {
 
     public List<Map<String, String>> getNormalTransactions(String address) {
         String url = String.format(
-                "%s?module=account&action=txlist&address=%s&startblock=0&endblock=99999999&sort=asc&apikey=%s",
+                "%s?chainid=1&module=account&action=txlist&address=%s&startblock=0&endblock=99999999&sort=asc&apikey=%s",
                 apiUrl, address, apiKey
         );
         return fetchResults(url);
@@ -34,7 +34,7 @@ public class EtherscanClient {
 
     public List<Map<String, String>> getErc20Transfers(String address) {
         String url = String.format(
-                "%s?module=account&action=tokentx&address=%s&startblock=0&endblock=99999999&sort=asc&apikey=%s",
+                "%s?chainid=1&module=account&action=tokentx&address=%s&startblock=0&endblock=99999999&sort=asc&apikey=%s",
                 apiUrl, address, apiKey
         );
         return fetchResults(url);
@@ -48,8 +48,14 @@ public class EtherscanClient {
                 new ParameterizedTypeReference<Map<String, Object>>() {}
         ).getBody();
 
-        if (response == null || !"1".equals(response.get("status"))) {
-            return List.of();
+        if (response == null) return List.of();
+
+        String status = String.valueOf(response.get("status"));
+        String message = String.valueOf(response.get("message"));
+
+        if (!"1".equals(status)) {
+            if ("No transactions found".equalsIgnoreCase(message)) return List.of();
+            throw new RuntimeException("Etherscan error: " + message);
         }
 
         @SuppressWarnings("unchecked")
