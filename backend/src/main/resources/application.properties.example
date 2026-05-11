@@ -1,0 +1,29 @@
+spring.application.name=backend
+
+# PostgreSQL
+spring.datasource.url=jdbc:postgresql://localhost:5432/walletpulse
+spring.datasource.username=postgres
+spring.datasource.password=postgres
+
+# JPA / Hibernate
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+
+# OpenAPI / Swagger
+springdoc.api-docs.path=/v3/api-docs
+springdoc.swagger-ui.path=/swagger-ui
+
+# JWT — use a random base64 string of at least 32 chars
+jwt.secret=REPLACE_WITH_YOUR_JWT_SECRET
+jwt.expiration=1800000
+
+# CoinGecko (optional, increases rate limit)
+coingecko.api.key=REPLACE_WITH_YOUR_COINGECKO_KEY
+
+# Etherscan (ETH blockchain import)
+etherscan.api.url=https://api.etherscan.io/v2/api
+etherscan.api.key=REPLACE_WITH_YOUR_ETHERSCAN_KEY
+
+# Helius (SOL blockchain import)
+helius.api.key=REPLACE_WITH_YOUR_HELIUS_KEY
