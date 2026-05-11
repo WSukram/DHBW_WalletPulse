@@ -38,6 +38,19 @@ public class BlockchainImportService {
             Map.entry("PEPE", "pepe")
     );
 
+    private static final Map<String, String> SOL_MINT_TO_COINGECKO_ID = Map.ofEntries(
+            Map.entry("3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh", "wrapped-bitcoin"),  // Wormhole WBTC
+            Map.entry("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", "usd-coin"),         // USDC
+            Map.entry("Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB", "tether"),            // USDT
+            Map.entry("mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So", "msol"),              // mSOL
+            Map.entry("7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj", "lido-staked-sol"),  // stSOL
+            Map.entry("DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263", "bonk"),             // BONK
+            Map.entry("JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN", "jupiter-exchange-solana"), // JUP
+            Map.entry("4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R", "raydium"),          // RAY
+            Map.entry("orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE", "orca"),              // ORCA
+            Map.entry("EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm", "dogwifcoin")       // WIF
+    );
+
     private final WalletRepository walletRepository;
     private final AssetRepository assetRepository;
     private final TransactionRepository transactionRepository;
@@ -115,8 +128,6 @@ public class BlockchainImportService {
         List<Map<String, Object>> txs = blockstreamClient.getTransactions(address);
         for (Map<String, Object> tx : txs) {
             String txid = (String) tx.get("txid");
-            if (transactionRepository.existsByTxHash(txid)) { skipped++; continue; }
-
             try {
                 long receivedSatoshi = getReceivedSatoshi(tx, address);
                 if (receivedSatoshi <= 0) continue;
@@ -125,10 +136,23 @@ public class BlockchainImportService {
                 if (blockTime == 0) continue;
 
                 LocalDate date = Instant.ofEpochSecond(blockTime).atZone(ZoneOffset.UTC).toLocalDate();
+                BigDecimal eurPrice = getPriceOrZero("bitcoin", date);
+
+                var existingTx = transactionRepository.findByTxHash(txid);
+                if (existingTx.isPresent()) {
+                    Transaction t = existingTx.get();
+                    if (t.getBuyPrice() == 0.0 && eurPrice.compareTo(BigDecimal.ZERO) > 0) {
+                        t.setBuyPrice(eurPrice.doubleValue());
+                        transactionRepository.save(t);
+                        imported++;
+                    } else {
+                        skipped++;
+                    }
+                    continue;
+                }
+
                 double amount = new BigDecimal(receivedSatoshi)
                         .divide(SATOSHI_PER_BTC, 8, RoundingMode.HALF_UP).doubleValue();
-
-                BigDecimal eurPrice = getPriceOrZero("bitcoin", date);
                 Asset asset = findOrCreateAsset(wallet, "bitcoin");
 
                 transactionRepository.save(Transaction.builder()
@@ -148,35 +172,76 @@ public class BlockchainImportService {
         List<Map<String, Object>> txs = heliusClient.getTransactions(address);
         for (Map<String, Object> tx : txs) {
             String signature = (String) tx.get("signature");
-            if (transactionRepository.existsByTxHash(signature)) { skipped++; continue; }
+            long timestamp = toLong(tx.get("timestamp"));
+            if (timestamp == 0) continue;
+            LocalDate date = Instant.ofEpochSecond(timestamp).atZone(ZoneOffset.UTC).toLocalDate();
 
+            // Native SOL transfers
             try {
-                Object nativeTransfers = tx.get("nativeTransfers");
-                if (!(nativeTransfers instanceof List<?> transfers)) continue;
-
-                long receivedLamports = 0;
-                for (Object t : transfers) {
-                    if (!(t instanceof Map<?,?> transfer)) continue;
-                    if (address.equals(transfer.get("toUserAccount"))) {
-                        receivedLamports += toLong(transfer.get("amount"));
+                Object nativeTransfersObj = tx.get("nativeTransfers");
+                if (nativeTransfersObj instanceof List<?> transfers) {
+                    long receivedLamports = 0;
+                    for (Object t : transfers) {
+                        if (!(t instanceof Map<?,?> transfer)) continue;
+                        if (address.equals(transfer.get("toUserAccount"))) {
+                            receivedLamports += toLong(transfer.get("amount"));
+                        }
+                    }
+                    if (receivedLamports > 0) {
+                        BigDecimal eurPrice = getPriceOrZero("solana", date);
+                        var existingTx = transactionRepository.findByTxHash(signature);
+                        if (existingTx.isPresent()) {
+                            Transaction t = existingTx.get();
+                            if (t.getBuyPrice() == 0.0 && eurPrice.compareTo(BigDecimal.ZERO) > 0) {
+                                t.setBuyPrice(eurPrice.doubleValue());
+                                transactionRepository.save(t);
+                                imported++;
+                            } else skipped++;
+                        } else {
+                            double amount = receivedLamports / 1_000_000_000.0;
+                            Asset asset = findOrCreateAsset(wallet, "solana");
+                            transactionRepository.save(Transaction.builder()
+                                    .asset(asset).amount(amount).buyPrice(eurPrice.doubleValue())
+                                    .date(date).txHash(signature).source(TransactionSource.IMPORTED).build());
+                            imported++;
+                        }
                     }
                 }
-                if (receivedLamports <= 0) continue;
-
-                long timestamp = toLong(tx.get("timestamp"));
-                if (timestamp == 0) continue;
-
-                LocalDate date = Instant.ofEpochSecond(timestamp).atZone(ZoneOffset.UTC).toLocalDate();
-                double amount = receivedLamports / 1_000_000_000.0;
-
-                BigDecimal eurPrice = getPriceOrZero("solana", date);
-                Asset asset = findOrCreateAsset(wallet, "solana");
-
-                transactionRepository.save(Transaction.builder()
-                        .asset(asset).amount(amount).buyPrice(eurPrice.doubleValue())
-                        .date(date).txHash(signature).source(TransactionSource.IMPORTED).build());
-                imported++;
             } catch (Exception e) { failed++; }
+
+            // SPL token transfers
+            Object tokenTransfersObj = tx.get("tokenTransfers");
+            if (!(tokenTransfersObj instanceof List<?> tokenTransfers)) continue;
+            for (Object t : tokenTransfers) {
+                if (!(t instanceof Map<?,?> transfer)) continue;
+                if (!address.equals(transfer.get("toUserAccount"))) continue;
+                Object tokenAmountObj = transfer.get("tokenAmount");
+                if (!(tokenAmountObj instanceof Number)) continue;
+                double tokenAmount = ((Number) tokenAmountObj).doubleValue();
+                if (tokenAmount <= 0) continue;
+                String mint = (String) transfer.get("mint");
+                String coinId = SOL_MINT_TO_COINGECKO_ID.get(mint);
+                if (coinId == null) continue;
+                String tokenTxHash = signature + "_" + mint;
+                try {
+                    BigDecimal eurPrice = getPriceOrZero(coinId, date);
+                    var existingTx = transactionRepository.findByTxHash(tokenTxHash);
+                    if (existingTx.isPresent()) {
+                        Transaction t2 = existingTx.get();
+                        if (t2.getBuyPrice() == 0.0 && eurPrice.compareTo(BigDecimal.ZERO) > 0) {
+                            t2.setBuyPrice(eurPrice.doubleValue());
+                            transactionRepository.save(t2);
+                            imported++;
+                        } else skipped++;
+                    } else {
+                        Asset asset = findOrCreateAsset(wallet, coinId);
+                        transactionRepository.save(Transaction.builder()
+                                .asset(asset).amount(tokenAmount).buyPrice(eurPrice.doubleValue())
+                                .date(date).txHash(tokenTxHash).source(TransactionSource.IMPORTED).build());
+                        imported++;
+                    }
+                } catch (Exception e) { failed++; }
+            }
         }
 
         return new ImportResult(imported, skipped, failed);
@@ -184,10 +249,21 @@ public class BlockchainImportService {
 
     private boolean saveEthTx(Wallet wallet, String hash, String coinId, BigDecimal raw,
                                BigDecimal divisor, int scale, String timestamp) {
-        if (transactionRepository.existsByTxHash(hash)) return false;
-        double amount = raw.divide(divisor, scale, RoundingMode.HALF_UP).doubleValue();
         LocalDate date = Instant.ofEpochSecond(Long.parseLong(timestamp)).atZone(ZoneOffset.UTC).toLocalDate();
         BigDecimal eurPrice = getPriceOrZero(coinId, date);
+
+        var existing = transactionRepository.findByTxHash(hash);
+        if (existing.isPresent()) {
+            Transaction tx = existing.get();
+            if (tx.getBuyPrice() == 0.0 && eurPrice.compareTo(BigDecimal.ZERO) > 0) {
+                tx.setBuyPrice(eurPrice.doubleValue());
+                transactionRepository.save(tx);
+                return true;
+            }
+            return false;
+        }
+
+        double amount = raw.divide(divisor, scale, RoundingMode.HALF_UP).doubleValue();
         Asset asset = findOrCreateAsset(wallet, coinId);
         transactionRepository.save(Transaction.builder()
                 .asset(asset).amount(amount).buyPrice(eurPrice.doubleValue())
@@ -204,6 +280,8 @@ public class BlockchainImportService {
         try {
             return historicalPriceService.getEurPrice(coinId, date);
         } catch (Exception e) {
+            System.err.println("[Import] Price lookup failed for " + coinId + " on " + date + ": "
+                    + e.getClass().getSimpleName() + " – " + e.getMessage());
             return BigDecimal.ZERO;
         }
     }
