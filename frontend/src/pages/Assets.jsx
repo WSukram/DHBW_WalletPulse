@@ -16,6 +16,22 @@ const coinMeta = (coinId) =>
     icon: coinId[0].toUpperCase(),
   };
 
+const groupByCoin = (assets) => {
+  const map = {};
+  for (const a of assets) {
+    if (!map[a.coinId]) {
+      map[a.coinId] = { ...a };
+    } else {
+      const g = map[a.coinId];
+      g.totalAmount = (g.totalAmount ?? 0) + (a.totalAmount ?? 0);
+      g.totalInvested = (g.totalInvested ?? 0) + (a.totalInvested ?? 0);
+      g.profit = (g.profit ?? 0) + (a.profit ?? 0);
+      g.currentValue = (g.currentValue ?? 0) + (a.currentValue ?? 0);
+    }
+  }
+  return Object.values(map);
+};
+
 const formatPct = (profit, invested) => {
   if (!invested || invested === 0) return '0.00%';
   const pct = ((profit / invested) * 100).toFixed(2);
@@ -119,14 +135,15 @@ const Assets = () => {
         return Promise.all(
           res.data.map((w) => axios.get(`http://localhost:8080/api/wallets/${w.id}/portfolio`).then((r) => r.data))
         ).then((portfolios) => {
+          const allAssets = portfolios.flatMap((p) => p.assets ?? []);
           const merged = {
-            assets: portfolios.flatMap((p) => p.assets ?? []),
+            assets: groupByCoin(allAssets),
             totalCurrentValue: portfolios.reduce((s, p) => s + (p.totalCurrentValue ?? 0), 0),
             totalInvested: portfolios.reduce((s, p) => s + (p.totalInvested ?? 0), 0),
             totalProfit: portfolios.reduce((s, p) => s + (p.totalProfit ?? 0), 0),
           };
           return Promise.all(
-            merged.assets.map((asset) =>
+            allAssets.map((asset) =>
               axios.get(`http://localhost:8080/api/assets/${asset.id}/transactions`)
                 .then((r) => r.data.map((tx) => ({ ...tx, assetId: asset.id, coinId: asset.coinId })))
             )
