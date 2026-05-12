@@ -53,7 +53,7 @@ const Home = () => {
   };
 
   return (
-    <div className="bg-surface-container-lowest text-on-surface min-h-screen flex flex-col font-sans scroll-smooth scroll-pt-24">
+    <div className="bg-surface-container-lowest text-on-surface min-h-screen flex flex-col font-sans scroll-smooth">
       {/* Top Nav */}
       <header className="fixed top-0 w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-white/10">
         <div className="flex justify-between items-center w-full px-6 h-16 max-w-[1440px] mx-auto">
@@ -61,7 +61,7 @@ const Home = () => {
           <nav className="hidden md:flex items-center gap-1">
             {[
               { label: 'Live Prices', href: '#prices' },
-              { label: 'Features', href: '#features' },
+              { label: "What's supported", href: '#supported' },
               { label: 'How it works', href: '#how-it-works' },
             ].map(({ label, href }) => (
               <a key={label} href={href} className="text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors px-4 py-2 rounded-md hover:bg-white/5">
@@ -138,7 +138,7 @@ const Home = () => {
         </section>
 
         {/* Stats Bar */}
-        <section className="max-w-[1440px] mx-auto px-6 mb-24">
+        <section id="supported" className="max-w-[1440px] mx-auto px-6 mb-24">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-outline-variant/20 rounded-2xl overflow-hidden border border-outline-variant/20">
             {[
               { value: '3', label: 'Supported Blockchains', icon: 'hub' },
@@ -156,7 +156,7 @@ const Home = () => {
         </section>
 
         {/* Features */}
-        <section id="features" className="max-w-[1440px] mx-auto px-6 mb-24">
+        <section className="max-w-[1440px] mx-auto px-6 mb-24">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-lg">
             {features.map((f) => (
               <div key={f.title} className="bg-surface-container rounded-xl border border-outline-variant/30 p-lg hover:border-primary/50 transition-colors group">
@@ -204,6 +204,107 @@ const Home = () => {
               GET STARTED FOR FREE
             </button>
           </div>
+        </section>
+
+        {/* API Keys Setup */}
+        <section className="max-w-[1440px] mx-auto px-6 mb-24">
+          <div className="text-center mb-12">
+            <h2 className="font-heading-lg text-heading-lg text-inverse-surface mb-3">Connect your chains</h2>
+            <p className="font-body-md text-body-md text-on-surface-variant max-w-xl mx-auto">
+              On-chain import requires free API keys from these providers. All of them have a free tier — no credit card needed.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              {
+                name: 'CoinGecko',
+                badge: 'Prices',
+                badgeColor: 'text-primary bg-primary/10 border-primary/20',
+                icon: 'sensors',
+                iconColor: 'text-primary',
+                desc: 'Live and historical EUR prices for BTC, ETH and SOL. Free demo key allows 30 requests/min. Without a key the free tier still works but is rate-limited.',
+                steps: ['Sign up at coingecko.com', 'Go to Developer Dashboard → API Keys', 'Add to application.properties as coingecko.api.key'],
+                url: 'https://www.coingecko.com/en/api',
+                required: false,
+              },
+              {
+                name: 'Etherscan',
+                badge: 'ETH Import',
+                badgeColor: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+                icon: 'currency_exchange',
+                iconColor: 'text-blue-400',
+                desc: 'Imports your full Ethereum transaction history by wallet address. Supports native ETH and ERC-20 tokens.',
+                steps: ['Sign up at etherscan.io', 'Go to My Account → API Keys → Add', 'Add to application.properties as etherscan.api.key'],
+                url: 'https://etherscan.io/apis',
+                required: true,
+              },
+              {
+                name: 'Helius',
+                badge: 'SOL Import',
+                badgeColor: 'text-[#14F195] bg-[#14F195]/10 border-[#14F195]/20',
+                icon: 'bolt',
+                iconColor: 'text-[#14F195]',
+                desc: 'Imports your Solana transaction history. Free plan includes 100,000 requests per month — more than enough for personal use.',
+                steps: ['Sign up at helius.dev', 'Your API key is shown on the dashboard', 'Add to application.properties as helius.api.key'],
+                url: 'https://helius.dev',
+                required: true,
+              },
+              {
+                name: 'Blockstream',
+                badge: 'BTC Import',
+                badgeColor: 'text-[#F7931A] bg-[#F7931A]/10 border-[#F7931A]/20',
+                icon: 'lock_open',
+                iconColor: 'text-[#F7931A]',
+                desc: 'Imports your Bitcoin transaction history using the open Blockstream Esplora API. Completely free and open source — no account or API key required.',
+                steps: ['No setup needed — works out of the box', 'Set your wallet chainType to BTC', 'Add your Bitcoin address and trigger import'],
+                url: null,
+                required: false,
+              },
+            ].map((api) => (
+              <div key={api.name} className="bg-surface-container border border-outline-variant/30 rounded-2xl p-6 flex flex-col gap-4 hover:border-outline-variant/60 transition-colors">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-surface-container-low border border-outline-variant/30 flex items-center justify-center flex-shrink-0">
+                      <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1", color: 'inherit' }}>{api.icon}</span>
+                    </div>
+                    <div>
+                      <p className="font-heading-md text-heading-md text-inverse-surface leading-none">{api.name}</p>
+                      <span className={`inline-block mt-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${api.badgeColor}`}>{api.badge}</span>
+                    </div>
+                  </div>
+                  {!api.required && (
+                    <span className="text-xs font-semibold text-secondary bg-secondary/10 border border-secondary/20 px-2 py-0.5 rounded-full flex-shrink-0">Optional</span>
+                  )}
+                </div>
+                <p className="font-body-md text-body-md text-on-surface-variant text-sm">{api.desc}</p>
+                <ol className="space-y-1.5">
+                  {api.steps.map((step, i) => (
+                    <li key={i} className="flex items-start gap-2.5 text-sm text-on-surface-variant">
+                      <span className="w-5 h-5 rounded-full bg-surface-container-high border border-outline-variant/30 flex items-center justify-center flex-shrink-0 text-xs font-bold text-on-surface-variant mt-0.5">{i + 1}</span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
+                {api.url ? (
+                  <a
+                    href={api.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-auto flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary-fixed transition-colors self-start"
+                  >
+                    Get your free key
+                    <span className="material-symbols-outlined text-[16px]">open_in_new</span>
+                  </a>
+                ) : (
+                  <span className="mt-auto flex items-center gap-1.5 text-sm font-medium text-secondary self-start">
+                    <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                    No API key required
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+
         </section>
       </main>
 
