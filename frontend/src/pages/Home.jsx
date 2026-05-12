@@ -104,6 +104,40 @@ const Home = () => {
             ))}
           </div>
         </section>
+
+        {/* How it works */}
+        <section className="max-w-[1440px] mx-auto px-6 mb-24">
+          <div className="text-center mb-12">
+            <h2 className="font-heading-lg text-heading-lg text-inverse-surface mb-3">How it works</h2>
+            <p className="font-body-md text-body-md text-on-surface-variant max-w-xl mx-auto">Get your full crypto portfolio under control in three steps.</p>
+          </div>
+          <div className="relative grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Connector line (desktop only) */}
+            <div className="hidden md:block absolute top-10 left-[calc(16.67%+1rem)] right-[calc(16.67%+1rem)] h-px bg-gradient-to-r from-primary/20 via-primary/60 to-primary/20" />
+            {[
+              { step: '01', icon: 'person_add', title: 'Create your account', desc: 'Register for free in seconds. No credit card, no subscription required.' },
+              { step: '02', icon: 'account_balance_wallet', title: 'Add your wallets', desc: 'Connect ETH, BTC or SOL wallets by address, or add transactions manually.' },
+              { step: '03', icon: 'insights', title: 'Track your portfolio', desc: 'See live valuations, P&L, and historical performance across all your assets.' },
+            ].map((s) => (
+              <div key={s.step} className="flex flex-col items-center text-center relative">
+                <div className="w-20 h-20 rounded-2xl bg-surface-container border border-outline-variant/30 flex items-center justify-center mb-6 relative z-10">
+                  <span className="material-symbols-outlined text-primary text-[36px]" style={{ fontVariationSettings: "'FILL' 1" }}>{s.icon}</span>
+                </div>
+                <span className="font-data-mono text-data-mono text-primary/50 text-xs mb-2 tracking-widest">{s.step}</span>
+                <h3 className="font-heading-md text-heading-md text-inverse-surface mb-2">{s.title}</h3>
+                <p className="font-body-md text-body-md text-on-surface-variant max-w-xs">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-12">
+            <button
+              onClick={handleEnter}
+              className="bg-primary text-on-primary font-label-sm text-label-sm px-8 py-4 rounded-full shadow-[0_0_25px_rgba(195,192,255,0.2)] hover:shadow-[0_0_40px_rgba(195,192,255,0.35)] transition-all transform hover:-translate-y-0.5"
+            >
+              GET STARTED FOR FREE
+            </button>
+          </div>
+        </section>
       </main>
 
       {/* Footer */}
