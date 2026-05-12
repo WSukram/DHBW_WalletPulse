@@ -16,6 +16,22 @@ const coinMeta = (coinId) =>
     icon: coinId[0].toUpperCase(),
   };
 
+const groupByCoin = (assets) => {
+  const map = {};
+  for (const a of assets) {
+    if (!map[a.coinId]) {
+      map[a.coinId] = { ...a };
+    } else {
+      const g = map[a.coinId];
+      g.totalAmount = (g.totalAmount ?? 0) + (a.totalAmount ?? 0);
+      g.totalInvested = (g.totalInvested ?? 0) + (a.totalInvested ?? 0);
+      g.profit = (g.profit ?? 0) + (a.profit ?? 0);
+      g.currentValue = (g.currentValue ?? 0) + (a.currentValue ?? 0);
+    }
+  }
+  return Object.values(map);
+};
+
 const formatPct = (profit, invested) => {
   if (!invested || invested === 0) return '0.00%';
   const pct = ((profit / invested) * 100).toFixed(2);
@@ -189,7 +205,7 @@ const Analytics = () => {
   if (isLoading) return <div className="p-6 text-on-surface text-center">Loading Live-Data from Backend...</div>;
   if (error) return <div className="p-6 text-error text-center">{error}</div>;
 
-  const allAssets = portfolios.flatMap((p) => p.assets ?? []);
+  const allAssets = groupByCoin(portfolios.flatMap((p) => p.assets ?? []));
   const totalCurrentValue = portfolios.reduce((s, p) => s + (p.totalCurrentValue ?? 0), 0);
   const totalInvested = portfolios.reduce((s, p) => s + (p.totalInvested ?? 0), 0);
   const totalProfit = portfolios.reduce((s, p) => s + (p.totalProfit ?? 0), 0);
