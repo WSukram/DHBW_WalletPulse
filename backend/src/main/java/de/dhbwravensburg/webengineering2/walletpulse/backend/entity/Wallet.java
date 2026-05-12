@@ -23,13 +23,6 @@ public class Wallet {
     @Column(nullable = false)
     private String name;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = true)
-    private ChainType chainType;
-
-    @Column(nullable = true)
-    private String chainAddress;
-
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "owner_id", nullable = false)

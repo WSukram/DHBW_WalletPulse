@@ -1,7 +1,6 @@
 package de.dhbwravensburg.webengineering2.walletpulse.backend.service;
 
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Asset;
-import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.User;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Wallet;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.exception.ResourceNotFoundException;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.AssetRepository;
@@ -40,22 +39,17 @@ class AssetServiceTest {
 
     @Test
     void shouldReturnAssetsByWalletId() {
-        User owner = new User();
-        owner.setEmail("test@test.com");
-
         Wallet wallet = new Wallet();
         wallet.setId(1L);
-        wallet.setOwner(owner);
 
         Asset asset = new Asset();
         asset.setId(11L);
         asset.setCoinId("bitcoin");
         asset.setWallet(wallet);
 
-        when(walletRepository.findById(1L)).thenReturn(Optional.of(wallet));
         when(assetRepository.findByWalletId(1L)).thenReturn(List.of(asset));
 
-        List<Asset> result = assetService.getAssetsByWalletId(1L, "test@test.com");
+        List<Asset> result = assetService.getAssetsByWalletId(1L);
 
         assertEquals(1, result.size());
         assertEquals("bitcoin", result.get(0).getCoinId());
@@ -63,12 +57,8 @@ class AssetServiceTest {
 
     @Test
     void shouldCreateAssetForWallet() {
-        User owner = new User();
-        owner.setEmail("test@test.com");
-
         Wallet wallet = new Wallet();
         wallet.setId(1L);
-        wallet.setOwner(owner);
 
         Asset saved = new Asset();
         saved.setId(10L);
@@ -78,7 +68,7 @@ class AssetServiceTest {
         when(walletRepository.findById(1L)).thenReturn(Optional.of(wallet));
         when(assetRepository.save(org.mockito.ArgumentMatchers.any(Asset.class))).thenReturn(saved);
 
-        Asset result = assetService.createAsset(1L, "ethereum", "test@test.com");
+        Asset result = assetService.createAsset(1L, "ethereum");
 
         assertEquals(10L, result.getId());
         assertEquals("ethereum", result.getCoinId());
@@ -91,7 +81,7 @@ class AssetServiceTest {
 
         ResourceNotFoundException ex = assertThrows(
                 ResourceNotFoundException.class,
-                () -> assetService.createAsset(1L, "bitcoin", "test@test.com")
+                () -> assetService.createAsset(1L, "bitcoin")
         );
 
         assertEquals("Wallet with id 1 not found", ex.getMessage());
@@ -99,12 +89,8 @@ class AssetServiceTest {
 
     @Test
     void shouldUpdateAssetCoinId() {
-        User owner = new User();
-        owner.setEmail("test@test.com");
-
         Wallet wallet = new Wallet();
         wallet.setId(2L);
-        wallet.setOwner(owner);
 
         Asset existing = new Asset();
         existing.setId(3L);
@@ -114,7 +100,7 @@ class AssetServiceTest {
         when(assetRepository.findById(3L)).thenReturn(Optional.of(existing));
         when(assetRepository.save(existing)).thenReturn(existing);
 
-        Asset result = assetService.updateAsset(3L, "bitcoin", "test@test.com");
+        Asset result = assetService.updateAsset(3L, "bitcoin");
 
         assertEquals("bitcoin", result.getCoinId());
         verify(assetRepository).save(existing);
@@ -122,12 +108,8 @@ class AssetServiceTest {
 
     @Test
     void shouldDeleteAsset() {
-        User owner = new User();
-        owner.setEmail("test@test.com");
-
         Wallet wallet = new Wallet();
         wallet.setId(2L);
-        wallet.setOwner(owner);
 
         Asset existing = new Asset();
         existing.setId(3L);
@@ -135,7 +117,7 @@ class AssetServiceTest {
 
         when(assetRepository.findById(3L)).thenReturn(Optional.of(existing));
 
-        assetService.deleteAsset(3L, "test@test.com");
+        assetService.deleteAsset(3L);
 
         verify(assetRepository).delete(existing);
     }

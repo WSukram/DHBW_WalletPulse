@@ -115,30 +115,22 @@ const Assets = () => {
   useEffect(() => {
     axios.get('http://localhost:8080/api/wallets')
       .then((res) => {
-        if (res.data.length === 0) return { merged: null, txArrays: [] };
-        return Promise.all(
-          res.data.map((w) => axios.get(`http://localhost:8080/api/wallets/${w.id}/portfolio`).then((r) => r.data))
-        ).then((portfolios) => {
-          const merged = {
-            assets: portfolios.flatMap((p) => p.assets ?? []),
-            totalCurrentValue: portfolios.reduce((s, p) => s + (p.totalCurrentValue ?? 0), 0),
-            totalInvested: portfolios.reduce((s, p) => s + (p.totalInvested ?? 0), 0),
-            totalProfit: portfolios.reduce((s, p) => s + (p.totalProfit ?? 0), 0),
-          };
-          return Promise.all(
-            merged.assets.map((asset) =>
-              axios.get(`http://localhost:8080/api/assets/${asset.id}/transactions`)
-                .then((r) => r.data.map((tx) => ({ ...tx, assetId: asset.id, coinId: asset.coinId })))
-            )
-          ).then((txArrays) => ({ merged, txArrays }));
-        });
+        if (res.data.length === 0) return null;
+        return axios.get(`http://localhost:8080/api/wallets/${res.data[0].id}/portfolio`).then((r) => r.data);
       })
-      .then(({ merged, txArrays }) => {
-        if (merged) {
-          setPortfolio(merged);
-          if (merged.assets.length > 0) setActiveCompare(merged.assets[0].coinId);
-        }
-        setTransactions(txArrays.flat());
+      .then((portfolioData) => {
+        if (!portfolioData) { setIsLoading(false); return null; }
+        setPortfolio(portfolioData);
+        if (portfolioData.assets?.length > 0) setActiveCompare(portfolioData.assets[0].coinId);
+        return Promise.all(
+          (portfolioData.assets ?? []).map((asset) =>
+            axios.get(`http://localhost:8080/api/assets/${asset.id}/transactions`)
+              .then((r) => r.data.map((tx) => ({ ...tx, assetId: asset.id, coinId: asset.coinId })))
+          )
+        );
+      })
+      .then((txArrays) => {
+        if (txArrays) setTransactions(txArrays.flat());
         setIsLoading(false);
       })
       .catch(() => {
