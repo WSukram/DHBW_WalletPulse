@@ -9,6 +9,27 @@ const CHAIN_META = {
   SOL: { label: 'Solana',   color: '#14F195', bg: '#14F19522' },
 };
 
+const addressExplorerUrl = (chainType, address) => {
+  if (!address || !chainType) return null;
+  switch (chainType) {
+    case 'ETH': return `https://etherscan.io/address/${address}`;
+    case 'BTC': return `https://blockstream.info/address/${address}`;
+    case 'SOL': return `https://solscan.io/account/${address}`;
+    default: return null;
+  }
+};
+
+const formatRelative = (dateStr) => {
+  if (!dateStr) return null;
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+};
+
 const COIN_META = {
   bitcoin:  { name: 'Bitcoin',  symbol: 'BTC', icon: 'currency_bitcoin', color: '#F7931A' },
   ethereum: { name: 'Ethereum', symbol: 'ETH', icon: 'token',            color: '#627EEA' },
@@ -181,6 +202,7 @@ const Wallet = () => {
               ...r.data,
               chainType: w.chainType ?? null,
               chainAddress: w.chainAddress ?? null,
+              lastImportTime: w.lastImportTime ?? null,
             }))
           )
         )
@@ -269,13 +291,20 @@ const Wallet = () => {
       .then((res) => {
         setImportResult(res.data);
         setImporting(false);
-        // Only reload the imported wallet, not all wallets
-        return axios.get(`http://localhost:8080/api/wallets/${selectedWalletId}/portfolio`)
-          .then((r) => {
-            const wallet = portfolios.find((p) => p.id === selectedWalletId);
-            const updated = { ...r.data, chainType: wallet?.chainType ?? null, chainAddress: wallet?.chainAddress ?? null };
-            setPortfolios((prev) => prev.map((p) => (p.id === selectedWalletId ? updated : p)));
-          });
+        // Reload portfolio + wallet metadata (to pick up updated lastImportTime)
+        return Promise.all([
+          axios.get(`http://localhost:8080/api/wallets/${selectedWalletId}/portfolio`),
+          axios.get(`http://localhost:8080/api/wallets/${selectedWalletId}`),
+        ]).then(([portfolioRes, walletRes]) => {
+          const w = walletRes.data;
+          const updated = {
+            ...portfolioRes.data,
+            chainType: w.chainType ?? null,
+            chainAddress: w.chainAddress ?? null,
+            lastImportTime: w.lastImportTime ?? null,
+          };
+          setPortfolios((prev) => prev.map((p) => (p.id === selectedWalletId ? updated : p)));
+        });
       })
       .catch((err) => { setImportResult({ error: true, message: err.response?.data?.error }); setImporting(false); });
   };
@@ -658,6 +687,28 @@ const Wallet = () => {
             Wallet
           </div>
           <h1 className="font-display-xl text-display-xl text-on-surface">{portfolio.name}</h1>
+          {(portfolio.chainAddress || portfolio.lastImportTime) && (
+            <div className="flex flex-wrap items-center gap-4 mt-3">
+              {portfolio.chainAddress && (
+                <a
+                  href={addressExplorerUrl(portfolio.chainType, portfolio.chainAddress) ?? undefined}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 font-mono text-xs text-on-surface-variant hover:text-primary transition-colors"
+                  title={portfolio.chainAddress}
+                >
+                  <span className="material-symbols-outlined text-[14px]">link</span>
+                  {portfolio.chainAddress.slice(0, 8)}…{portfolio.chainAddress.slice(-6)}
+                </a>
+              )}
+              {portfolio.lastImportTime && (
+                <span className="flex items-center gap-1.5 text-xs text-on-surface-variant">
+                  <span className="material-symbols-outlined text-[14px]">schedule</span>
+                  Last synced {formatRelative(portfolio.lastImportTime)}
+                </span>
+              )}
+            </div>
+          )}
         </div>
         <div className="flex gap-3 flex-wrap">
           <button className="px-4 py-2 rounded-lg bg-surface-container-high border border-outline-variant text-on-surface font-label-sm text-label-sm hover:bg-surface-bright transition-colors flex items-center gap-2">
