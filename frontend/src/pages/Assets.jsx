@@ -339,7 +339,6 @@ const Assets = () => {
                 <th className="py-3 px-6 text-right">P&amp;L</th>
                 <th className="py-3 px-6 text-right">Amount Held</th>
                 <th className="py-3 px-6 text-right">Current Value</th>
-                <th className="py-3 px-6 text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/10 font-body-md text-body-md">
@@ -380,14 +379,6 @@ const Assets = () => {
                     </td>
                     <td className="py-4 px-6 text-right font-data-mono text-[14px] text-on-surface-variant">{asset.totalAmount?.toFixed(8)}</td>
                     <td className="py-4 px-6 text-right font-data-mono text-[14px] text-on-surface-variant">{formatEur(asset.currentValue)}</td>
-                    <td className="py-4 px-6 text-center">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setActiveCompare(asset.coinId); }}
-                        className="px-3 py-1.5 rounded bg-surface-container-highest text-primary font-label-sm text-label-sm hover:bg-surface-bright transition-colors border border-outline-variant/30 whitespace-nowrap"
-                      >
-                        View Analytics
-                      </button>
-                    </td>
                   </tr>
                 );
               })}

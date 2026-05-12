@@ -86,14 +86,9 @@ const Dashboard = () => {
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="font-heading-lg text-heading-lg text-on-surface">Overview</h2>
-          <p className="font-body-md text-body-md text-on-surface-variant mt-1">Performance vs. Purchase Price</p>
-        </div>
-        <div className="flex bg-surface-container rounded-lg p-1 border border-outline-variant inline-flex self-start">
-          <button className="px-4 py-1.5 rounded text-sm font-medium bg-surface-bright text-primary shadow-sm">EUR</button>
-        </div>
+      <div>
+        <h2 className="font-heading-lg text-heading-lg text-on-surface">Overview</h2>
+        <p className="font-body-md text-body-md text-on-surface-variant mt-1">Performance vs. Purchase Price</p>
       </div>
 
       {/* Key Metrics */}
