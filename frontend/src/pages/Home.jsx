@@ -13,9 +13,8 @@ const useLivePrices = () => {
   const [prices, setPrices] = useState({});
 
   useEffect(() => {
-    const ids = TICKER_COINS.map((c) => c.id).join(',');
     axios
-      .get(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur&include_24hr_change=true`)
+      .get('http://localhost:8080/api/market/prices')
       .then((res) => setPrices(res.data))
       .catch(() => {});
   }, []);
@@ -98,7 +97,7 @@ const Home = () => {
             {TICKER_COINS.map((coin) => {
               const data = prices[coin.id];
               const price = data?.eur;
-              const change = data?.eur_24h_change;
+              const change = data?.eurChange24h;
               const positive = change >= 0;
               return (
                 <div key={coin.id} className="bg-surface-container border border-outline-variant/30 rounded-xl px-6 py-5 flex items-center justify-between">
@@ -117,7 +116,7 @@ const Home = () => {
                     </p>
                     {change != null && (
                       <p className={`font-data-mono text-xs mt-0.5 ${positive ? 'text-secondary' : 'text-error'}`}>
-                        {positive ? '+' : ''}{change.toFixed(2)}%
+                        {positive ? '+' : ''}{Number(change).toFixed(2)}%
                       </p>
                     )}
                   </div>
