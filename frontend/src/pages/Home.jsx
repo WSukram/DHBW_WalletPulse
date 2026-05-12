@@ -1,6 +1,27 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
 import { isTokenExpired } from '../context/AppContext';
+
+const TICKER_COINS = [
+  { id: 'bitcoin',  symbol: 'BTC', name: 'Bitcoin',  color: '#F7931A' },
+  { id: 'ethereum', symbol: 'ETH', name: 'Ethereum', color: '#627EEA' },
+  { id: 'solana',   symbol: 'SOL', name: 'Solana',   color: '#14F195' },
+];
+
+const useLivePrices = () => {
+  const [prices, setPrices] = useState({});
+
+  useEffect(() => {
+    const ids = TICKER_COINS.map((c) => c.id).join(',');
+    axios
+      .get(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur&include_24hr_change=true`)
+      .then((res) => setPrices(res.data))
+      .catch(() => {});
+  }, []);
+
+  return prices;
+};
 
 const features = [
   {
@@ -25,6 +46,7 @@ const features = [
 
 const Home = () => {
   const navigate = useNavigate();
+  const prices = useLivePrices();
 
   const handleEnter = () => {
     const token = localStorage.getItem('wp_token');
@@ -67,6 +89,41 @@ const Home = () => {
             <Link to="/register" className="border border-outline-variant text-on-surface font-label-sm text-label-sm px-8 py-4 rounded-full hover:bg-surface-container transition-colors">
               CREATE ACCOUNT
             </Link>
+          </div>
+        </section>
+
+        {/* Live Market Ticker */}
+        <section className="max-w-[1440px] mx-auto px-6 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {TICKER_COINS.map((coin) => {
+              const data = prices[coin.id];
+              const price = data?.eur;
+              const change = data?.eur_24h_change;
+              const positive = change >= 0;
+              return (
+                <div key={coin.id} className="bg-surface-container border border-outline-variant/30 rounded-xl px-6 py-5 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: `${coin.color}20` }}>
+                      <span className="font-bold text-sm" style={{ color: coin.color }}>{coin.symbol[0]}</span>
+                    </div>
+                    <div>
+                      <p className="font-label-sm text-label-sm text-on-surface-variant">{coin.symbol}</p>
+                      <p className="font-heading-sm text-heading-sm text-inverse-surface">{coin.name}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-data-mono text-data-mono text-inverse-surface">
+                      {price != null ? `€${price.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
+                    </p>
+                    {change != null && (
+                      <p className={`font-data-mono text-xs mt-0.5 ${positive ? 'text-secondary' : 'text-error'}`}>
+                        {positive ? '+' : ''}{change.toFixed(2)}%
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
 
