@@ -26,20 +26,20 @@ const features = [
   {
     icon: 'sensors',
     iconColor: 'text-primary',
-    title: 'Live CoinGecko Integration',
-    desc: 'Real-time price feeds and market metrics powered by industry-leading data, ensuring your portfolio valuation is always up to the second.',
+    title: 'Live CoinGecko Prices',
+    desc: 'Real-time BTC, ETH and SOL prices powered by CoinGecko. Your portfolio value is always calculated against current market data.',
   },
   {
     icon: 'timeline',
     iconColor: 'text-secondary',
-    title: 'Historical Cost Analysis',
-    desc: 'Track your true performance. We automatically calculate cost basis, realized gains, and impermanent loss across all supported chains.',
+    title: 'Cost Basis & P&L Tracking',
+    desc: 'See exactly what you paid vs. what it\'s worth now. WalletPulse calculates your total invested, unrealized P&L and per-asset performance automatically.',
   },
   {
-    icon: 'hub',
+    icon: 'account_balance_wallet',
     iconColor: 'text-tertiary',
-    title: 'Multi-Wallet Management',
-    desc: 'Consolidate your view. Connect hardware wallets, exchange API keys, and Web3 extensions into a single, unified command center.',
+    title: 'On-Chain Import',
+    desc: 'Import your transaction history directly from Ethereum, Bitcoin or Solana by wallet address — no manual entry required.',
   },
 ];
 
@@ -53,11 +53,22 @@ const Home = () => {
   };
 
   return (
-    <div className="bg-surface-container-lowest text-on-surface min-h-screen flex flex-col font-sans">
+    <div className="bg-surface-container-lowest text-on-surface min-h-screen flex flex-col font-sans scroll-smooth">
       {/* Top Nav */}
       <header className="fixed top-0 w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-white/10">
         <div className="flex justify-between items-center w-full px-6 h-16 max-w-[1440px] mx-auto">
           <div className="text-xl font-bold tracking-tighter text-slate-50">WalletPulse</div>
+          <nav className="hidden md:flex items-center gap-1">
+            {[
+              { label: 'Live Prices', href: '#prices' },
+              { label: 'Features', href: '#features' },
+              { label: 'How it works', href: '#how-it-works' },
+            ].map(({ label, href }) => (
+              <a key={label} href={href} className="text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors px-4 py-2 rounded-md hover:bg-white/5">
+                {label}
+              </a>
+            ))}
+          </nav>
           <div className="flex items-center gap-3">
             <Link to="/login" className="text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors px-4 py-2">
               Log in
@@ -92,7 +103,7 @@ const Home = () => {
         </section>
 
         {/* Live Market Ticker */}
-        <section className="max-w-[1440px] mx-auto px-6 mb-16">
+        <section id="prices" className="max-w-[1440px] mx-auto px-6 mb-16">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {TICKER_COINS.map((coin) => {
               const data = prices[coin.id];
@@ -145,7 +156,7 @@ const Home = () => {
         </section>
 
         {/* Features */}
-        <section className="max-w-[1440px] mx-auto px-6 mb-24">
+        <section id="features" className="max-w-[1440px] mx-auto px-6 mb-24">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-lg">
             {features.map((f) => (
               <div key={f.title} className="bg-surface-container rounded-xl border border-outline-variant/30 p-lg hover:border-primary/50 transition-colors group">
@@ -162,7 +173,7 @@ const Home = () => {
         </section>
 
         {/* How it works */}
-        <section className="max-w-[1440px] mx-auto px-6 mb-24">
+        <section id="how-it-works" className="max-w-[1440px] mx-auto px-6 mb-24">
           <div className="text-center mb-12">
             <h2 className="font-heading-lg text-heading-lg text-inverse-surface mb-3">How it works</h2>
             <p className="font-body-md text-body-md text-on-surface-variant max-w-xl mx-auto">Get your full crypto portfolio under control in three steps.</p>
