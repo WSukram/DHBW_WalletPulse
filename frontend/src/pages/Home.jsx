@@ -70,6 +70,24 @@ const Home = () => {
           </div>
         </section>
 
+        {/* Stats Bar */}
+        <section className="max-w-[1440px] mx-auto px-6 mb-24">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-outline-variant/20 rounded-2xl overflow-hidden border border-outline-variant/20">
+            {[
+              { value: '3', label: 'Supported Blockchains', icon: 'hub' },
+              { value: 'Live', label: 'CoinGecko Price Feed', icon: 'sensors' },
+              { value: 'ETH · BTC · SOL', label: 'On-Chain Import', icon: 'download' },
+              { value: 'Free', label: 'No subscription needed', icon: 'verified' },
+            ].map((stat) => (
+              <div key={stat.label} className="bg-surface-container px-8 py-8 flex flex-col items-center text-center gap-2">
+                <span className="material-symbols-outlined text-primary text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>{stat.icon}</span>
+                <p className="font-heading-md text-heading-md text-inverse-surface">{stat.value}</p>
+                <p className="font-label-sm text-label-sm text-on-surface-variant">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* Features */}
         <section className="max-w-[1440px] mx-auto px-6 mb-24">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-lg">
