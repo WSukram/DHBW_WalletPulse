@@ -16,10 +16,14 @@ import org.springframework.web.client.RestTemplate;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
 public class CoinGeckoClient {
+
+    public record MarketPrice(java.math.BigDecimal eur, Double eurChange24h) {}
 
     private final RestTemplate restTemplate;
 
@@ -65,6 +69,38 @@ public class CoinGeckoClient {
 
         } catch (RestClientException e) {
             throw new RuntimeException("Fehler beim Abrufen der Daten von CoinGecko für: " + coinId, e);
+        }
+    }
+
+    @Cacheable(value = "marketPrices", key = "#coinIds.toString()")
+    public Map<String, MarketPrice> getMarketPrices(List<String> coinIds) {
+        String ids = String.join(",", coinIds);
+        String url = String.format("%s/simple/price?ids=%s&vs_currencies=eur&include_24hr_change=true", apiUrl, ids);
+
+        HttpHeaders headers = new HttpHeaders();
+        if (apiKey != null && !apiKey.isEmpty()) {
+            headers.set("x-cg-demo-api-key", apiKey);
+        }
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        try {
+            ResponseEntity<Map<String, Map<String, Object>>> response = restTemplate.exchange(
+                    url, HttpMethod.GET, entity, new ParameterizedTypeReference<>() {}
+            );
+            Map<String, Map<String, Object>> body = response.getBody();
+            Map<String, MarketPrice> result = new HashMap<>();
+            if (body != null) {
+                body.forEach((coinId, data) -> {
+                    BigDecimal price = new BigDecimal(data.get("eur").toString());
+                    Double change = data.get("eur_24h_change") != null
+                            ? ((Number) data.get("eur_24h_change")).doubleValue()
+                            : null;
+                    result.put(coinId, new MarketPrice(price, change));
+                });
+            }
+            return result;
+        } catch (RestClientException e) {
+            throw new RuntimeException("Fehler beim Abrufen der Marktpreise von CoinGecko", e);
         }
     }
 

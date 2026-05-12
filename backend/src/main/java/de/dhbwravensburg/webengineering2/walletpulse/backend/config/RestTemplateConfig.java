@@ -16,7 +16,7 @@ public class RestTemplateConfig {
 
     @Bean
     public CacheManager cacheManager() {
-        return new ConcurrentMapCacheManager("coinPrices");
+        return new ConcurrentMapCacheManager("coinPrices", "marketPrices");
     }
 }
 
