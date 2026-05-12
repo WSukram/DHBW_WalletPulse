@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -29,6 +30,9 @@ public class Wallet {
 
     @Column(nullable = true)
     private String chainAddress;
+
+    @Column(nullable = true)
+    private LocalDateTime lastImportTime;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

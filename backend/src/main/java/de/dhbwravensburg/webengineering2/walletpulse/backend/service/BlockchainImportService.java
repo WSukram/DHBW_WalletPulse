@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
@@ -84,11 +85,15 @@ public class BlockchainImportService {
             throw new IllegalStateException("Wallet has no chain address configured.");
         }
 
-        return switch (wallet.getChainType()) {
+        ImportResult result = switch (wallet.getChainType()) {
             case ETH -> importEth(wallet);
             case BTC -> importBtc(wallet);
             case SOL -> importSol(wallet);
         };
+
+        wallet.setLastImportTime(LocalDateTime.now());
+        walletRepository.save(wallet);
+        return result;
     }
 
     private ImportResult importEth(Wallet wallet) {
