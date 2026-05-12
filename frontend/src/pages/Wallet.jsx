@@ -3,6 +3,12 @@ import axios from 'axios';
 import { useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
+const CHAIN_META = {
+  ETH: { label: 'Ethereum', color: '#627EEA', bg: '#627EEA22' },
+  BTC: { label: 'Bitcoin',  color: '#F7931A', bg: '#F7931A22' },
+  SOL: { label: 'Solana',   color: '#14F195', bg: '#14F19522' },
+};
+
 const COIN_META = {
   bitcoin:  { name: 'Bitcoin',  symbol: 'BTC', icon: 'currency_bitcoin', color: '#F7931A' },
   ethereum: { name: 'Ethereum', symbol: 'ETH', icon: 'token',            color: '#627EEA' },
@@ -141,6 +147,8 @@ const Wallet = () => {
   // Add Wallet modal state
   const [showAddWallet, setShowAddWallet] = useState(false);
   const [newWalletName, setNewWalletName] = useState('');
+  const [newWalletChainType, setNewWalletChainType] = useState('');
+  const [newWalletChainAddress, setNewWalletChainAddress] = useState('');
   const [savingWallet, setSavingWallet] = useState(false);
 
   // Delete Wallet modal state
@@ -150,7 +158,13 @@ const Wallet = () => {
   // Edit Wallet modal state
   const [editWallet, setEditWallet] = useState(null);
   const [editWalletName, setEditWalletName] = useState('');
+  const [editWalletChainType, setEditWalletChainType] = useState('');
+  const [editWalletChainAddress, setEditWalletChainAddress] = useState('');
   const [savingEditWallet, setSavingEditWallet] = useState(false);
+
+  // Import state
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState(null);
 
   // Add Transaction modal state
   const [showAddTx, setShowAddTx] = useState(false);
@@ -163,7 +177,11 @@ const Wallet = () => {
       .then((res) =>
         Promise.all(
           res.data.map((w) =>
-            axios.get(`http://localhost:8080/api/wallets/${w.id}/portfolio`).then((r) => r.data)
+            axios.get(`http://localhost:8080/api/wallets/${w.id}/portfolio`).then((r) => ({
+              ...r.data,
+              chainType: w.chainType ?? null,
+              chainAddress: w.chainAddress ?? null,
+            }))
           )
         )
       );
@@ -206,19 +224,60 @@ const Wallet = () => {
   const handleCreateWallet = () => {
     if (!newWalletName.trim()) return;
     setSavingWallet(true);
-    axios.post('http://localhost:8080/api/wallets', { name: newWalletName.trim() })
+    const body = { name: newWalletName.trim() };
+    if (newWalletChainType) body.chainType = newWalletChainType;
+    if (newWalletChainAddress.trim()) body.chainAddress = newWalletChainAddress.trim();
+    axios.post('http://localhost:8080/api/wallets', body)
       .then(() => loadPortfolios())
-      .then((data) => { setPortfolios(data); setShowAddWallet(false); setNewWalletName(''); setSavingWallet(false); })
+      .then((data) => {
+        setPortfolios(data);
+        setShowAddWallet(false);
+        setNewWalletName('');
+        setNewWalletChainType('');
+        setNewWalletChainAddress('');
+        setSavingWallet(false);
+      })
       .catch(() => setSavingWallet(false));
   };
 
   const handleEditWallet = () => {
     if (!editWallet || !editWalletName.trim()) return;
     setSavingEditWallet(true);
-    axios.put(`http://localhost:8080/api/wallets/${editWallet.id}`, { name: editWalletName.trim() })
+    const body = {
+      name: editWalletName.trim(),
+      chainType: editWalletChainType || null,
+      chainAddress: editWalletChainAddress.trim() || null,
+    };
+    axios.put(`http://localhost:8080/api/wallets/${editWallet.id}`, body)
       .then(() => loadPortfolios())
-      .then((data) => { setPortfolios(data); setEditWallet(null); setEditWalletName(''); setSavingEditWallet(false); })
+      .then((data) => {
+        setPortfolios(data);
+        setEditWallet(null);
+        setEditWalletName('');
+        setEditWalletChainType('');
+        setEditWalletChainAddress('');
+        setSavingEditWallet(false);
+      })
       .catch(() => setSavingEditWallet(false));
+  };
+
+  const handleImport = () => {
+    if (!selectedWalletId || importing) return;
+    setImporting(true);
+    setImportResult(null);
+    axios.post(`http://localhost:8080/api/wallets/${selectedWalletId}/import`)
+      .then((res) => {
+        setImportResult(res.data);
+        setImporting(false);
+        // Only reload the imported wallet, not all wallets
+        return axios.get(`http://localhost:8080/api/wallets/${selectedWalletId}/portfolio`)
+          .then((r) => {
+            const wallet = portfolios.find((p) => p.id === selectedWalletId);
+            const updated = { ...r.data, chainType: wallet?.chainType ?? null, chainAddress: wallet?.chainAddress ?? null };
+            setPortfolios((prev) => prev.map((p) => (p.id === selectedWalletId ? updated : p)));
+          });
+      })
+      .catch((err) => { setImportResult({ error: true, message: err.response?.data?.error }); setImporting(false); });
   };
 
   const handleDeleteWallet = () => {
@@ -306,17 +365,41 @@ const Wallet = () => {
             <div className="bg-surface-container rounded-xl p-6 w-full max-w-sm border border-outline-variant/30 shadow-2xl" onClick={(e) => e.stopPropagation()}>
               <h3 className="font-heading-md text-heading-md text-on-surface mb-1">New Wallet</h3>
               <p className="text-sm text-on-surface-variant mb-5">Give your wallet a name to get started.</p>
-              <label className={labelCls}>Wallet Name</label>
-              <input
-                autoFocus
-                className={`${inputCls} mb-5`}
-                placeholder="e.g. Main Portfolio"
-                value={newWalletName}
-                onChange={(e) => setNewWalletName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleCreateWallet()}
-              />
+              <div className="space-y-4 mb-5">
+                <div>
+                  <label className={labelCls}>Wallet Name</label>
+                  <input
+                    autoFocus
+                    className={inputCls}
+                    placeholder="e.g. Main Portfolio"
+                    value={newWalletName}
+                    onChange={(e) => setNewWalletName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleCreateWallet()}
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>Blockchain (optional)</label>
+                  <select className={inputCls} value={newWalletChainType} onChange={(e) => setNewWalletChainType(e.target.value)}>
+                    <option value="">None — manual entry only</option>
+                    <option value="ETH">Ethereum (ETH)</option>
+                    <option value="BTC">Bitcoin (BTC)</option>
+                    <option value="SOL">Solana (SOL)</option>
+                  </select>
+                </div>
+                {newWalletChainType && (
+                  <div>
+                    <label className={labelCls}>Wallet Address</label>
+                    <input
+                      className={inputCls}
+                      placeholder={newWalletChainType === 'ETH' ? '0x...' : newWalletChainType === 'BTC' ? 'bc1q... or 1A...' : 'Sol address...'}
+                      value={newWalletChainAddress}
+                      onChange={(e) => setNewWalletChainAddress(e.target.value)}
+                    />
+                  </div>
+                )}
+              </div>
               <div className="flex gap-3 justify-end">
-                <button onClick={() => setShowAddWallet(false)} className="px-4 py-2 rounded-lg text-on-surface-variant font-label-sm text-label-sm hover:text-on-surface transition-colors">Cancel</button>
+                <button onClick={() => { setShowAddWallet(false); setNewWalletChainType(''); setNewWalletChainAddress(''); }} className="px-4 py-2 rounded-lg text-on-surface-variant font-label-sm text-label-sm hover:text-on-surface transition-colors">Cancel</button>
                 <button onClick={handleCreateWallet} disabled={savingWallet || !newWalletName.trim()} className="px-4 py-2 rounded-lg bg-primary text-on-primary font-label-sm text-label-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                   {savingWallet ? 'Creating…' : 'Create Wallet'}
                 </button>
@@ -328,17 +411,41 @@ const Wallet = () => {
         {editWallet && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setEditWallet(null)}>
           <div className="bg-surface-container rounded-xl p-6 w-full max-w-sm border border-outline-variant/30 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-heading-md text-heading-md text-on-surface mb-1">Rename Wallet</h3>
-            <p className="text-sm text-on-surface-variant mb-5">Enter a new name for "{editWallet.name}".</p>
-            <label className={labelCls}>Wallet Name</label>
-            <input
-              autoFocus
-              className={`${inputCls} mb-5`}
-              placeholder="e.g. Main Portfolio"
-              value={editWalletName}
-              onChange={(e) => setEditWalletName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleEditWallet()}
-            />
+            <h3 className="font-heading-md text-heading-md text-on-surface mb-1">Edit Wallet</h3>
+            <p className="text-sm text-on-surface-variant mb-5">Update name or blockchain address for "{editWallet.name}".</p>
+            <div className="space-y-4 mb-5">
+              <div>
+                <label className={labelCls}>Wallet Name</label>
+                <input
+                  autoFocus
+                  className={inputCls}
+                  placeholder="e.g. Main Portfolio"
+                  value={editWalletName}
+                  onChange={(e) => setEditWalletName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleEditWallet()}
+                />
+              </div>
+              <div>
+                <label className={labelCls}>Blockchain (optional)</label>
+                <select className={inputCls} value={editWalletChainType} onChange={(e) => setEditWalletChainType(e.target.value)}>
+                  <option value="">None — manual entry only</option>
+                  <option value="ETH">Ethereum (ETH)</option>
+                  <option value="BTC">Bitcoin (BTC)</option>
+                  <option value="SOL">Solana (SOL)</option>
+                </select>
+              </div>
+              {editWalletChainType && (
+                <div>
+                  <label className={labelCls}>Wallet Address</label>
+                  <input
+                    className={inputCls}
+                    placeholder={editWalletChainType === 'ETH' ? '0x...' : editWalletChainType === 'BTC' ? 'bc1q... or 1A...' : 'Sol address...'}
+                    value={editWalletChainAddress}
+                    onChange={(e) => setEditWalletChainAddress(e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
             <div className="flex gap-3 justify-end">
               <button onClick={() => setEditWallet(null)} className="px-4 py-2 rounded-lg text-on-surface-variant font-label-sm text-label-sm hover:text-on-surface transition-colors">Cancel</button>
               <button onClick={handleEditWallet} disabled={savingEditWallet || !editWalletName.trim()} className="px-4 py-2 rounded-lg bg-primary text-on-primary font-label-sm text-label-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
@@ -406,7 +513,17 @@ const Wallet = () => {
                         <span className="material-symbols-outlined">account_balance_wallet</span>
                       </div>
                       <div>
-                        <div className="font-heading-md text-heading-md text-on-surface">{p.name}</div>
+                        <div className="flex items-center gap-2">
+                          <div className="font-heading-md text-heading-md text-on-surface">{p.name}</div>
+                          {p.chainType && (
+                            <span
+                              className="text-[10px] font-label-sm px-1.5 py-0.5 rounded font-bold tracking-wider"
+                              style={{ color: CHAIN_META[p.chainType]?.color, backgroundColor: CHAIN_META[p.chainType]?.bg }}
+                            >
+                              {p.chainType}
+                            </span>
+                          )}
+                        </div>
                         <div className="text-xs text-on-surface-variant font-data-mono">
                           {p.assets?.length ?? 0} {p.assets?.length === 1 ? 'Asset' : 'Assets'}
                         </div>
@@ -414,7 +531,7 @@ const Wallet = () => {
                     </div>
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={(e) => { e.stopPropagation(); setEditWalletName(p.name); setEditWallet(p); }}
+                        onClick={(e) => { e.stopPropagation(); setEditWalletName(p.name); setEditWalletChainType(p.chainType ?? ''); setEditWalletChainAddress(p.chainAddress ?? ''); setEditWallet(p); }}
                         className="p-1.5 rounded-lg text-on-surface-variant opacity-0 group-hover:opacity-100 hover:text-primary hover:bg-primary/10 transition-all"
                         title="Rename wallet"
                       >
@@ -542,11 +659,22 @@ const Wallet = () => {
           </div>
           <h1 className="font-display-xl text-display-xl text-on-surface">{portfolio.name}</h1>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap">
           <button className="px-4 py-2 rounded-lg bg-surface-container-high border border-outline-variant text-on-surface font-label-sm text-label-sm hover:bg-surface-bright transition-colors flex items-center gap-2">
             <span className="material-symbols-outlined text-[18px]">download</span>
             Export
           </button>
+          {portfolio.chainType && (
+            <button
+              onClick={handleImport}
+              disabled={importing}
+              className="px-4 py-2 rounded-lg border font-label-sm text-label-sm transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ borderColor: CHAIN_META[portfolio.chainType]?.color + '55', color: CHAIN_META[portfolio.chainType]?.color, backgroundColor: CHAIN_META[portfolio.chainType]?.bg }}
+            >
+              <span className="material-symbols-outlined text-[18px]">{importing ? 'sync' : 'travel_explore'}</span>
+              {importing ? 'Scanning…' : `Scan ${portfolio.chainType} Wallet`}
+            </button>
+          )}
           <button
             onClick={openAddTx}
             className="px-4 py-2 rounded-lg bg-primary-container text-on-primary-container font-label-sm text-label-sm hover:bg-inverse-primary transition-colors flex items-center gap-2 shadow-[0_0_15px_rgba(79,70,229,0.3)]"
@@ -556,6 +684,28 @@ const Wallet = () => {
           </button>
         </div>
       </div>
+
+      {/* Import result banner */}
+      {importResult && !importResult.error && (
+        <div className="flex items-center gap-4 bg-surface-container rounded-xl px-5 py-3 border border-outline-variant/30">
+          <span className="material-symbols-outlined text-secondary">check_circle</span>
+          <span className="font-label-sm text-label-sm text-on-surface">
+            Import complete — <span className="text-secondary font-medium">{importResult.imported} new</span>, {importResult.skipped} skipped, {importResult.failed} failed
+          </span>
+          <button onClick={() => setImportResult(null)} className="ml-auto text-on-surface-variant hover:text-on-surface">
+            <span className="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+      )}
+      {importResult?.error && (
+        <div className="flex items-center gap-4 bg-error/10 rounded-xl px-5 py-3 border border-error/30">
+          <span className="material-symbols-outlined text-error">error</span>
+          <span className="font-label-sm text-label-sm text-error">{importResult.message ?? 'Import failed. Check that your API key and wallet address are configured correctly.'}</span>
+          <button onClick={() => setImportResult(null)} className="ml-auto text-error/70 hover:text-error">
+            <span className="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+      )}
 
       {/* Bento Grid */}
       <div className="grid grid-cols-12 gap-layout-gutter">

@@ -98,7 +98,7 @@ const History = () => {
     const amount = parseFloat(editForm.amount);
     const buyPrice = parseFloat(editForm.buyPrice);
     if (!editForm.date || isNaN(amount) || amount <= 0) { setEditError('Amount must be a positive number.'); return; }
-    if (isNaN(buyPrice) || buyPrice <= 0) { setEditError('Buy price must be a positive number.'); return; }
+    if (isNaN(buyPrice) || buyPrice < 0) { setEditError('Buy price must be zero or a positive number.'); return; }
     setSavingEdit(true);
     setEditError('');
     axios.put(`http://localhost:8080/api/transactions/${editTx.id}`, { amount, buyPrice, date: editForm.date })

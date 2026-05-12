@@ -41,4 +41,16 @@ public class GlobalExceptionHandler {
                 "error", message
         );
     }
+
+    @ExceptionHandler(IllegalStateException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> handleIllegalState(IllegalStateException ex) {
+        return Map.of("error", ex.getMessage());
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public Map<String, String> handleRuntime(RuntimeException ex) {
+        return Map.of("error", ex.getMessage() != null ? ex.getMessage() : "Unexpected error");
+    }
 }

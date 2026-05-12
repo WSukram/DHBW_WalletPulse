@@ -4,11 +4,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 
 import java.time.LocalDate;
 
 @Entity
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = "txHash"))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -20,24 +22,28 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Associated Assets
     @ManyToOne
     @JoinColumn(name = "asset_id", nullable = false)
     @JsonIgnore
     private Asset asset;
 
-    // Amount (e.g. 0.5 BTC)
     @Positive(message = "Amount must be greater than zero")
     @Column(nullable = false)
     private double amount;
 
-    // Purchase price per unit
-    @Positive(message = "Buy price must be greater than zero")
+    @PositiveOrZero(message = "Buy price must be zero or greater")
     @Column(nullable = false)
     private double buyPrice;
 
-    // Purchase date
     @NotNull(message = "Date must not be null")
     @Column(nullable = false)
     private LocalDate date;
+
+    @Column(nullable = true, unique = true)
+    private String txHash;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private TransactionSource source = TransactionSource.MANUAL;
 }

@@ -2,6 +2,8 @@ package de.dhbwravensburg.webengineering2.walletpulse.backend.service;
 
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Asset;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Transaction;
+import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.User;
+import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Wallet;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.exception.ResourceNotFoundException;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.AssetRepository;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.TransactionRepository;
@@ -33,10 +35,20 @@ class TransactionServiceTest {
     @InjectMocks
     private TransactionService transactionService;
 
+    private Asset assetWithOwner(long assetId, String ownerEmail) {
+        User owner = new User();
+        owner.setEmail(ownerEmail);
+        Wallet wallet = new Wallet();
+        wallet.setOwner(owner);
+        Asset asset = new Asset();
+        asset.setId(assetId);
+        asset.setWallet(wallet);
+        return asset;
+    }
+
     @Test
     void shouldReturnTransactionsByAssetId() {
-        Asset asset = new Asset();
-        asset.setId(10L);
+        Asset asset = assetWithOwner(10L, "test@test.com");
 
         Transaction transaction = new Transaction();
         transaction.setId(100L);
@@ -45,10 +57,10 @@ class TransactionServiceTest {
         transaction.setBuyPrice(58000);
         transaction.setDate(LocalDate.of(2026, 4, 24));
 
-        when(assetRepository.existsById(10L)).thenReturn(true);
+        when(assetRepository.findById(10L)).thenReturn(Optional.of(asset));
         when(transactionRepository.findByAssetId(10L)).thenReturn(List.of(transaction));
 
-        List<Transaction> result = transactionService.getTransactionsByAssetId(10L);
+        List<Transaction> result = transactionService.getTransactionsByAssetId(10L, "test@test.com");
 
         assertEquals(1, result.size());
         assertEquals(0.5, result.get(0).getAmount());
@@ -57,11 +69,11 @@ class TransactionServiceTest {
 
     @Test
     void shouldThrowWhenAssetNotFoundOnList() {
-        when(assetRepository.existsById(10L)).thenReturn(false);
+        when(assetRepository.findById(10L)).thenReturn(Optional.empty());
 
         ResourceNotFoundException ex = assertThrows(
                 ResourceNotFoundException.class,
-                () -> transactionService.getTransactionsByAssetId(10L)
+                () -> transactionService.getTransactionsByAssetId(10L, "test@test.com")
         );
 
         assertEquals("Asset with id 10 not found", ex.getMessage());
@@ -69,8 +81,7 @@ class TransactionServiceTest {
 
     @Test
     void shouldCreateTransaction() {
-        Asset asset = new Asset();
-        asset.setId(10L);
+        Asset asset = assetWithOwner(10L, "test@test.com");
 
         Transaction saved = new Transaction();
         saved.setId(100L);
@@ -82,7 +93,7 @@ class TransactionServiceTest {
         when(assetRepository.findById(10L)).thenReturn(Optional.of(asset));
         when(transactionRepository.save(any(Transaction.class))).thenReturn(saved);
 
-        Transaction result = transactionService.createTransaction(10L, 1.2, 2500, LocalDate.of(2026, 1, 10));
+        Transaction result = transactionService.createTransaction(10L, 1.2, 2500, LocalDate.of(2026, 1, 10), "test@test.com");
 
         assertEquals(100L, result.getId());
         assertEquals(10L, result.getAsset().getId());
@@ -92,8 +103,7 @@ class TransactionServiceTest {
 
     @Test
     void shouldUpdateTransaction() {
-        Asset asset = new Asset();
-        asset.setId(10L);
+        Asset asset = assetWithOwner(10L, "test@test.com");
 
         Transaction existing = new Transaction();
         existing.setId(100L);
@@ -105,7 +115,7 @@ class TransactionServiceTest {
         when(transactionRepository.findById(100L)).thenReturn(Optional.of(existing));
         when(transactionRepository.save(existing)).thenReturn(existing);
 
-        Transaction result = transactionService.updateTransaction(100L, 0.4, 2000, LocalDate.of(2026, 2, 1));
+        Transaction result = transactionService.updateTransaction(100L, 0.4, 2000, LocalDate.of(2026, 2, 1), "test@test.com");
 
         assertEquals(0.4, result.getAmount());
         assertEquals(2000, result.getBuyPrice());
@@ -115,8 +125,7 @@ class TransactionServiceTest {
 
     @Test
     void shouldDeleteTransaction() {
-        Asset asset = new Asset();
-        asset.setId(10L);
+        Asset asset = assetWithOwner(10L, "test@test.com");
 
         Transaction existing = new Transaction();
         existing.setId(100L);
@@ -124,9 +133,8 @@ class TransactionServiceTest {
 
         when(transactionRepository.findById(100L)).thenReturn(Optional.of(existing));
 
-        transactionService.deleteTransaction(100L);
+        transactionService.deleteTransaction(100L, "test@test.com");
 
         verify(transactionRepository).delete(existing);
     }
 }
-
