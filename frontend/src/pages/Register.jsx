@@ -154,23 +154,6 @@ const Register = () => {
             </div>
           </div>
 
-          {/* Terms */}
-          <div className="flex items-start gap-sm mt-sm mb-sm">
-            <div className="flex items-center h-5 mt-0.5">
-              <input
-                id="terms"
-                type="checkbox"
-                required
-                className="w-4 h-4 rounded bg-background border-outline-variant text-primary-container focus:ring-primary-container cursor-pointer"
-              />
-            </div>
-            <label htmlFor="terms" className="font-body-md text-body-md text-on-surface-variant cursor-pointer select-none">
-              I agree to the{' '}
-              <a href="#" className="text-primary hover:text-primary-fixed hover:underline transition-colors">Terms of Service</a>
-              {' '}and Privacy Policy.
-            </label>
-          </div>
-
           {/* Submit */}
           <button
             type="submit"
@@ -185,12 +168,18 @@ const Register = () => {
         </form>
 
         {/* Footer link */}
-        <div className="mt-lg pt-lg border-t border-outline-variant/30 text-center">
+        <div className="mt-lg pt-lg border-t border-outline-variant/30 text-center space-y-3">
           <p className="font-body-md text-body-md text-on-surface-variant">
             Already have an account?{' '}
             <Link to="/login" className="text-primary font-medium hover:text-primary-fixed hover:underline transition-colors">
               Sign in here
             </Link>
+          </p>
+          <p className="text-xs text-on-surface-variant/60">
+            By registering you agree to our{' '}
+            <Link to="/terms" target="_blank" className="text-primary/80 hover:text-primary hover:underline transition-colors">Terms of Service</Link>
+            {' '}and{' '}
+            <Link to="/privacy" target="_blank" className="text-primary/80 hover:text-primary hover:underline transition-colors">Privacy Policy</Link>
           </p>
         </div>
       </main>

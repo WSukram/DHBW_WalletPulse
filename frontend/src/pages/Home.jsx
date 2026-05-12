@@ -213,11 +213,9 @@ const Home = () => {
           <div className="text-sm font-bold text-slate-300">WalletPulse</div>
           <div className="text-xs text-slate-500 font-light">© 2026 WalletPulse. High-fidelity crypto analytics.</div>
           <div className="flex gap-6">
-            {['Terms of Service', 'Privacy Policy', 'API Documentation', 'Status'].map((link) => (
-              <a key={link} href="#" className="text-xs text-slate-500 font-light hover:text-slate-300 transition-colors">
-                {link}
-              </a>
-            ))}
+            <Link to="/terms" className="text-xs text-slate-500 font-light hover:text-slate-300 transition-colors">Terms of Service</Link>
+            <Link to="/privacy" className="text-xs text-slate-500 font-light hover:text-slate-300 transition-colors">Privacy Policy</Link>
+            <a href="http://localhost:8080/swagger-ui/index.html" target="_blank" rel="noopener noreferrer" className="text-xs text-slate-500 font-light hover:text-slate-300 transition-colors">API Docs</a>
           </div>
         </div>
       </footer>
