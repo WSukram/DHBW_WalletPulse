@@ -1,5 +1,6 @@
 package de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto;
 
+import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.TransactionSource;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
@@ -14,7 +15,11 @@ public record TransactionResponse(
         @Schema(description = "Kaufpreis pro Coin", example = "58000")
         double buyPrice,
         @Schema(description = "Kaufdatum", example = "2026-04-24")
-        LocalDate date
+        LocalDate date,
+        @Schema(description = "Transaktionsquelle", example = "MANUAL")
+        TransactionSource source,
+        @Schema(description = "Blockchain-Transaktionshash (nur bei importierten Transaktionen)", nullable = true)
+        String txHash
 ) {
 }
 
