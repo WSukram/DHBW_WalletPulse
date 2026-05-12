@@ -6,7 +6,7 @@ Webanwendung zur Verwaltung eines Krypto-Portfolios mit Gewinn- und Verlustberec
 - Backend: Spring Boot (Java 21)
 - Frontend: React (Vite)
 - Datenbank: PostgreSQL
-- Externe API: CoinGecko
+- Externe APIs: CoinGecko, CryptoCompare, Etherscan (ETH), Blockstream (BTC), Helius (SOL)
 
 ## Architektur
 Frontend (React) ↔ Backend (Spring Boot) ↔ Drittanbieter API
