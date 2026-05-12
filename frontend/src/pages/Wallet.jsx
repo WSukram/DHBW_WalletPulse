@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { downloadCsv } from '../utils/exportCsv';
 
 const CHAIN_META = {
   ETH: { label: 'Ethereum', color: '#627EEA', bg: '#627EEA22' },
@@ -368,6 +369,17 @@ const Wallet = () => {
     }
   };
 
+  const handleExportCsv = () => {
+    const p = portfolios.find((po) => po.id === selectedWalletId);
+    const headers = ['Date', 'Coin', 'Symbol', 'Amount', 'Buy Price (EUR)', 'Total Value (EUR)', 'Source', 'Tx Hash'];
+    const rows = transactions.map((tx) => {
+      const meta = coinMeta(tx.coinId);
+      return [tx.date, meta.name, meta.symbol, tx.amount, tx.buyPrice, tx.amount * tx.buyPrice, tx.source ?? 'MANUAL', tx.txHash ?? ''];
+    });
+    const slug = (p?.name ?? 'wallet').replace(/\s+/g, '_');
+    downloadCsv(`${slug}_transactions.csv`, headers, rows);
+  };
+
   const portfolio = portfolios.find((p) => p.id === selectedWalletId) ?? null;
 
   const chartPoints = useMemo(
@@ -711,7 +723,7 @@ const Wallet = () => {
           )}
         </div>
         <div className="flex gap-3 flex-wrap">
-          <button className="px-4 py-2 rounded-lg bg-surface-container-high border border-outline-variant text-on-surface font-label-sm text-label-sm hover:bg-surface-bright transition-colors flex items-center gap-2">
+          <button onClick={handleExportCsv} className="px-4 py-2 rounded-lg bg-surface-container-high border border-outline-variant text-on-surface font-label-sm text-label-sm hover:bg-surface-bright transition-colors flex items-center gap-2">
             <span className="material-symbols-outlined text-[18px]">download</span>
             Export
           </button>
