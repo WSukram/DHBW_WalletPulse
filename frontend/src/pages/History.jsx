@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useApp } from '../context/AppContext';
+import { downloadCsv } from '../utils/exportCsv';
 
 const COIN_META = {
   bitcoin:  { name: 'Bitcoin',  symbol: 'BTC', color: '#F7931A', icon: '₿' },
@@ -146,6 +147,16 @@ const History = () => {
   const handleWalletChange = (name) => { setActiveWallet(name); setPage(1); };
   const handleAssetChange = (e) => { setAssetFilter(e.target.value); setPage(1); };
 
+  const handleExportCsv = () => {
+    const headers = ['Date', 'Asset', 'Symbol', 'Amount', 'Buy Price (EUR)', 'Total Value (EUR)', 'Wallet', 'Source', 'Tx Hash'];
+    const rows = filtered.map((tx) => {
+      const meta = coinMeta(tx.coinId);
+      return [tx.date, meta.name, meta.symbol, tx.amount, tx.buyPrice, tx.amount * tx.buyPrice, tx.walletName, tx.source ?? 'MANUAL', tx.txHash ?? ''];
+    });
+    const walletSlug = activeWallet === 'All Wallets' ? 'all' : activeWallet.replace(/\s+/g, '_');
+    downloadCsv(`transactions_${walletSlug}.csv`, headers, rows);
+  };
+
   return (
     <div className="flex-1 overflow-y-auto p-6 md:p-layout-margin flex flex-col gap-6">
 
@@ -260,7 +271,7 @@ const History = () => {
           <h2 className="font-heading-lg text-heading-lg text-on-surface mb-1">Transaction History</h2>
           <p className="font-body-md text-body-md text-on-surface-variant">A comprehensive log of all actions across connected wallets.</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-surface-container-high border border-outline-variant rounded-lg hover:bg-surface-bright transition-colors font-label-sm text-label-sm text-on-surface">
+        <button onClick={handleExportCsv} className="flex items-center gap-2 px-4 py-2 bg-surface-container-high border border-outline-variant rounded-lg hover:bg-surface-bright transition-colors font-label-sm text-label-sm text-on-surface">
           <span className="material-symbols-outlined text-[16px]">download</span>
           Export CSV
         </button>
