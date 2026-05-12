@@ -22,6 +22,16 @@ const formatDate = (dateStr) => {
   return d.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
+const explorerUrl = (chainType, txHash) => {
+  if (!txHash || !chainType) return null;
+  switch (chainType) {
+    case 'ETH': return `https://etherscan.io/tx/${txHash}`;
+    case 'BTC': return `https://blockstream.info/tx/${txHash}`;
+    case 'SOL': return `https://solscan.io/tx/${txHash}`;
+    default: return null;
+  }
+};
+
 const inputCls = 'w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg px-4 py-2.5 text-on-surface font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-on-surface-variant/50';
 const labelCls = 'block font-label-sm text-label-sm text-on-surface-variant mb-1';
 
@@ -71,6 +81,7 @@ const History = () => {
                   coinId: asset.coinId,
                   walletId: wallet.id,
                   walletName: wallet.name,
+                  chainType: wallet.chainType,
                 }))
               )
             )
@@ -296,11 +307,11 @@ const History = () => {
           <table className="w-full text-left border-collapse whitespace-nowrap">
             <thead>
               <tr className="border-b border-outline-variant/30 bg-surface-container/30">
-                {['Date', 'Asset', 'Amount', 'Buy Price', 'Total Value', 'Wallet', 'Actions'].map((col, i) => (
+                {['Date', 'Asset', 'Amount', 'Buy Price', 'Total Value', 'Wallet', 'Source', 'Actions'].map((col, i) => (
                   <th
                     key={col}
                     className={`px-6 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider${
-                      i >= 2 && i <= 4 ? ' text-right' : i === 6 ? ' text-center' : ''
+                      i >= 2 && i <= 4 ? ' text-right' : i === 7 ? ' text-center' : ''
                     }`}
                   >
                     {col}
@@ -347,7 +358,33 @@ const History = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex flex-col gap-1">
+                        {tx.source === 'IMPORTED' ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-tertiary/15 text-tertiary w-fit">
+                            <span className="material-symbols-outlined text-[12px]">link</span>
+                            Imported
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-surface-container-high text-on-surface-variant w-fit">
+                            <span className="material-symbols-outlined text-[12px]">edit_note</span>
+                            Manual
+                          </span>
+                        )}
+                        {explorerUrl(tx.chainType, tx.txHash) && (
+                          <a
+                            href={explorerUrl(tx.chainType, tx.txHash)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-mono text-[10px] text-primary/70 hover:text-primary transition-colors truncate max-w-[120px]"
+                            title={tx.txHash}
+                          >
+                            {tx.txHash.slice(0, 8)}…{tx.txHash.slice(-6)}
+                          </a>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-center gap-1">
                         <button
                           onClick={() => openEdit(tx)}
                           title="Edit transaction"
@@ -369,7 +406,7 @@ const History = () => {
               })}
               {paginated.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-on-surface-variant font-label-sm text-label-sm">
+                  <td colSpan={8} className="px-6 py-8 text-center text-on-surface-variant font-label-sm text-label-sm">
                     No transactions found.
                   </td>
                 </tr>

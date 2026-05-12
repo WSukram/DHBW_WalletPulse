@@ -107,7 +107,9 @@ public class TransactionController {
                 transaction.getAsset().getId(),
                 transaction.getAmount(),
                 transaction.getBuyPrice(),
-                transaction.getDate()
+                transaction.getDate(),
+                transaction.getSource(),
+                transaction.getTxHash()
         );
     }
 }
