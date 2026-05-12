@@ -53,7 +53,7 @@ const Home = () => {
   };
 
   return (
-    <div className="bg-surface-container-lowest text-on-surface min-h-screen flex flex-col font-sans scroll-smooth">
+    <div className="bg-surface-container-lowest text-on-surface min-h-screen flex flex-col font-sans scroll-smooth scroll-pt-24">
       {/* Top Nav */}
       <header className="fixed top-0 w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-white/10">
         <div className="flex justify-between items-center w-full px-6 h-16 max-w-[1440px] mx-auto">
