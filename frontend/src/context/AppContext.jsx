@@ -77,6 +77,33 @@ export const AppProvider = ({ children }) => {
     }
   }, []);
 
+  // Auto-refresh token when less than 2 minutes remain
+  useEffect(() => {
+    let refreshing = null;
+    const interceptor = axios.interceptors.request.use(async (config) => {
+      if (config.url?.includes('/api/auth/')) return config;
+      const token = localStorage.getItem('wp_token');
+      if (!token) return config;
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const expiresIn = payload.exp * 1000 - Date.now();
+        if (expiresIn < 120000 && expiresIn > 0) {
+          if (!refreshing) {
+            refreshing = axios.post('http://localhost:8080/api/auth/refresh').then((res) => {
+              const newToken = res.data.token;
+              localStorage.setItem('wp_token', newToken);
+              axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+            }).catch(() => {}).finally(() => { refreshing = null; });
+          }
+          await refreshing;
+          config.headers['Authorization'] = `Bearer ${localStorage.getItem('wp_token')}`;
+        }
+      } catch {}
+      return config;
+    });
+    return () => axios.interceptors.request.eject(interceptor);
+  }, []);
+
   // Intercept 401 responses and redirect to login
   useEffect(() => {
     const interceptor = axios.interceptors.response.use(
