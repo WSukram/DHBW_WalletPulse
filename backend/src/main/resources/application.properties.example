@@ -16,7 +16,7 @@ springdoc.swagger-ui.path=/swagger-ui
 
 # JWT — use a random base64 string of at least 32 chars
 jwt.secret=REPLACE_WITH_YOUR_JWT_SECRET
-jwt.expiration=1800000
+jwt.expiration=600000 # 10 minutes in milliseconds
 
 # CoinGecko (optional, increases rate limit)
 coingecko.api.key=REPLACE_WITH_YOUR_COINGECKO_KEY
