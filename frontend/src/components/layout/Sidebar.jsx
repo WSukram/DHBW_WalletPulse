@@ -17,14 +17,7 @@ const Sidebar = () => {
     <aside className="hidden lg:flex flex-col h-screen w-64 border-r border-outline-variant/30 bg-surface-container-low text-sm font-medium shrink-0">
       {/* Brand */}
       <Link to="/" className="px-6 py-6 flex items-center gap-3 border-b border-outline-variant/20 hover:bg-surface-container-high transition-colors">
-        <div className="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center shrink-0">
-          <span
-            className="material-symbols-outlined text-on-primary-container text-sm"
-            style={{ fontVariationSettings: "'FILL' 1" }}
-          >
-            account_balance_wallet
-          </span>
-        </div>
+        <img src="/wp-icon.svg" alt="WalletPulse" className="w-8 h-8 shrink-0" />
         <div>
           <h1 className="text-lg font-black text-on-surface">WalletPulse</h1>
           <p className="text-[10px] text-on-surface-variant uppercase tracking-wider">Terminal v1.0</p>
@@ -39,7 +32,7 @@ const Sidebar = () => {
         </NavLink>
         <NavLink to="/wallet" className={({ isActive }) => navLinkClass(isActive)}>
           <span className="material-symbols-outlined text-[20px]">account_balance_wallet</span>
-          <span>Wallet</span>
+          <span>Wallets</span>
         </NavLink>
         <NavLink to="/assets" className={({ isActive }) => navLinkClass(isActive)}>
           <span className="material-symbols-outlined text-[20px]">bar_chart</span>
