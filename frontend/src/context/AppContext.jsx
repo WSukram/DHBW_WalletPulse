@@ -77,6 +77,37 @@ export const AppProvider = ({ children }) => {
     }
   }, []);
 
+  // Proactive session expiry — redirect to login exactly when the token expires.
+  // Self-reschedules if the token was refreshed in the meantime.
+  useEffect(() => {
+    if (!user) return;
+    let timer;
+    const schedule = () => {
+      const token = localStorage.getItem('wp_token');
+      if (!token) return;
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const expiresIn = payload.exp * 1000 - Date.now();
+        if (expiresIn <= 0) {
+          clearSession();
+          navigate('/login');
+          return;
+        }
+        timer = setTimeout(() => {
+          const current = localStorage.getItem('wp_token');
+          if (!current || isTokenExpired(current)) {
+            clearSession();
+            navigate('/login');
+          } else {
+            schedule();
+          }
+        }, expiresIn);
+      } catch {}
+    };
+    schedule();
+    return () => clearTimeout(timer);
+  }, [user]);
+
   // Auto-refresh token when less than 2 minutes remain
   useEffect(() => {
     let refreshing = null;
