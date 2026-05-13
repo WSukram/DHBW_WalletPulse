@@ -23,6 +23,8 @@ services:
       JWT_SECRET: ${JWT_SECRET:-change_this_in_production}
       JWT_EXPIRATION: 600000
       COINGECKO_API_KEY: ${COINGECKO_API_KEY:-}
+      ETHERSCAN_API_KEY: ${ETHERSCAN_API_KEY:-}
+      HELIUS_API_KEY: ${HELIUS_API_KEY:-}
     ports:
       - "8080:8080"
 
