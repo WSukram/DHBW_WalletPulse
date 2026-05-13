@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import { AppProvider } from './context/AppContext'
+import ScrollToTop from './components/ScrollToTop'
 import MainLayout from './components/layout/MainLayout'
 import PrivateRoute from './components/PrivateRoute'
 import Dashboard from './pages/Dashboard'
@@ -18,6 +19,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy.jsx";
 function App() {
   return (
     <AppProvider>
+      <ScrollToTop />
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />

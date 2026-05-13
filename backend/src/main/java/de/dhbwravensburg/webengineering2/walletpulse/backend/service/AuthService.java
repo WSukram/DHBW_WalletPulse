@@ -43,6 +43,17 @@ public class AuthService {
         return toAuthResponse(token, user);
     }
 
+    public AuthResponse refresh(String email) {
+        User user = userRepository.findByEmail(email).orElseThrow();
+        UserDetails userDetails = org.springframework.security.core.userdetails.User
+                .withUsername(user.getEmail())
+                .password(user.getPassword())
+                .roles("USER")
+                .build();
+        String token = jwtService.generateToken(userDetails);
+        return toAuthResponse(token, user);
+    }
+
     public AuthResponse login(LoginRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.email(), request.password())

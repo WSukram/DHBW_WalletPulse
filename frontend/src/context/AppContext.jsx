@@ -56,7 +56,7 @@ export const AppProvider = ({ children }) => {
   const navigate = useNavigate();
   const storedUser = loadStoredUser();
   const [currency, setCurrencyRaw] = useState(storedUser?.preferredCurrency ?? 'EUR');
-  const [theme, setThemeRaw] = useState(storedUser?.preferredTheme ?? 'Dark');
+  const [theme, setThemeRaw] = useState(storedUser?.preferredTheme ?? 'System');
   const [user, setUser] = useState(storedUser);
 
   const currencyRef = useRef(currency);
@@ -75,6 +75,64 @@ export const AppProvider = ({ children }) => {
       // Token exists but is expired — clear everything silently
       clearSession();
     }
+  }, []);
+
+  // Proactive session expiry — redirect to login exactly when the token expires.
+  // Self-reschedules if the token was refreshed in the meantime.
+  useEffect(() => {
+    if (!user) return;
+    let timer;
+    const schedule = () => {
+      const token = localStorage.getItem('wp_token');
+      if (!token) return;
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const expiresIn = payload.exp * 1000 - Date.now();
+        if (expiresIn <= 0) {
+          clearSession();
+          navigate('/login');
+          return;
+        }
+        timer = setTimeout(() => {
+          const current = localStorage.getItem('wp_token');
+          if (!current || isTokenExpired(current)) {
+            clearSession();
+            navigate('/login');
+          } else {
+            schedule();
+          }
+        }, expiresIn);
+      } catch {}
+    };
+    schedule();
+    return () => clearTimeout(timer);
+  }, [user]);
+
+  // Auto-refresh token when less than 2 minutes remain
+  useEffect(() => {
+    let refreshing = null;
+    const interceptor = axios.interceptors.request.use(async (config) => {
+      if (config.url?.includes('/api/auth/')) return config;
+      const token = localStorage.getItem('wp_token');
+      if (!token) return config;
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const expiresIn = payload.exp * 1000 - Date.now();
+        if (expiresIn < 120000 && expiresIn > 0) {
+          if (!refreshing) {
+            refreshing = axios.post('http://localhost:8080/api/auth/refresh').then((res) => {
+              const newToken = res.data.token;
+              localStorage.setItem('wp_token', newToken);
+              axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+            }).catch(() => {}).finally(() => { refreshing = null; });
+          }
+          await refreshing;
+          config.headers['Authorization'] = `Bearer ${localStorage.getItem('wp_token')}`;
+        }
+      } catch {}
+      return config;
+    });
+    return () => axios.interceptors.request.eject(interceptor);
   }, []);
 
   // Intercept 401 responses and redirect to login
@@ -100,8 +158,8 @@ export const AppProvider = ({ children }) => {
     delete axios.defaults.headers.common['Authorization'];
     setCurrencyRaw('EUR');
     currencyRef.current = 'EUR';
-    setThemeRaw('Dark');
-    themeRef.current = 'Dark';
+    setThemeRaw('System');
+    themeRef.current = 'System';
     setUser(null);
   };
 
@@ -123,7 +181,7 @@ export const AppProvider = ({ children }) => {
   const login = (authResponse) => {
     const { token, email, firstName, lastName, preferredCurrency, preferredTheme } = authResponse;
     const c = preferredCurrency ?? 'EUR';
-    const t = preferredTheme ?? 'Dark';
+    const t = preferredTheme ?? 'System';
     const userData = { email, firstName, lastName, preferredCurrency: c, preferredTheme: t };
 
     localStorage.setItem('wp_token', token);
