@@ -1,4 +1,7 @@
 /** @type {import('tailwindcss').Config} */
+import forms from '@tailwindcss/forms';
+import containerQueries from '@tailwindcss/container-queries';
+
 const v = (name) => `rgb(var(--wp-${name}) / <alpha-value>)`;
 
 export default {
@@ -101,8 +104,5 @@ export default {
       }
     },
   },
-  plugins: [
-    require('@tailwindcss/forms'),
-    require('@tailwindcss/container-queries')
-  ],
+  plugins: [forms, containerQueries],
 }
