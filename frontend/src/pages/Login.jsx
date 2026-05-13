@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useApp } from '../context/AppContext';
 
 const Login = () => {
+  useEffect(() => { document.title = 'Login · WalletPulse'; }, []);
   const navigate = useNavigate();
   const { login } = useApp();
   const [error, setError] = useState('');

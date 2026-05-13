@@ -155,6 +155,7 @@ const inputCls = 'w-full bg-surface-container-lowest border border-outline-varia
 const labelCls = 'block font-label-sm text-label-sm text-on-surface-variant mb-1';
 
 const Wallet = () => {
+  useEffect(() => { document.title = 'Wallets · WalletPulse'; }, []);
   const location = useLocation();
   const { formatCurrency: formatEur } = useApp();
   const [portfolios, setPortfolios] = useState([]);

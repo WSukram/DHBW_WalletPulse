@@ -120,6 +120,7 @@ const pointsToPath = (points, key, minV, maxV, closed = false) => {
 };
 
 const Assets = () => {
+  useEffect(() => { document.title = 'Assets · WalletPulse'; }, []);
   const { formatCurrency: formatEur } = useApp();
   const [portfolio, setPortfolio] = useState(null);
   const [transactions, setTransactions] = useState([]);

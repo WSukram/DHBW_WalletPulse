@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 const Section = ({ title, children }) => (
@@ -20,7 +20,9 @@ const DataRow = ({ label, value }) => (
   </div>
 );
 
-const PrivacyPolicy = () => (
+const PrivacyPolicy = () => {
+  useEffect(() => { document.title = 'Privacy Policy · WalletPulse'; }, []);
+  return (
   <div className="bg-surface-container-lowest text-on-surface min-h-screen flex flex-col font-sans">
     {/* Nav */}
     <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-white/10">
@@ -149,6 +151,7 @@ const PrivacyPolicy = () => (
       </div>
     </footer>
   </div>
-);
+  );
+};
 
 export default PrivacyPolicy;

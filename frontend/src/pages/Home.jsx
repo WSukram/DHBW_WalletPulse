@@ -46,6 +46,7 @@ const features = [
 const Home = () => {
   const navigate = useNavigate();
   const prices = useLivePrices();
+  useEffect(() => { document.title = 'WalletPulse'; }, []);
 
   const handleEnter = () => {
     const token = localStorage.getItem('wp_token');
@@ -323,9 +324,9 @@ const Home = () => {
 
       {/* Footer */}
       <footer className="w-full border-t border-white/5 bg-slate-950">
-        <div className="w-full py-8 px-6 flex flex-col md:flex-row justify-between items-center max-w-[1440px] mx-auto gap-4">
+        <div className="relative w-full py-8 px-6 flex flex-col md:flex-row justify-between items-center max-w-[1440px] mx-auto gap-4">
           <div className="text-sm font-bold text-slate-300">WalletPulse</div>
-          <div className="text-xs text-slate-500 font-light">© 2026 WalletPulse. High-fidelity crypto analytics.</div>
+          <div className="md:absolute md:left-1/2 md:-translate-x-1/2 text-xs text-slate-500 font-light">© 2026 WalletPulse. High-fidelity crypto analytics.</div>
           <div className="flex gap-6">
             <Link to="/terms" className="text-xs text-slate-500 font-light hover:text-slate-300 transition-colors">Terms of Service</Link>
             <Link to="/privacy" className="text-xs text-slate-500 font-light hover:text-slate-300 transition-colors">Privacy Policy</Link>
