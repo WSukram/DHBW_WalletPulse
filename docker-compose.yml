@@ -22,6 +22,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
       JWT_SECRET: ${JWT_SECRET:-change_this_in_production}
       JWT_EXPIRATION: 600000
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
       COINGECKO_API_KEY: ${COINGECKO_API_KEY:-}
       ETHERSCAN_API_KEY: ${ETHERSCAN_API_KEY:-}
       HELIUS_API_KEY: ${HELIUS_API_KEY:-}
