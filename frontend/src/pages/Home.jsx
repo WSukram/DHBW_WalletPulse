@@ -56,9 +56,12 @@ const Home = () => {
     <div className="bg-surface-container-lowest text-on-surface min-h-screen flex flex-col font-sans scroll-smooth">
       {/* Top Nav */}
       <header className="fixed top-0 w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-white/10">
-        <div className="flex justify-between items-center w-full px-6 h-16 max-w-[1440px] mx-auto">
-          <div className="text-xl font-bold tracking-tighter text-slate-50">WalletPulse</div>
-          <nav className="hidden md:flex items-center gap-1">
+        <div className="relative flex justify-between items-center w-full px-6 h-16 max-w-[1440px] mx-auto">
+          <div className="flex items-center gap-2">
+            <img src="/wp-icon.svg" alt="WalletPulse" className="w-7 h-7" />
+            <span className="text-xl font-bold tracking-tighter text-slate-50">WalletPulse</span>
+          </div>
+          <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-1">
             {[
               { label: 'Live Prices', href: '#prices' },
               { label: "What's supported", href: '#supported' },
