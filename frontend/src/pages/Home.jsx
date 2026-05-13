@@ -70,7 +70,17 @@ const Home = () => {
             ))}
           </nav>
           <div className="flex items-center gap-3">
-            <Link to="/login" className="text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors px-4 py-2">
+            <Link
+              to="/login"
+              onClick={(e) => {
+                const token = localStorage.getItem('wp_token');
+                if (token && !isTokenExpired(token)) {
+                  e.preventDefault();
+                  navigate('/dashboard');
+                }
+              }}
+              className="text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors px-4 py-2"
+            >
               Log in
             </Link>
             <Link to="/register" className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors shadow-[0_0_15px_rgba(79,70,229,0.3)]">
