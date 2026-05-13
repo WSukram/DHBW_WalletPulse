@@ -4,6 +4,7 @@
 
 html {
   scroll-padding-top: 88px;
+  scroll-behavior: smooth;
 }
 
 /* ─── Dark theme (default) ───────────────────────────────────────────────── */
