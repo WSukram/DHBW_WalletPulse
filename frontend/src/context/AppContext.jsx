@@ -56,7 +56,7 @@ export const AppProvider = ({ children }) => {
   const navigate = useNavigate();
   const storedUser = loadStoredUser();
   const [currency, setCurrencyRaw] = useState(storedUser?.preferredCurrency ?? 'EUR');
-  const [theme, setThemeRaw] = useState(storedUser?.preferredTheme ?? 'Dark');
+  const [theme, setThemeRaw] = useState(storedUser?.preferredTheme ?? 'System');
   const [user, setUser] = useState(storedUser);
 
   const currencyRef = useRef(currency);
@@ -100,8 +100,8 @@ export const AppProvider = ({ children }) => {
     delete axios.defaults.headers.common['Authorization'];
     setCurrencyRaw('EUR');
     currencyRef.current = 'EUR';
-    setThemeRaw('Dark');
-    themeRef.current = 'Dark';
+    setThemeRaw('System');
+    themeRef.current = 'System';
     setUser(null);
   };
 
@@ -123,7 +123,7 @@ export const AppProvider = ({ children }) => {
   const login = (authResponse) => {
     const { token, email, firstName, lastName, preferredCurrency, preferredTheme } = authResponse;
     const c = preferredCurrency ?? 'EUR';
-    const t = preferredTheme ?? 'Dark';
+    const t = preferredTheme ?? 'System';
     const userData = { email, firstName, lastName, preferredCurrency: c, preferredTheme: t };
 
     localStorage.setItem('wp_token', token);
