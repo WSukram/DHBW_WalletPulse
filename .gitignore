@@ -25,9 +25,6 @@ requirements.md
 # Backend (Spring Boot / Maven)
 ############################
 backend/target/
-backend/.mvn/
-backend/mvnw
-backend/mvnw.cmd
 
 ############################
 # Java
