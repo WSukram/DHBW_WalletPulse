@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useApp } from '../context/AppContext';
 import { downloadCsv } from '../utils/exportCsv';
 import { coinMeta } from '../utils/coins';
+import { usePortfolioData } from '../hooks/usePortfolioData';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '—';
@@ -28,10 +29,7 @@ const PAGE_SIZE = 10;
 const History = () => {
   useEffect(() => { document.title = 'History · WalletPulse'; }, []);
   const { formatCurrency: formatEur } = useApp();
-  const [wallets, setWallets] = useState([]);
-  const [allTransactions, setAllTransactions] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { wallets, transactions: allTransactions, isLoading, error, reload } = usePortfolioData();
   const [activeWallet, setActiveWallet] = useState('All Wallets');
   const [assetFilter, setAssetFilter] = useState('All Assets');
   const [page, setPage] = useState(1);
@@ -45,48 +43,6 @@ const History = () => {
   // Delete confirmation state
   const [deleteTx, setDeleteTx] = useState(null);
   const [deleting, setDeleting] = useState(false);
-
-  const loadAll = () =>
-    axios.get('/api/wallets')
-      .then((res) => {
-        const walletList = res.data;
-        setWallets(walletList);
-        return Promise.all(
-          walletList.map((w) =>
-            axios.get(`/api/wallets/${w.id}/portfolio`).then((r) => ({
-              wallet: w,
-              portfolio: r.data,
-            }))
-          )
-        );
-      })
-      .then((walletPortfolios) =>
-        Promise.all(
-          walletPortfolios.flatMap(({ wallet, portfolio }) =>
-            (portfolio.assets ?? []).map((asset) =>
-              axios.get(`/api/assets/${asset.id}/transactions`).then((r) =>
-                r.data.map((tx) => ({
-                  ...tx,
-                  coinId: asset.coinId,
-                  walletId: wallet.id,
-                  walletName: wallet.name,
-                  chainType: wallet.chainType,
-                }))
-              )
-            )
-          )
-        )
-      )
-      .then((txArrays) => {
-        const flat = txArrays.flat().sort((a, b) => new Date(b.date) - new Date(a.date));
-        setAllTransactions(flat);
-      });
-
-  useEffect(() => {
-    loadAll()
-      .then(() => setIsLoading(false))
-      .catch(() => { setError('Failed to load transaction history.'); setIsLoading(false); });
-  }, []);
 
   const openEdit = (tx) => {
     setEditTx(tx);
@@ -102,7 +58,7 @@ const History = () => {
     setSavingEdit(true);
     setEditError('');
     axios.put(`/api/transactions/${editTx.id}`, { amount, buyPrice, date: editForm.date })
-      .then(() => loadAll())
+      .then(() => reload())
       .then(() => { setEditTx(null); setSavingEdit(false); })
       .catch(() => { setEditError('Failed to save changes.'); setSavingEdit(false); });
   };
@@ -110,7 +66,7 @@ const History = () => {
   const handleDelete = () => {
     setDeleting(true);
     axios.delete(`/api/transactions/${deleteTx.id}`)
-      .then(() => loadAll())
+      .then(() => reload())
       .then(() => { setDeleteTx(null); setDeleting(false); })
       .catch(() => setDeleting(false));
   };

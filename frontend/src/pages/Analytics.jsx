@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
 import { useApp } from '../context/AppContext';
 import { coinMeta, formatPct } from '../utils/coins';
 import { timeRanges, getChartLabels, computePortfolioChartPoints, pointsToPath } from '../utils/chart';
 import { groupByCoin } from '../utils/groupByCoin';
+import { usePortfolioData } from '../hooks/usePortfolioData';
 
 const CIRCUMFERENCE = 2 * Math.PI * 40;
 
@@ -37,40 +37,8 @@ const DonutChart = ({ segments }) => {
 const Analytics = () => {
   useEffect(() => { document.title = 'Analytics · WalletPulse'; }, []);
   const { formatCurrency: formatEur } = useApp();
-  const [portfolios, setPortfolios] = useState([]);
-  const [transactions, setTransactions] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { portfolios, transactions, isLoading, error } = usePortfolioData();
   const [activeRange, setActiveRange] = useState('1Y');
-
-  useEffect(() => {
-    axios.get('/api/wallets')
-      .then((res) =>
-        Promise.all(
-          res.data.map((w) =>
-            axios.get(`/api/wallets/${w.id}/portfolio`).then((r) => r.data)
-          )
-        )
-      )
-      .then((portfolioData) => {
-        setPortfolios(portfolioData);
-        const allAssets = portfolioData.flatMap((p) => p.assets ?? []);
-        return Promise.all(
-          allAssets.map((asset) =>
-            axios.get(`/api/assets/${asset.id}/transactions`)
-              .then((r) => r.data.map((tx) => ({ ...tx, assetId: asset.id, coinId: asset.coinId })))
-          )
-        );
-      })
-      .then((txArrays) => {
-        setTransactions(txArrays.flat());
-        setIsLoading(false);
-      })
-      .catch(() => {
-        setError('Failed to load analytics data.');
-        setIsLoading(false);
-      });
-  }, []);
 
   const chartPoints = useMemo(
     () => computePortfolioChartPoints(transactions, portfolios.flatMap((p) => p.assets ?? []), activeRange),

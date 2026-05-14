@@ -1,55 +1,33 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
 import { useApp } from '../context/AppContext';
 import { coinMeta, formatPct } from '../utils/coins';
 import { timeRanges, getChartLabels, computeAssetChartPoints, pointsToPath } from '../utils/chart';
 import { groupByCoin } from '../utils/groupByCoin';
+import { usePortfolioData } from '../hooks/usePortfolioData';
 
 const Assets = () => {
   useEffect(() => { document.title = 'Assets · WalletPulse'; }, []);
   const { formatCurrency: formatEur } = useApp();
-  const [portfolio, setPortfolio] = useState(null);
-  const [transactions, setTransactions] = useState([]);
+  const { portfolios, transactions, isLoading, error } = usePortfolioData();
   const [activeCompare, setActiveCompare] = useState(null);
   const [activeRange, setActiveRange] = useState('1Y');
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+
+  const portfolio = useMemo(() => {
+    if (portfolios.length === 0) return null;
+    const allAssets = portfolios.flatMap((p) => p.assets ?? []);
+    return {
+      assets: groupByCoin(allAssets),
+      totalCurrentValue: portfolios.reduce((s, p) => s + (p.totalCurrentValue ?? 0), 0),
+      totalInvested: portfolios.reduce((s, p) => s + (p.totalInvested ?? 0), 0),
+      totalProfit: portfolios.reduce((s, p) => s + (p.totalProfit ?? 0), 0),
+    };
+  }, [portfolios]);
 
   useEffect(() => {
-    axios.get('/api/wallets')
-      .then((res) => {
-        if (res.data.length === 0) return { merged: null, txArrays: [] };
-        return Promise.all(
-          res.data.map((w) => axios.get(`/api/wallets/${w.id}/portfolio`).then((r) => r.data))
-        ).then((portfolios) => {
-          const allAssets = portfolios.flatMap((p) => p.assets ?? []);
-          const merged = {
-            assets: groupByCoin(allAssets),
-            totalCurrentValue: portfolios.reduce((s, p) => s + (p.totalCurrentValue ?? 0), 0),
-            totalInvested: portfolios.reduce((s, p) => s + (p.totalInvested ?? 0), 0),
-            totalProfit: portfolios.reduce((s, p) => s + (p.totalProfit ?? 0), 0),
-          };
-          return Promise.all(
-            allAssets.map((asset) =>
-              axios.get(`/api/assets/${asset.id}/transactions`)
-                .then((r) => r.data.map((tx) => ({ ...tx, assetId: asset.id, coinId: asset.coinId })))
-            )
-          ).then((txArrays) => ({ merged, txArrays }));
-        });
-      })
-      .then(({ merged, txArrays }) => {
-        if (merged) {
-          setPortfolio(merged);
-          if (merged.assets.length > 0) setActiveCompare(merged.assets[0].coinId);
-        }
-        setTransactions(txArrays.flat());
-        setIsLoading(false);
-      })
-      .catch(() => {
-        setError('Failed to load asset data.');
-        setIsLoading(false);
-      });
-  }, []);
+    if (activeCompare == null && portfolio?.assets?.length > 0) {
+      setActiveCompare(portfolio.assets[0].coinId);
+    }
+  }, [portfolio, activeCompare]);
 
   const activeAsset = (portfolio?.assets ?? []).find((a) => a.coinId === activeCompare) ?? null;
 
