@@ -46,6 +46,7 @@ const features = [
 const Home = () => {
   const navigate = useNavigate();
   const prices = useLivePrices();
+  useEffect(() => { document.title = 'WalletPulse'; }, []);
 
   const handleEnter = () => {
     const token = localStorage.getItem('wp_token');
@@ -56,9 +57,12 @@ const Home = () => {
     <div className="bg-surface-container-lowest text-on-surface min-h-screen flex flex-col font-sans scroll-smooth">
       {/* Top Nav */}
       <header className="fixed top-0 w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-white/10">
-        <div className="flex justify-between items-center w-full px-6 h-16 max-w-[1440px] mx-auto">
-          <div className="text-xl font-bold tracking-tighter text-slate-50">WalletPulse</div>
-          <nav className="hidden md:flex items-center gap-1">
+        <div className="relative flex justify-between items-center w-full px-6 h-16 max-w-[1440px] mx-auto">
+          <div className="flex items-center gap-2">
+            <img src="/wp-icon.svg" alt="WalletPulse" className="w-7 h-7" />
+            <span className="text-xl font-bold tracking-tighter text-slate-50">WalletPulse</span>
+          </div>
+          <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-1">
             {[
               { label: 'Live Prices', href: '#prices' },
               { label: "What's supported", href: '#supported' },
@@ -320,9 +324,9 @@ const Home = () => {
 
       {/* Footer */}
       <footer className="w-full border-t border-white/5 bg-slate-950">
-        <div className="w-full py-8 px-6 flex flex-col md:flex-row justify-between items-center max-w-[1440px] mx-auto gap-4">
+        <div className="relative w-full py-8 px-6 flex flex-col md:flex-row justify-between items-center max-w-[1440px] mx-auto gap-4">
           <div className="text-sm font-bold text-slate-300">WalletPulse</div>
-          <div className="text-xs text-slate-500 font-light">© 2026 WalletPulse. High-fidelity crypto analytics.</div>
+          <div className="md:absolute md:left-1/2 md:-translate-x-1/2 text-xs text-slate-500 font-light">© 2026 WalletPulse. High-fidelity crypto analytics.</div>
           <div className="flex gap-6">
             <Link to="/terms" className="text-xs text-slate-500 font-light hover:text-slate-300 transition-colors">Terms of Service</Link>
             <Link to="/privacy" className="text-xs text-slate-500 font-light hover:text-slate-300 transition-colors">Privacy Policy</Link>

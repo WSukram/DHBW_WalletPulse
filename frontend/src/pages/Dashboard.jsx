@@ -5,6 +5,7 @@ import { useApp } from '../context/AppContext';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  useEffect(() => { document.title = 'Dashboard · WalletPulse'; }, []);
   const [wallets, setWallets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);

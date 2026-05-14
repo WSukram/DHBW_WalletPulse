@@ -161,6 +161,7 @@ const pointsToPath = (points, key, minV, maxV, closed = false) => {
 };
 
 const Analytics = () => {
+  useEffect(() => { document.title = 'Analytics · WalletPulse'; }, []);
   const { formatCurrency: formatEur } = useApp();
   const [portfolios, setPortfolios] = useState([]);
   const [transactions, setTransactions] = useState([]);

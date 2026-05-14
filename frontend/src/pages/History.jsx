@@ -39,6 +39,7 @@ const labelCls = 'block font-label-sm text-label-sm text-on-surface-variant mb-1
 const PAGE_SIZE = 10;
 
 const History = () => {
+  useEffect(() => { document.title = 'History · WalletPulse'; }, []);
   const { formatCurrency: formatEur } = useApp();
   const [wallets, setWallets] = useState([]);
   const [allTransactions, setAllTransactions] = useState([]);

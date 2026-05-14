@@ -36,8 +36,9 @@ const TopNav = () => {
       <div className="flex-1" />
 
       {/* Center: Mobile brand */}
-      <Link to="/" className="lg:hidden text-xl font-black text-on-surface flex-1 text-center">
-        WalletPulse
+      <Link to="/" className="lg:hidden flex items-center justify-center gap-2 flex-1">
+        <img src="/wp-icon.svg" alt="WalletPulse" className="w-7 h-7" />
+        <span className="text-xl font-black text-on-surface">WalletPulse</span>
       </Link>
 
       {/* Right: Icons */}
