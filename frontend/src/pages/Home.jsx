@@ -1,21 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
 import { isTokenExpired } from '../context/AppContext';
 import { TICKER_COINS } from '../utils/coins';
-
-const useLivePrices = () => {
-  const [prices, setPrices] = useState({});
-
-  useEffect(() => {
-    axios
-      .get('/api/market/prices')
-      .then((res) => setPrices(res.data))
-      .catch(() => {});
-  }, []);
-
-  return prices;
-};
+import { useLivePrices } from '../hooks/useLivePrices';
 
 const features = [
   {
