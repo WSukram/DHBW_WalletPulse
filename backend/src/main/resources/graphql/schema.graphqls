@@ -1,5 +1,3 @@
-scalar Date
-
 type Wallet {
     id: ID!
     name: String!
@@ -25,7 +23,7 @@ type Transaction {
     assetId: ID!
     amount: Float!
     buyPrice: Float!
-    date: Date!
+    date: String!
     source: String!
     txHash: String
 }

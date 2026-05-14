@@ -95,6 +95,11 @@ public class GraphQLController {
         return transaction.getSource() == null ? null : transaction.getSource().name();
     }
 
+    @SchemaMapping(typeName = "Transaction")
+    public String date(Transaction transaction) {
+        return transaction.getDate().toString();
+    }
+
     private AssetResponse computed(Asset asset) {
         return assetService.mapToPortfolioResponse(asset);
     }
