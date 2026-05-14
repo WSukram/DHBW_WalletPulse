@@ -6,6 +6,7 @@ import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Transaction;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.service.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,6 +20,7 @@ import java.util.List;
 
 @RestController
 @Tag(name = "Transactions", description = "CRUD endpoints for purchase transactions")
+@SecurityRequirement(name = "bearerAuth")
 public class TransactionController {
 
     private final TransactionService transactionService;

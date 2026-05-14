@@ -7,6 +7,7 @@ import de.dhbwravensburg.webengineering2.walletpulse.backend.service.UserService
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/user/me")
 @RequiredArgsConstructor
 @Tag(name = "User", description = "Current user profile and account settings")
+@SecurityRequirement(name = "bearerAuth")
 public class UserController {
 
     private final UserService userService;

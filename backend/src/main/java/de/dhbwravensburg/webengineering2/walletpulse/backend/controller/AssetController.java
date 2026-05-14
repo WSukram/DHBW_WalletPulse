@@ -6,6 +6,7 @@ import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Asset;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.service.AssetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,6 +20,7 @@ import java.util.List;
 
 @RestController
 @Tag(name = "Assets", description = "CRUD endpoints for wallet assets")
+@SecurityRequirement(name = "bearerAuth")
 public class AssetController {
 
     private final AssetService assetService;

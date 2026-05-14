@@ -5,6 +5,7 @@ import de.dhbwravensburg.webengineering2.walletpulse.backend.service.WalletServi
 import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.WalletPortfolioResponse;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.WalletRequest;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/wallets")
 @Tag(name = "Wallets", description = "CRUD endpoints for wallets")
+@SecurityRequirement(name = "bearerAuth")
 public class WalletController {
 
     private final WalletService walletService;
