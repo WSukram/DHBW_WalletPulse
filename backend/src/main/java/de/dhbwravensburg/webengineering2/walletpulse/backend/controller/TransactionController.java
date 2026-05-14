@@ -1,11 +1,14 @@
 package de.dhbwravensburg.webengineering2.walletpulse.backend.controller;
 
+import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.ErrorResponse;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.TransactionRequest;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.TransactionResponse;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Transaction;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.service.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -33,7 +36,10 @@ public class TransactionController {
     @Operation(summary = "Get all transactions of an asset")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Transactions loaded successfully"),
-            @ApiResponse(responseCode = "404", description = "Asset not found")
+            @ApiResponse(responseCode = "401", description = "Not authenticated",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Asset not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public List<TransactionResponse> getTransactionsByAssetId(
             @Parameter(description = "Asset ID", example = "10") @PathVariable Long assetId,
@@ -48,7 +54,10 @@ public class TransactionController {
     @Operation(summary = "Get a transaction by ID")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Transaction found"),
-            @ApiResponse(responseCode = "404", description = "Transaction not found")
+            @ApiResponse(responseCode = "401", description = "Not authenticated",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Transaction not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public TransactionResponse getTransactionById(
             @Parameter(description = "Transaction ID", example = "100") @PathVariable Long transactionId,
@@ -61,8 +70,12 @@ public class TransactionController {
     @Operation(summary = "Create a new transaction")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Transaction created"),
-            @ApiResponse(responseCode = "400", description = "Invalid request"),
-            @ApiResponse(responseCode = "404", description = "Asset not found")
+            @ApiResponse(responseCode = "400", description = "Invalid request body",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Not authenticated",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Asset not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public TransactionResponse createTransaction(
             @Parameter(description = "Asset ID", example = "10") @PathVariable Long assetId,
@@ -78,7 +91,12 @@ public class TransactionController {
     @Operation(summary = "Update a transaction")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Transaction updated"),
-            @ApiResponse(responseCode = "404", description = "Transaction not found")
+            @ApiResponse(responseCode = "400", description = "Invalid request body",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Not authenticated",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Transaction not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public TransactionResponse updateTransaction(
             @Parameter(description = "Transaction ID", example = "100") @PathVariable Long transactionId,
@@ -95,7 +113,10 @@ public class TransactionController {
     @Operation(summary = "Delete a transaction")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Transaction deleted"),
-            @ApiResponse(responseCode = "404", description = "Transaction not found")
+            @ApiResponse(responseCode = "401", description = "Not authenticated",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Transaction not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public void deleteTransaction(
             @Parameter(description = "Transaction ID", example = "100") @PathVariable Long transactionId,

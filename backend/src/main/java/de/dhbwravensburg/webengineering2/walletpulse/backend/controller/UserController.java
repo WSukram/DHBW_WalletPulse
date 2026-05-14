@@ -1,10 +1,13 @@
 package de.dhbwravensburg.webengineering2.walletpulse.backend.controller;
 
 import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.ChangePasswordRequest;
+import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.ErrorResponse;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.PreferencesRequest;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.UserResponse;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -29,7 +32,8 @@ public class UserController {
     @Operation(summary = "Get the profile of the currently authenticated user")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "User profile returned"),
-            @ApiResponse(responseCode = "401", description = "Not authenticated")
+            @ApiResponse(responseCode = "401", description = "Not authenticated",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public UserResponse getMe(@AuthenticationPrincipal UserDetails user) {
         return userService.getUser(user.getUsername());
@@ -39,8 +43,10 @@ public class UserController {
     @Operation(summary = "Update display preferences (currency and theme)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Preferences updated"),
-            @ApiResponse(responseCode = "400", description = "Invalid request"),
-            @ApiResponse(responseCode = "401", description = "Not authenticated")
+            @ApiResponse(responseCode = "400", description = "Invalid request body",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Not authenticated",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public UserResponse updatePreferences(
             @Valid @RequestBody PreferencesRequest request,
@@ -53,8 +59,10 @@ public class UserController {
     @Operation(summary = "Change the current user's password")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Password changed successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid request or wrong current password"),
-            @ApiResponse(responseCode = "401", description = "Not authenticated")
+            @ApiResponse(responseCode = "400", description = "Invalid request body or wrong current password",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Not authenticated",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public void changePassword(
             @Valid @RequestBody ChangePasswordRequest request,

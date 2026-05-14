@@ -315,5 +315,10 @@ public class BlockchainImportService {
         try { return Integer.parseInt(tokenDecimal); } catch (Exception e) { return 18; }
     }
 
-    public record ImportResult(int imported, int skipped, int failed) {}
+    @io.swagger.v3.oas.annotations.media.Schema(description = "Summary of an on-chain import run")
+    public record ImportResult(
+            @io.swagger.v3.oas.annotations.media.Schema(description = "Number of new transactions stored", example = "12") int imported,
+            @io.swagger.v3.oas.annotations.media.Schema(description = "Number of transactions skipped (already known)", example = "5") int skipped,
+            @io.swagger.v3.oas.annotations.media.Schema(description = "Number of transactions that failed to import", example = "0") int failed
+    ) {}
 }
