@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { downloadCsv } from '../utils/exportCsv';
 import { COIN_META, KNOWN_COINS, coinMeta, formatPct } from '../utils/coins';
+import { timeRanges, getChartLabels, computePortfolioChartPoints, pointsToPath } from '../utils/chart';
 
 const CHAIN_META = {
   ETH: { label: 'Ethereum', color: '#627EEA', bg: '#627EEA22' },
@@ -30,102 +31,6 @@ const formatRelative = (dateStr) => {
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
   return `${Math.floor(hrs / 24)}d ago`;
-};
-
-const timeRanges = ['1W', '1M', '1Y', 'ALL'];
-
-const getChartLabels = (range) => {
-  const now = new Date();
-  if (range === '1W') {
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(now);
-      d.setDate(d.getDate() - (6 - i));
-      return d.toLocaleDateString('en-US', { weekday: 'short' });
-    });
-  }
-  if (range === '1M') {
-    return Array.from({ length: 5 }, (_, i) => {
-      const d = new Date(now);
-      d.setDate(d.getDate() - (28 - i * 7));
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    });
-  }
-  if (range === '1Y') {
-    return Array.from({ length: 6 }, (_, i) => {
-      const d = new Date(now);
-      d.setMonth(d.getMonth() - (10 - i * 2));
-      return d.toLocaleDateString('en-US', { month: 'short' });
-    });
-  }
-  const year = now.getFullYear();
-  return [year - 4, year - 3, year - 2, year - 1, year].map(String);
-};
-
-const computeChartPoints = (txs, assets, range) => {
-  if (!txs.length) return [];
-
-  const now = new Date();
-  let cutoff = null;
-  if (range === '1W') { cutoff = new Date(now); cutoff.setDate(now.getDate() - 7); }
-  else if (range === '1M') { cutoff = new Date(now); cutoff.setMonth(now.getMonth() - 1); }
-  else if (range === '1Y') { cutoff = new Date(now); cutoff.setFullYear(now.getFullYear() - 1); }
-
-  const priceMap = {};
-  const assetCoinMap = {};
-  assets.forEach((a) => {
-    priceMap[a.coinId] = a.currentPrice;
-    assetCoinMap[String(a.id)] = a.coinId;
-  });
-
-  const sorted = [...txs].sort((a, b) => new Date(a.date) - new Date(b.date));
-  const firstTxDate = new Date(sorted[0].date);
-  const rangeStart = cutoff && cutoff > firstTxDate ? cutoff : firstTxDate;
-  const span = now - rangeStart;
-  if (span <= 0) return [];
-
-  const N = 40;
-  const holdings = {};
-  let cost = 0;
-  let txIdx = 0;
-
-  while (txIdx < sorted.length && new Date(sorted[txIdx].date) < rangeStart) {
-    const tx = sorted[txIdx];
-    holdings[tx.assetId] = (holdings[tx.assetId] || 0) + tx.amount;
-    cost += tx.amount * tx.buyPrice;
-    txIdx++;
-  }
-
-  const points = [];
-  for (let i = 0; i <= N; i++) {
-    const t = new Date(rangeStart.getTime() + (span * i) / N);
-    while (txIdx < sorted.length && new Date(sorted[txIdx].date) <= t) {
-      const tx = sorted[txIdx];
-      holdings[tx.assetId] = (holdings[tx.assetId] || 0) + tx.amount;
-      cost += tx.amount * tx.buyPrice;
-      txIdx++;
-    }
-    let value = 0;
-    Object.entries(holdings).forEach(([aid, amt]) => {
-      const coinId = assetCoinMap[String(aid)];
-      value += amt * (priceMap[coinId] || 0);
-    });
-    points.push({ t, cost, value });
-  }
-  return points;
-};
-
-// SVG path for the cost/value chart. Maps each point onto a 100×100 viewBox
-// (x: 0–100 across the point index, y: 10–95 with 5 units of top margin). With
-// `closed = true` the path is closed to the bottom edge for the filled area.
-const pointsToPath = (points, key, minV, maxV, closed = false) => {
-  if (!points.length || maxV === minV) return '';
-  const coords = points.map((p, i) => {
-    const x = (i / (points.length - 1)) * 100;
-    const y = 95 - ((p[key] - minV) / (maxV - minV)) * 85;
-    return [x, y];
-  });
-  const d = coords.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(2)} ${y.toFixed(2)}`).join(' ');
-  return closed ? `${d} L100 100 L0 100 Z` : d;
 };
 
 // ── Shared modal styles ─────────────────────────────────────────────────────
@@ -362,7 +267,7 @@ const Wallet = () => {
   const portfolio = portfolios.find((p) => p.id === selectedWalletId) ?? null;
 
   const chartPoints = useMemo(
-    () => computeChartPoints(transactions, portfolio?.assets ?? [], activeRange),
+    () => computePortfolioChartPoints(transactions, portfolio?.assets ?? [], activeRange),
     [transactions, portfolio, activeRange]
   );
 
