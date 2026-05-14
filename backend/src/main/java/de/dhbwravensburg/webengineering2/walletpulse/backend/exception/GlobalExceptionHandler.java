@@ -1,14 +1,16 @@
 package de.dhbwravensburg.webengineering2.walletpulse.backend.exception;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
-@ControllerAdvice
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -27,19 +29,16 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleValidationErrors(
-            MethodArgumentNotValidException ex) {
-
-        String message = ex.getBindingResult()
+    public Map<String, Object> handleValidationErrors(MethodArgumentNotValidException ex) {
+        Map<String, String> fieldErrors = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
-                .findFirst()
-                .map(error -> error.getDefaultMessage())
-                .orElse("Validation failed");
-
-        return Map.of(
-                "error", message
-        );
+                .collect(Collectors.toMap(
+                        FieldError::getField,
+                        e -> e.getDefaultMessage() != null ? e.getDefaultMessage() : "invalid",
+                        (first, second) -> first
+                ));
+        return Map.of("errors", fieldErrors);
     }
 
     @ExceptionHandler(IllegalStateException.class)
