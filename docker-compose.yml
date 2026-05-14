@@ -33,6 +33,8 @@ services:
       COINGECKO_API_KEY: ${COINGECKO_API_KEY:-}
       ETHERSCAN_API_KEY: ${ETHERSCAN_API_KEY:-}
       HELIUS_API_KEY: ${HELIUS_API_KEY:-}
+      SPRING_GRAPHQL_GRAPHIQL_ENABLED: "true"
+      SPRING_GRAPHQL_GRAPHIQL_PATH: /graphiql
     ports:
       - "8080:8080"
     healthcheck:

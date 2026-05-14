@@ -1,0 +1,37 @@
+type Wallet {
+    id: ID!
+    name: String!
+    chainType: String
+    chainAddress: String
+    assets: [Asset!]!
+}
+
+type Asset {
+    id: ID!
+    coinId: String!
+    walletId: ID!
+    totalAmount: Float
+    totalInvested: Float
+    currentPrice: Float
+    currentValue: Float
+    profit: Float
+    transactions: [Transaction!]!
+}
+
+type Transaction {
+    id: ID!
+    assetId: ID!
+    amount: Float!
+    buyPrice: Float!
+    date: String!
+    source: String!
+    txHash: String
+}
+
+type Query {
+    wallets: [Wallet!]!
+    wallet(id: ID!): Wallet
+    assets(walletId: ID!): [Asset!]!
+    asset(id: ID!): Asset
+    transactions(assetId: ID!): [Transaction!]!
+}

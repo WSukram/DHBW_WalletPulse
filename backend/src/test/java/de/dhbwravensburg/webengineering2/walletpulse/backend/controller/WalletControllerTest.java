@@ -84,19 +84,19 @@ class WalletControllerTest {
     }
 
     @Test
-    void createWallet_validData_returns200() throws Exception {
+    void createWallet_validData_returns201() throws Exception {
         Map<String, String> body = Map.of("name", "My Main Wallet");
 
         mockMvc.perform(post("/api/wallets")
                         .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("My Main Wallet"));
     }
 
     @Test
-    void createWallet_withChainTypeAndAddress_returns200() throws Exception {
+    void createWallet_withChainTypeAndAddress_returns201() throws Exception {
         Map<String, String> body = Map.of(
                 "name", "My ETH Wallet",
                 "chainType", "ETH",
@@ -107,7 +107,7 @@ class WalletControllerTest {
                         .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("My ETH Wallet"))
                 .andExpect(jsonPath("$.chainType").value("ETH"));
     }
