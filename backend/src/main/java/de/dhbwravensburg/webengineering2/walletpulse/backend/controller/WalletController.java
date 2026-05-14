@@ -3,6 +3,7 @@ package de.dhbwravensburg.webengineering2.walletpulse.backend.controller;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Wallet;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.service.WalletService;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.WalletPortfolioResponse;
+import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.WalletRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -15,7 +16,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/wallets")
-@Tag(name = "Wallets", description = "CRUD-Endpunkte für Wallets")
+@Tag(name = "Wallets", description = "CRUD endpoints for wallets")
 public class WalletController {
 
     private final WalletService walletService;
@@ -42,16 +43,25 @@ public class WalletController {
     }
 
     @PostMapping
-    @Operation(summary = "Neue Wallet anlegen")
-    public Wallet createWallet(@Valid @RequestBody Wallet wallet, @AuthenticationPrincipal UserDetails user) {
+    @Operation(summary = "Create a new wallet")
+    public Wallet createWallet(@Valid @RequestBody WalletRequest req, @AuthenticationPrincipal UserDetails user) {
+        Wallet wallet = new Wallet();
+        wallet.setName(req.name());
+        wallet.setChainType(req.chainType());
+        wallet.setChainAddress(req.chainAddress());
         return walletService.createWallet(wallet, user.getUsername());
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Update an existing wallet")
     public Wallet updateWallet(
             @PathVariable Long id,
-            @Valid @RequestBody Wallet updatedWallet,
+            @Valid @RequestBody WalletRequest req,
             @AuthenticationPrincipal UserDetails user) {
+        Wallet updatedWallet = new Wallet();
+        updatedWallet.setName(req.name());
+        updatedWallet.setChainType(req.chainType());
+        updatedWallet.setChainAddress(req.chainAddress());
         return walletService.updateWallet(id, updatedWallet, user.getUsername());
     }
 
