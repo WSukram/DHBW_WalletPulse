@@ -4,7 +4,8 @@ import { useApp } from '../context/AppContext';
 import { downloadCsv } from '../utils/exportCsv';
 import { coinMeta } from '../utils/coins';
 import { usePortfolioData } from '../hooks/usePortfolioData';
-import { inputCls, labelCls } from '../utils/styles';
+import EditTransactionModal from '../components/history/EditTransactionModal';
+import DeleteTransactionModal from '../components/history/DeleteTransactionModal';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '—';
@@ -102,110 +103,25 @@ const History = () => {
   return (
     <div className="flex-1 overflow-y-auto p-6 md:p-layout-margin flex flex-col gap-6">
 
-      {/* Edit Modal */}
-      {editTx && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setEditTx(null)}>
-          <div className="bg-surface-container rounded-xl p-6 w-full max-w-md border border-outline-variant/30 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-heading-md text-heading-md text-on-surface mb-1">Edit Transaction</h3>
-            <div className="flex items-center gap-2 mb-5">
-              <div
-                className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                style={{ backgroundColor: `${coinMeta(editTx.coinId).color}1a`, color: coinMeta(editTx.coinId).color }}
-              >
-                {coinMeta(editTx.coinId).icon}
-              </div>
-              <span className="text-sm text-on-surface-variant">{coinMeta(editTx.coinId).name} · {editTx.walletName}</span>
-            </div>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={labelCls}>Amount</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="any"
-                    className={inputCls}
-                    value={editForm.amount}
-                    onChange={(e) => setEditForm((f) => ({ ...f, amount: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <label className={labelCls}>Buy Price (EUR)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="any"
-                    className={inputCls}
-                    value={editForm.buyPrice}
-                    onChange={(e) => setEditForm((f) => ({ ...f, buyPrice: e.target.value }))}
-                  />
-                </div>
-              </div>
-              <div>
-                <label className={labelCls}>Purchase Date</label>
-                <input
-                  type="date"
-                  className={inputCls}
-                  value={editForm.date}
-                  max={new Date().toISOString().split('T')[0]}
-                  onChange={(e) => setEditForm((f) => ({ ...f, date: e.target.value }))}
-                />
-              </div>
-              {editForm.amount && editForm.buyPrice && (
-                <div className="bg-surface-container-highest rounded-lg px-4 py-3 text-sm text-on-surface-variant">
-                  Total cost: <span className="font-data-mono text-on-surface">
-                    {formatEur(parseFloat(editForm.amount || 0) * parseFloat(editForm.buyPrice || 0))}
-                  </span>
-                </div>
-              )}
-              {editError && <p className="text-error text-sm">{editError}</p>}
-            </div>
-            <div className="flex gap-3 justify-end mt-6">
-              <button onClick={() => setEditTx(null)} className="px-4 py-2 rounded-lg text-on-surface-variant font-label-sm text-label-sm hover:text-on-surface transition-colors">
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveEdit}
-                disabled={savingEdit}
-                className="px-4 py-2 rounded-lg bg-primary text-on-primary font-label-sm text-label-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {savingEdit ? 'Saving…' : 'Save Changes'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <EditTransactionModal
+        tx={editTx}
+        form={editForm}
+        setForm={setEditForm}
+        saving={savingEdit}
+        errorMsg={editError}
+        onClose={() => setEditTx(null)}
+        onSave={handleSaveEdit}
+        formatEur={formatEur}
+      />
 
-      {/* Delete Confirmation Modal */}
-      {deleteTx && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setDeleteTx(null)}>
-          <div className="bg-surface-container rounded-xl p-6 w-full max-w-sm border border-outline-variant/30 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center mb-4">
-              <span className="material-symbols-outlined text-error text-[20px]">delete</span>
-            </div>
-            <h3 className="font-heading-md text-heading-md text-on-surface mb-2">Delete Transaction</h3>
-            <p className="text-sm text-on-surface-variant mb-1">
-              {coinMeta(deleteTx.coinId).name} · {deleteTx.amount.toFixed(8)} units
-            </p>
-            <p className="text-sm text-on-surface-variant mb-5">
-              Purchased on {formatDate(deleteTx.date)} at {formatEur(deleteTx.buyPrice)}/unit
-            </p>
-            <p className="text-sm text-error/80 mb-5">This action cannot be undone.</p>
-            <div className="flex gap-3 justify-end">
-              <button onClick={() => setDeleteTx(null)} className="px-4 py-2 rounded-lg text-on-surface-variant font-label-sm text-label-sm hover:text-on-surface transition-colors">
-                Cancel
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="px-4 py-2 rounded-lg bg-error text-on-error font-label-sm text-label-sm hover:bg-error/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {deleting ? 'Deleting…' : 'Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteTransactionModal
+        tx={deleteTx}
+        deleting={deleting}
+        onClose={() => setDeleteTx(null)}
+        onConfirm={handleDelete}
+        formatEur={formatEur}
+        formatDate={formatDate}
+      />
 
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
