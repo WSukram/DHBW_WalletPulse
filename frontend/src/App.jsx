@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { AppProvider } from './context/AppContext'
 import ScrollToTop from './components/ScrollToTop'
@@ -14,6 +15,7 @@ import Register from "./pages/Register.jsx";
 import Home from "./pages/Home.jsx";
 import TermsOfService from "./pages/TermsOfService.jsx";
 import PrivacyPolicy from "./pages/PrivacyPolicy.jsx";
+const Docs = lazy(() => import('./pages/Docs.jsx'))
 
 
 function App() {
@@ -27,6 +29,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/docs" element={<Suspense fallback={null}><Docs /></Suspense>} />
 
         {/* Protected Routes */}
         <Route element={<PrivateRoute />}>
