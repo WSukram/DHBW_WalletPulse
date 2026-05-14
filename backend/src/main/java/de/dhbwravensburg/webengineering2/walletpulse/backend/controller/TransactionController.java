@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@Tag(name = "Transactions", description = "CRUD-Endpunkte für Kauftransaktionen")
+@Tag(name = "Transactions", description = "CRUD endpoints for purchase transactions")
 public class TransactionController {
 
     private final TransactionService transactionService;
@@ -28,13 +28,13 @@ public class TransactionController {
     }
 
     @GetMapping("/api/assets/{assetId}/transactions")
-    @Operation(summary = "Transaktionen eines Assets abrufen")
+    @Operation(summary = "Get all transactions of an asset")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Transaktionen erfolgreich geladen"),
-            @ApiResponse(responseCode = "404", description = "Asset nicht gefunden")
+            @ApiResponse(responseCode = "200", description = "Transactions loaded successfully"),
+            @ApiResponse(responseCode = "404", description = "Asset not found")
     })
     public List<TransactionResponse> getTransactionsByAssetId(
-            @Parameter(description = "ID des Assets", example = "10") @PathVariable Long assetId,
+            @Parameter(description = "Asset ID", example = "10") @PathVariable Long assetId,
             @AuthenticationPrincipal UserDetails user) {
         return transactionService.getTransactionsByAssetId(assetId, user.getUsername())
                 .stream()
@@ -43,27 +43,27 @@ public class TransactionController {
     }
 
     @GetMapping("/api/transactions/{transactionId}")
-    @Operation(summary = "Eine Transaktion per ID abrufen")
+    @Operation(summary = "Get a transaction by ID")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Transaktion gefunden"),
-            @ApiResponse(responseCode = "404", description = "Transaktion nicht gefunden")
+            @ApiResponse(responseCode = "200", description = "Transaction found"),
+            @ApiResponse(responseCode = "404", description = "Transaction not found")
     })
     public TransactionResponse getTransactionById(
-            @Parameter(description = "ID der Transaktion", example = "100") @PathVariable Long transactionId,
+            @Parameter(description = "Transaction ID", example = "100") @PathVariable Long transactionId,
             @AuthenticationPrincipal UserDetails user) {
         return toResponse(transactionService.getTransactionById(transactionId, user.getUsername()));
     }
 
     @PostMapping("/api/assets/{assetId}/transactions")
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Neue Transaktion anlegen")
+    @Operation(summary = "Create a new transaction")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Transaktion erstellt"),
-            @ApiResponse(responseCode = "400", description = "Ungültige Anfrage"),
-            @ApiResponse(responseCode = "404", description = "Asset nicht gefunden")
+            @ApiResponse(responseCode = "201", description = "Transaction created"),
+            @ApiResponse(responseCode = "400", description = "Invalid request"),
+            @ApiResponse(responseCode = "404", description = "Asset not found")
     })
     public TransactionResponse createTransaction(
-            @Parameter(description = "ID des Assets", example = "10") @PathVariable Long assetId,
+            @Parameter(description = "Asset ID", example = "10") @PathVariable Long assetId,
             @Valid @RequestBody TransactionRequest request,
             @AuthenticationPrincipal UserDetails user) {
         Transaction created = transactionService.createTransaction(
@@ -73,13 +73,13 @@ public class TransactionController {
     }
 
     @PutMapping("/api/transactions/{transactionId}")
-    @Operation(summary = "Transaktion aktualisieren")
+    @Operation(summary = "Update a transaction")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Transaktion aktualisiert"),
-            @ApiResponse(responseCode = "404", description = "Transaktion nicht gefunden")
+            @ApiResponse(responseCode = "200", description = "Transaction updated"),
+            @ApiResponse(responseCode = "404", description = "Transaction not found")
     })
     public TransactionResponse updateTransaction(
-            @Parameter(description = "ID der Transaktion", example = "100") @PathVariable Long transactionId,
+            @Parameter(description = "Transaction ID", example = "100") @PathVariable Long transactionId,
             @Valid @RequestBody TransactionRequest request,
             @AuthenticationPrincipal UserDetails user) {
         Transaction updated = transactionService.updateTransaction(
@@ -90,13 +90,13 @@ public class TransactionController {
 
     @DeleteMapping("/api/transactions/{transactionId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Transaktion löschen")
+    @Operation(summary = "Delete a transaction")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Transaktion gelöscht"),
-            @ApiResponse(responseCode = "404", description = "Transaktion nicht gefunden")
+            @ApiResponse(responseCode = "204", description = "Transaction deleted"),
+            @ApiResponse(responseCode = "404", description = "Transaction not found")
     })
     public void deleteTransaction(
-            @Parameter(description = "ID der Transaktion", example = "100") @PathVariable Long transactionId,
+            @Parameter(description = "Transaction ID", example = "100") @PathVariable Long transactionId,
             @AuthenticationPrincipal UserDetails user) {
         transactionService.deleteTransaction(transactionId, user.getUsername());
     }

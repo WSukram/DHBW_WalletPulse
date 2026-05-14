@@ -8,13 +8,13 @@ import jakarta.validation.constraints.PositiveOrZero;
 import java.time.LocalDate;
 
 public record TransactionRequest(
-        @Schema(description = "Menge des Coins", example = "0.5")
+        @Schema(description = "Amount of the coin", example = "0.5")
         @Positive(message = "Amount must be greater than zero")
         double amount,
-        @Schema(description = "Kaufpreis pro Coin", example = "58000")
+        @Schema(description = "Purchase price per coin in EUR", example = "58000")
         @PositiveOrZero(message = "Buy price must be zero or greater")
         double buyPrice,
-        @Schema(description = "Kaufdatum", example = "2026-04-24")
+        @Schema(description = "Purchase date", example = "2026-04-24")
         @NotNull(message = "Date must not be null")
         LocalDate date
 ) {

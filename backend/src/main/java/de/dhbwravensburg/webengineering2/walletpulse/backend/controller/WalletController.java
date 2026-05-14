@@ -31,13 +31,13 @@ public class WalletController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Eine Wallet per ID abrufen")
+    @Operation(summary = "Get a wallet by ID")
     public Wallet getWalletById(@PathVariable Long id, @AuthenticationPrincipal UserDetails user) {
         return walletService.getWalletById(id, user.getUsername());
     }
 
     @GetMapping("/{id}/portfolio")
-    @Operation(summary = "Gibt das komplette Portfolio einer Wallet inkl. Berechnungen aus")
+    @Operation(summary = "Get the full portfolio of a wallet including calculated totals")
     public WalletPortfolioResponse getWalletPortfolio(@PathVariable Long id, @AuthenticationPrincipal UserDetails user) {
         return walletService.getWalletPortfolio(id, user.getUsername());
     }

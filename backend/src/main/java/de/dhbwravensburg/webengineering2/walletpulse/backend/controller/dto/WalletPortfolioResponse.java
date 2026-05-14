@@ -6,15 +6,15 @@ import java.util.List;
 public record WalletPortfolioResponse(
         @Schema(description = "Wallet ID", example = "1")
         Long id,
-        @Schema(description = "Name der Wallet", example = "Mein Krypto-Portfolio")
+        @Schema(description = "Wallet display name", example = "My Crypto Portfolio")
         String name,
-        @Schema(description = "Gesamtinvestition über alle Assets (in Euro)", example = "50000.0")
+        @Schema(description = "Total amount invested across all assets (in EUR)", example = "50000.0")
         Double totalInvested,
-        @Schema(description = "Gesamtwert aller Assets basierend auf aktuellen Preisen (in Euro)", example = "65000.0")
+        @Schema(description = "Total current value of all assets based on live prices (in EUR)", example = "65000.0")
         Double totalCurrentValue,
-        @Schema(description = "Gesamtgewinn oder -verlust (in Euro)", example = "15000.0")
+        @Schema(description = "Total profit or loss (in EUR)", example = "15000.0")
         Double totalProfit,
-        @Schema(description = "Details zu den einzelnen Assets")
+        @Schema(description = "Individual asset details")
         List<AssetResponse> assets
 ) {
 }

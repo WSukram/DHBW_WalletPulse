@@ -14,7 +14,7 @@ public class OpenApiConfig {
                 .info(new Info()
                         .title("WalletPulse API")
                         .version("v1")
-                        .description("REST API für WalletPulse Portfolio Tracking"));
+                        .description("REST API for WalletPulse crypto portfolio tracking"));
     }
 }
 
