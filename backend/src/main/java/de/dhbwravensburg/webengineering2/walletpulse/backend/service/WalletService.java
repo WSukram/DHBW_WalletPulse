@@ -11,6 +11,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * CRUD and portfolio aggregation for wallets. Every method takes the caller's
+ * {@code ownerEmail} so that database queries are scoped to the authenticated
+ * user — a user can never observe or modify another user's wallets.
+ */
 @Service
 public class WalletService {
 

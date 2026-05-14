@@ -12,6 +12,12 @@ import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.function.Function;
 
+/**
+ * Issues and validates HS256-signed JWTs. The signing key is taken from the
+ * {@code jwt.secret} property (Base64-encoded) and the token lifetime from
+ * {@code jwt.expiration} (milliseconds). The token carries the user's email as
+ * its subject; no roles or other claims are added.
+ */
 @Service
 public class JwtService {
 

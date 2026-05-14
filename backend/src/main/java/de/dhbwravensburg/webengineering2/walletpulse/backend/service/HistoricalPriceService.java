@@ -10,6 +10,16 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Map;
 
+/**
+ * Resolves the EUR price of a coin on a given date through a three-tier lookup:
+ * <ol>
+ *   <li>local cache table ({@link HistoricalPrice})</li>
+ *   <li>CoinGecko historical endpoint (free tier supports only the last 365 days)</li>
+ *   <li>CryptoCompare daily-close as fallback for older dates or CoinGecko failures</li>
+ * </ol>
+ * Resolved prices are persisted to the cache, so each (coinId, date) pair hits
+ * the network at most once.
+ */
 @Service
 public class HistoricalPriceService {
 
@@ -72,10 +82,12 @@ public class HistoricalPriceService {
     private BigDecimal fetchPrice(String coinId, LocalDate date) {
         LocalDate today = LocalDate.now();
 
+        // For today / yesterday CoinGecko has no historical endpoint yet — use the live price.
         if (!date.isBefore(today.minusDays(1))) {
             return coinGeckoClient.getCurrentPriceInEur(coinId);
         }
 
+        // CoinGecko's free tier serves historical data only up to one year back.
         boolean coinGeckoSupported = date.isAfter(today.minusDays(365));
         if (coinGeckoSupported) {
             try {

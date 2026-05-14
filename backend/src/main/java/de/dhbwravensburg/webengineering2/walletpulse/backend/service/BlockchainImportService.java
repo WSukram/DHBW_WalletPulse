@@ -19,12 +19,26 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Imports on-chain transactions for ETH, BTC and SOL wallets. For each chain the
+ * service calls the matching explorer API (Etherscan, Blockstream, Helius),
+ * converts the chain's smallest unit to a human-readable amount, resolves the
+ * EUR price at the transaction date via {@link HistoricalPriceService} and
+ * stores the result. Imports are idempotent: transactions are deduplicated by
+ * {@code txHash}, and entries that were stored without a historical price
+ * (e.g. due to rate-limiting) are backfilled on subsequent runs.
+ */
 @Service
 public class BlockchainImportService {
 
+    // Native unit conversion factors. Native coins are stored on-chain as integers
+    // in their smallest unit; we divide by these to get a decimal amount.
     private static final BigDecimal WEI_PER_ETH = new BigDecimal("1000000000000000000");
     private static final BigDecimal SATOSHI_PER_BTC = new BigDecimal("100000000");
 
+    // ERC-20 symbol → CoinGecko coin id. We hardcode the common tokens because
+    // CoinGecko has no public symbol-to-id endpoint; unmapped symbols fall back
+    // to lower-casing the symbol, which works for many but not all coins.
     private static final Map<String, String> TOKEN_TO_COINGECKO_ID = Map.ofEntries(
             Map.entry("USDC", "usd-coin"),
             Map.entry("USDT", "tether"),
@@ -39,6 +53,9 @@ public class BlockchainImportService {
             Map.entry("PEPE", "pepe")
     );
 
+    // SPL tokens are identified on Solana by their mint address (not a symbol),
+    // so we map known mints to CoinGecko ids. Unknown mints are skipped during
+    // import — without a CoinGecko id we cannot price the transaction.
     private static final Map<String, String> SOL_MINT_TO_COINGECKO_ID = Map.ofEntries(
             Map.entry("3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh", "wrapped-bitcoin"),  // Wormhole WBTC
             Map.entry("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", "usd-coin"),         // USDC
@@ -281,6 +298,12 @@ public class BlockchainImportService {
                 .orElseGet(() -> assetRepository.save(Asset.builder().coinId(coinId).wallet(wallet).build()));
     }
 
+    /**
+     * Returns the EUR price for the given coin/date, or {@code 0} on failure
+     * (e.g. rate-limit, missing coin). Returning zero rather than aborting lets
+     * the rest of the import proceed; the transaction can be backfilled on a
+     * later import once the price source is reachable again.
+     */
     private BigDecimal getPriceOrZero(String coinId, LocalDate date) {
         try {
             return historicalPriceService.getEurPrice(coinId, date);
