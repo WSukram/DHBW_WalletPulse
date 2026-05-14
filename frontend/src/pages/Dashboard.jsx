@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   useEffect(() => { document.title = 'Dashboard · WalletPulse'; }, []);
   const [wallets, setWallets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -24,11 +25,15 @@ const Dashboard = () => {
       )
       .then(setWallets);
 
+  // Refetch on every navigation to this page so mutations made elsewhere
+  // (transaction edit/delete in History, etc.) are reflected without a hard
+  // reload. `isLoading` only flips true on the first mount — subsequent
+  // refetches happen silently in the background.
   useEffect(() => {
     loadWallets()
       .then(() => setIsLoading(false))
       .catch(() => { setError('Failed to load portfolio data.'); setIsLoading(false); });
-  }, []);
+  }, [location.key]);
 
   const handleCreateWallet = () => {
     if (!newWalletName.trim()) return;
