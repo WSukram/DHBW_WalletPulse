@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { downloadCsv } from '../utils/exportCsv';
+import { COIN_META, KNOWN_COINS, coinMeta, formatPct } from '../utils/coins';
 
 const CHAIN_META = {
   ETH: { label: 'Ethereum', color: '#627EEA', bg: '#627EEA22' },
@@ -29,32 +30,6 @@ const formatRelative = (dateStr) => {
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
   return `${Math.floor(hrs / 24)}d ago`;
-};
-
-const COIN_META = {
-  bitcoin:  { name: 'Bitcoin',  symbol: 'BTC', icon: 'currency_bitcoin', color: '#F7931A' },
-  ethereum: { name: 'Ethereum', symbol: 'ETH', icon: 'token',            color: '#627EEA' },
-  solana:   { name: 'Solana',   symbol: 'SOL', icon: 'toll',             color: '#14F195' },
-};
-
-const KNOWN_COINS = [
-  { id: 'bitcoin',  name: 'Bitcoin',  symbol: 'BTC' },
-  { id: 'ethereum', name: 'Ethereum', symbol: 'ETH' },
-  { id: 'solana',   name: 'Solana',   symbol: 'SOL' },
-];
-
-const coinMeta = (coinId) =>
-  COIN_META[coinId] ?? {
-    name: coinId.charAt(0).toUpperCase() + coinId.slice(1),
-    symbol: coinId.slice(0, 4).toUpperCase(),
-    icon: 'generating_tokens',
-    color: '#888888',
-  };
-
-const formatPct = (profit, invested) => {
-  if (!invested || invested === 0) return '0.00%';
-  const pct = ((profit / invested) * 100).toFixed(2);
-  return (profit >= 0 ? '+' : '') + pct + '%';
 };
 
 const timeRanges = ['1W', '1M', '1Y', 'ALL'];
@@ -934,7 +909,7 @@ const Wallet = () => {
                             className="w-8 h-8 rounded-full flex items-center justify-center"
                             style={{ backgroundColor: `${meta.color}33`, color: meta.color }}
                           >
-                            <span className="material-symbols-outlined text-[18px]">{meta.icon}</span>
+                            <span className="material-symbols-outlined text-[18px]">{meta.mui}</span>
                           </div>
                           <div>
                             <div className="font-body-md text-body-md font-medium">{meta.name}</div>

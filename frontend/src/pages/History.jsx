@@ -2,20 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useApp } from '../context/AppContext';
 import { downloadCsv } from '../utils/exportCsv';
-
-const COIN_META = {
-  bitcoin:  { name: 'Bitcoin',  symbol: 'BTC', color: '#F7931A', icon: '₿' },
-  ethereum: { name: 'Ethereum', symbol: 'ETH', color: '#627EEA', icon: 'Ξ' },
-  solana:   { name: 'Solana',   symbol: 'SOL', color: '#14F195', icon: 'S' },
-};
-
-const coinMeta = (coinId) =>
-  COIN_META[coinId] ?? {
-    name: coinId.charAt(0).toUpperCase() + coinId.slice(1),
-    symbol: coinId.slice(0, 4).toUpperCase(),
-    color: '#888888',
-    icon: coinId[0].toUpperCase(),
-  };
+import { coinMeta } from '../utils/coins';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '—';

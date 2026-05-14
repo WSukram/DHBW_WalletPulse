@@ -2,12 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { isTokenExpired } from '../context/AppContext';
-
-const TICKER_COINS = [
-  { id: 'bitcoin',  symbol: 'BTC', name: 'Bitcoin',  color: '#F7931A' },
-  { id: 'ethereum', symbol: 'ETH', name: 'Ethereum', color: '#627EEA' },
-  { id: 'solana',   symbol: 'SOL', name: 'Solana',   color: '#14F195' },
-];
+import { TICKER_COINS } from '../utils/coins';
 
 const useLivePrices = () => {
   const [prices, setPrices] = useState({});

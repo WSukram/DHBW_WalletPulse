@@ -1,20 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useApp } from '../context/AppContext';
-
-const COIN_META = {
-  bitcoin:  { name: 'Bitcoin',  symbol: 'BTC', color: '#F7931A', icon: '₿' },
-  ethereum: { name: 'Ethereum', symbol: 'ETH', color: '#627EEA', icon: 'Ξ' },
-  solana:   { name: 'Solana',   symbol: 'SOL', color: '#14F195', icon: 'S' },
-};
-
-const coinMeta = (coinId) =>
-  COIN_META[coinId] ?? {
-    name: coinId.charAt(0).toUpperCase() + coinId.slice(1),
-    symbol: coinId.slice(0, 4).toUpperCase(),
-    color: '#888888',
-    icon: coinId[0].toUpperCase(),
-  };
+import { coinMeta, formatPct } from '../utils/coins';
 
 const groupByCoin = (assets) => {
   const map = {};
@@ -30,12 +17,6 @@ const groupByCoin = (assets) => {
     }
   }
   return Object.values(map);
-};
-
-const formatPct = (profit, invested) => {
-  if (!invested || invested === 0) return '0.00%';
-  const pct = ((profit / invested) * 100).toFixed(2);
-  return (profit >= 0 ? '+' : '') + pct + '%';
 };
 
 const CIRCUMFERENCE = 2 * Math.PI * 40;
