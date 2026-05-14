@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext';
 import { downloadCsv } from '../utils/exportCsv';
 import { coinMeta } from '../utils/coins';
 import { usePortfolioData } from '../hooks/usePortfolioData';
+import { inputCls, labelCls } from '../utils/styles';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '—';
@@ -20,9 +21,6 @@ const explorerUrl = (chainType, txHash) => {
     default: return null;
   }
 };
-
-const inputCls = 'w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg px-4 py-2.5 text-on-surface font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-on-surface-variant/50';
-const labelCls = 'block font-label-sm text-label-sm text-on-surface-variant mb-1';
 
 const PAGE_SIZE = 10;
 

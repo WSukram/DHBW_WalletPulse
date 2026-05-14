@@ -5,6 +5,7 @@ import { useApp } from '../context/AppContext';
 import { downloadCsv } from '../utils/exportCsv';
 import { COIN_META, KNOWN_COINS, coinMeta, formatPct } from '../utils/coins';
 import { timeRanges, getChartLabels, computePortfolioChartPoints, pointsToPath } from '../utils/chart';
+import { inputCls, labelCls } from '../utils/styles';
 
 const CHAIN_META = {
   ETH: { label: 'Ethereum', color: '#627EEA', bg: '#627EEA22' },
@@ -32,10 +33,6 @@ const formatRelative = (dateStr) => {
   if (hrs < 24) return `${hrs}h ago`;
   return `${Math.floor(hrs / 24)}d ago`;
 };
-
-// ── Shared modal styles ─────────────────────────────────────────────────────
-const inputCls = 'w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg px-4 py-2.5 text-on-surface font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-on-surface-variant/50';
-const labelCls = 'block font-label-sm text-label-sm text-on-surface-variant mb-1';
 
 const Wallet = () => {
   useEffect(() => { document.title = 'Wallets · WalletPulse'; }, []);
