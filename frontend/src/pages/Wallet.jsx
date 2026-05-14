@@ -5,7 +5,10 @@ import { useApp } from '../context/AppContext';
 import { downloadCsv } from '../utils/exportCsv';
 import { COIN_META, KNOWN_COINS, coinMeta, formatPct } from '../utils/coins';
 import { timeRanges, getChartLabels, computePortfolioChartPoints, pointsToPath } from '../utils/chart';
-import { inputCls, labelCls } from '../utils/styles';
+import AddWalletModal from '../components/wallet/AddWalletModal';
+import EditWalletModal from '../components/wallet/EditWalletModal';
+import DeleteWalletModal from '../components/wallet/DeleteWalletModal';
+import AddTransactionModal from '../components/wallet/AddTransactionModal';
 
 const CHAIN_META = {
   ETH: { label: 'Ethereum', color: '#627EEA', bg: '#627EEA22' },
@@ -282,119 +285,32 @@ const Wallet = () => {
 
     return (
       <div className="flex-1 overflow-y-auto p-6 lg:p-layout-margin space-y-8">
-        {showAddWallet && (
-          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setShowAddWallet(false)}>
-            <div className="bg-surface-container rounded-xl p-6 w-full max-w-sm border border-outline-variant/30 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              <h3 className="font-heading-md text-heading-md text-on-surface mb-1">New Wallet</h3>
-              <p className="text-sm text-on-surface-variant mb-5">Give your wallet a name to get started.</p>
-              <div className="space-y-4 mb-5">
-                <div>
-                  <label className={labelCls}>Wallet Name</label>
-                  <input
-                    autoFocus
-                    className={inputCls}
-                    placeholder="e.g. Main Portfolio"
-                    value={newWalletName}
-                    onChange={(e) => setNewWalletName(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleCreateWallet()}
-                  />
-                </div>
-                <div>
-                  <label className={labelCls}>Blockchain (optional)</label>
-                  <select className={inputCls} value={newWalletChainType} onChange={(e) => setNewWalletChainType(e.target.value)}>
-                    <option value="">None — manual entry only</option>
-                    <option value="ETH">Ethereum (ETH)</option>
-                    <option value="BTC">Bitcoin (BTC)</option>
-                    <option value="SOL">Solana (SOL)</option>
-                  </select>
-                </div>
-                {newWalletChainType && (
-                  <div>
-                    <label className={labelCls}>Wallet Address</label>
-                    <input
-                      className={inputCls}
-                      placeholder={newWalletChainType === 'ETH' ? '0x...' : newWalletChainType === 'BTC' ? 'bc1q... or 1A...' : 'Sol address...'}
-                      value={newWalletChainAddress}
-                      onChange={(e) => setNewWalletChainAddress(e.target.value)}
-                    />
-                  </div>
-                )}
-              </div>
-              <div className="flex gap-3 justify-end">
-                <button onClick={() => { setShowAddWallet(false); setNewWalletChainType(''); setNewWalletChainAddress(''); }} className="px-4 py-2 rounded-lg text-on-surface-variant font-label-sm text-label-sm hover:text-on-surface transition-colors">Cancel</button>
-                <button onClick={handleCreateWallet} disabled={savingWallet || !newWalletName.trim()} className="px-4 py-2 rounded-lg bg-primary text-on-primary font-label-sm text-label-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                  {savingWallet ? 'Creating…' : 'Create Wallet'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <AddWalletModal
+          open={showAddWallet}
+          name={newWalletName} setName={setNewWalletName}
+          chainType={newWalletChainType} setChainType={setNewWalletChainType}
+          chainAddress={newWalletChainAddress} setChainAddress={setNewWalletChainAddress}
+          saving={savingWallet}
+          onClose={() => { setShowAddWallet(false); setNewWalletChainType(''); setNewWalletChainAddress(''); }}
+          onCreate={handleCreateWallet}
+        />
 
-        {editWallet && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setEditWallet(null)}>
-          <div className="bg-surface-container rounded-xl p-6 w-full max-w-sm border border-outline-variant/30 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-heading-md text-heading-md text-on-surface mb-1">Edit Wallet</h3>
-            <p className="text-sm text-on-surface-variant mb-5">Update name or blockchain address for "{editWallet.name}".</p>
-            <div className="space-y-4 mb-5">
-              <div>
-                <label className={labelCls}>Wallet Name</label>
-                <input
-                  autoFocus
-                  className={inputCls}
-                  placeholder="e.g. Main Portfolio"
-                  value={editWalletName}
-                  onChange={(e) => setEditWalletName(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleEditWallet()}
-                />
-              </div>
-              <div>
-                <label className={labelCls}>Blockchain (optional)</label>
-                <select className={inputCls} value={editWalletChainType} onChange={(e) => setEditWalletChainType(e.target.value)}>
-                  <option value="">None — manual entry only</option>
-                  <option value="ETH">Ethereum (ETH)</option>
-                  <option value="BTC">Bitcoin (BTC)</option>
-                  <option value="SOL">Solana (SOL)</option>
-                </select>
-              </div>
-              {editWalletChainType && (
-                <div>
-                  <label className={labelCls}>Wallet Address</label>
-                  <input
-                    className={inputCls}
-                    placeholder={editWalletChainType === 'ETH' ? '0x...' : editWalletChainType === 'BTC' ? 'bc1q... or 1A...' : 'Sol address...'}
-                    value={editWalletChainAddress}
-                    onChange={(e) => setEditWalletChainAddress(e.target.value)}
-                  />
-                </div>
-              )}
-            </div>
-            <div className="flex gap-3 justify-end">
-              <button onClick={() => setEditWallet(null)} className="px-4 py-2 rounded-lg text-on-surface-variant font-label-sm text-label-sm hover:text-on-surface transition-colors">Cancel</button>
-              <button onClick={handleEditWallet} disabled={savingEditWallet || !editWalletName.trim()} className="px-4 py-2 rounded-lg bg-primary text-on-primary font-label-sm text-label-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                {savingEditWallet ? 'Saving…' : 'Save'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+        <EditWalletModal
+          wallet={editWallet}
+          name={editWalletName} setName={setEditWalletName}
+          chainType={editWalletChainType} setChainType={setEditWalletChainType}
+          chainAddress={editWalletChainAddress} setChainAddress={setEditWalletChainAddress}
+          saving={savingEditWallet}
+          onClose={() => setEditWallet(null)}
+          onSave={handleEditWallet}
+        />
 
-      {deleteWallet && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setDeleteWallet(null)}>
-          <div className="bg-surface-container rounded-xl p-6 w-full max-w-sm border border-outline-variant/30 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-heading-md text-heading-md text-on-surface mb-1">Delete Wallet</h3>
-            <p className="text-sm text-on-surface-variant mb-2">
-              Are you sure you want to delete <span className="text-on-surface font-medium">"{deleteWallet.name}"</span>?
-            </p>
-            <p className="text-sm text-error mb-5">This will permanently remove the wallet and all its assets and transactions. This cannot be undone.</p>
-            <div className="flex gap-3 justify-end">
-              <button onClick={() => setDeleteWallet(null)} className="px-4 py-2 rounded-lg text-on-surface-variant font-label-sm text-label-sm hover:text-on-surface transition-colors">Cancel</button>
-              <button onClick={handleDeleteWallet} disabled={deletingWallet} className="px-4 py-2 rounded-lg bg-error text-on-error font-label-sm text-label-sm hover:bg-error/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                {deletingWallet ? 'Deleting…' : 'Delete Wallet'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+        <DeleteWalletModal
+          wallet={deleteWallet}
+          deleting={deletingWallet}
+          onClose={() => setDeleteWallet(null)}
+          onConfirm={handleDeleteWallet}
+        />
 
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
@@ -521,49 +437,16 @@ const Wallet = () => {
 
   return (
     <div className="flex-1 overflow-y-auto p-6 lg:p-layout-margin space-y-8">
-      {showAddTx && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setShowAddTx(false)}>
-          <div className="bg-surface-container rounded-xl p-6 w-full max-w-md border border-outline-variant/30 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-heading-md text-heading-md text-on-surface mb-1">Add Transaction</h3>
-            <p className="text-sm text-on-surface-variant mb-5">Record a new purchase for this wallet.</p>
-            <div className="space-y-4">
-              <div>
-                <label className={labelCls}>Coin</label>
-                <select className={inputCls} value={txForm.coinId} onChange={(e) => setTxForm((f) => ({ ...f, coinId: e.target.value }))}>
-                  <option value="">Select a coin…</option>
-                  {coinOptions.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={labelCls}>Amount</label>
-                  <input type="number" min="0" step="any" className={inputCls} placeholder="0.00" value={txForm.amount} onChange={(e) => setTxForm((f) => ({ ...f, amount: e.target.value }))} />
-                </div>
-                <div>
-                  <label className={labelCls}>Buy Price (EUR)</label>
-                  <input type="number" min="0" step="any" className={inputCls} placeholder="0.00" value={txForm.buyPrice} onChange={(e) => setTxForm((f) => ({ ...f, buyPrice: e.target.value }))} />
-                </div>
-              </div>
-              <div>
-                <label className={labelCls}>Purchase Date</label>
-                <input type="date" className={inputCls} value={txForm.date} max={new Date().toISOString().split('T')[0]} onChange={(e) => setTxForm((f) => ({ ...f, date: e.target.value }))} />
-              </div>
-              {txForm.amount && txForm.buyPrice && (
-                <div className="bg-surface-container-highest rounded-lg px-4 py-3 text-sm text-on-surface-variant">
-                  Total cost: <span className="font-data-mono text-on-surface">{formatEur(parseFloat(txForm.amount || 0) * parseFloat(txForm.buyPrice || 0))}</span>
-                </div>
-              )}
-              {txError && <p className="text-error text-sm font-label-sm">{txError}</p>}
-            </div>
-            <div className="flex gap-3 justify-end mt-6">
-              <button onClick={() => setShowAddTx(false)} className="px-4 py-2 rounded-lg text-on-surface-variant font-label-sm text-label-sm hover:text-on-surface transition-colors">Cancel</button>
-              <button onClick={handleAddTransaction} disabled={savingTx} className="px-4 py-2 rounded-lg bg-primary text-on-primary font-label-sm text-label-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                {savingTx ? 'Saving…' : 'Add Transaction'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AddTransactionModal
+        open={showAddTx}
+        form={txForm} setForm={setTxForm}
+        coinOptions={coinOptions}
+        saving={savingTx}
+        errorMsg={txError}
+        onClose={() => setShowAddTx(false)}
+        onSave={handleAddTransaction}
+        formatEur={formatEur}
+      />
 
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
