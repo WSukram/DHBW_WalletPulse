@@ -139,6 +139,9 @@ const computeChartPoints = (txs, assets, range) => {
   return points;
 };
 
+// SVG path for the cost/value chart. Maps each point onto a 100×100 viewBox
+// (x: 0–100 across the point index, y: 10–95 with 5 units of top margin). With
+// `closed = true` the path is closed to the bottom edge for the filled area.
 const pointsToPath = (points, key, minV, maxV, closed = false) => {
   if (!points.length || maxV === minV) return '';
   const coords = points.map((p, i) => {

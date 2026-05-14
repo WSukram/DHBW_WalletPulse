@@ -96,6 +96,17 @@ const getChartLabels = (range) => {
   return [year - 4, year - 3, year - 2, year - 1, year].map(String);
 };
 
+/**
+ * Reconstructs portfolio cost and value over time by replaying every transaction
+ * in chronological order and accumulating per-asset holdings. The timeline is
+ * sampled into N+1 evenly-spaced points between the first transaction (or the
+ * range cutoff, whichever is later) and now, so the chart has a fixed number
+ * of vertices regardless of how many transactions exist.
+ *
+ * Note: current market price is used for every sample — we do not look up the
+ * historical price at each point, so the resulting "value" curve is an
+ * approximation that mirrors today's prices applied to past holdings.
+ */
 const computePortfolioChartPoints = (txs, allAssets, range) => {
   if (!txs.length) return [];
 
@@ -149,6 +160,14 @@ const computePortfolioChartPoints = (txs, allAssets, range) => {
   return points;
 };
 
+/**
+ * Converts a series of `{cost, value, t}` points into an SVG path string.
+ * The chart uses a 100×100 viewBox: x is the point's index mapped to 0–100,
+ * y maps the value into 10–95 (95 puts the baseline a little above the bottom
+ * edge, the 85-unit span leaves a 5-unit top margin so the line never touches
+ * the chart edge). With `closed = true` the path is closed down to the bottom
+ * edge, which we use for the filled area below the line.
+ */
 const pointsToPath = (points, key, minV, maxV, closed = false) => {
   if (!points.length || maxV === minV) return '';
   const coords = points.map((p, i) => {

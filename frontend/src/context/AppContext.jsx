@@ -108,7 +108,11 @@ export const AppProvider = ({ children }) => {
     return () => clearTimeout(timer);
   }, [user]);
 
-  // Auto-refresh token when less than 2 minutes remain
+  // Auto-refresh the JWT shortly before it expires. We trigger a refresh on the
+  // first request that finds less than two minutes of lifetime left and share
+  // the in-flight request between concurrent callers so they all attach the new
+  // token. If the refresh fails we let the original request continue with the
+  // old token — the response interceptor below will catch the inevitable 401.
   useEffect(() => {
     let refreshing = null;
     const interceptor = axios.interceptors.request.use(async (config) => {
