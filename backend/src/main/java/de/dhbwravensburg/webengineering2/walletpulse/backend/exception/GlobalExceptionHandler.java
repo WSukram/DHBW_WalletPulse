@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -39,6 +40,12 @@ public class GlobalExceptionHandler {
                         (first, second) -> first
                 ));
         return Map.of("errors", fieldErrors);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public Map<String, String> handleBadCredentials(BadCredentialsException ex) {
+        return Map.of("error", "Invalid email or password");
     }
 
     @ExceptionHandler(IllegalStateException.class)
