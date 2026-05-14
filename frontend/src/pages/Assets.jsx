@@ -16,11 +16,11 @@ const Assets = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    axios.get('http://localhost:8080/api/wallets')
+    axios.get('/api/wallets')
       .then((res) => {
         if (res.data.length === 0) return { merged: null, txArrays: [] };
         return Promise.all(
-          res.data.map((w) => axios.get(`http://localhost:8080/api/wallets/${w.id}/portfolio`).then((r) => r.data))
+          res.data.map((w) => axios.get(`/api/wallets/${w.id}/portfolio`).then((r) => r.data))
         ).then((portfolios) => {
           const allAssets = portfolios.flatMap((p) => p.assets ?? []);
           const merged = {
@@ -31,7 +31,7 @@ const Assets = () => {
           };
           return Promise.all(
             allAssets.map((asset) =>
-              axios.get(`http://localhost:8080/api/assets/${asset.id}/transactions`)
+              axios.get(`/api/assets/${asset.id}/transactions`)
                 .then((r) => r.data.map((tx) => ({ ...tx, assetId: asset.id, coinId: asset.coinId })))
             )
           ).then((txArrays) => ({ merged, txArrays }));

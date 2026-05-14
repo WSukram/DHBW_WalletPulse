@@ -22,7 +22,7 @@ const Security = () => {
 
     setPwLoading(true);
     try {
-      await axios.put('http://localhost:8080/api/user/me/password', {
+      await axios.put('/api/user/me/password', {
         currentPassword,
         newPassword,
       });

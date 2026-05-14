@@ -14,11 +14,11 @@ const Dashboard = () => {
   const [saving, setSaving] = useState(false);
 
   const loadWallets = () =>
-    axios.get('http://localhost:8080/api/wallets')
+    axios.get('/api/wallets')
       .then((res) =>
         Promise.all(
           res.data.map((w) =>
-            axios.get(`http://localhost:8080/api/wallets/${w.id}/portfolio`).then((r) => r.data)
+            axios.get(`/api/wallets/${w.id}/portfolio`).then((r) => r.data)
           )
         )
       )
@@ -33,7 +33,7 @@ const Dashboard = () => {
   const handleCreateWallet = () => {
     if (!newWalletName.trim()) return;
     setSaving(true);
-    axios.post('http://localhost:8080/api/wallets', { name: newWalletName.trim() })
+    axios.post('/api/wallets', { name: newWalletName.trim() })
       .then(() => loadWallets())
       .then(() => { setShowAddWallet(false); setNewWalletName(''); setSaving(false); })
       .catch(() => setSaving(false));

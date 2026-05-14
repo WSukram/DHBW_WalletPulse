@@ -47,13 +47,13 @@ const History = () => {
   const [deleting, setDeleting] = useState(false);
 
   const loadAll = () =>
-    axios.get('http://localhost:8080/api/wallets')
+    axios.get('/api/wallets')
       .then((res) => {
         const walletList = res.data;
         setWallets(walletList);
         return Promise.all(
           walletList.map((w) =>
-            axios.get(`http://localhost:8080/api/wallets/${w.id}/portfolio`).then((r) => ({
+            axios.get(`/api/wallets/${w.id}/portfolio`).then((r) => ({
               wallet: w,
               portfolio: r.data,
             }))
@@ -64,7 +64,7 @@ const History = () => {
         Promise.all(
           walletPortfolios.flatMap(({ wallet, portfolio }) =>
             (portfolio.assets ?? []).map((asset) =>
-              axios.get(`http://localhost:8080/api/assets/${asset.id}/transactions`).then((r) =>
+              axios.get(`/api/assets/${asset.id}/transactions`).then((r) =>
                 r.data.map((tx) => ({
                   ...tx,
                   coinId: asset.coinId,
@@ -101,7 +101,7 @@ const History = () => {
     if (isNaN(buyPrice) || buyPrice < 0) { setEditError('Buy price must be zero or a positive number.'); return; }
     setSavingEdit(true);
     setEditError('');
-    axios.put(`http://localhost:8080/api/transactions/${editTx.id}`, { amount, buyPrice, date: editForm.date })
+    axios.put(`/api/transactions/${editTx.id}`, { amount, buyPrice, date: editForm.date })
       .then(() => loadAll())
       .then(() => { setEditTx(null); setSavingEdit(false); })
       .catch(() => { setEditError('Failed to save changes.'); setSavingEdit(false); });
@@ -109,7 +109,7 @@ const History = () => {
 
   const handleDelete = () => {
     setDeleting(true);
-    axios.delete(`http://localhost:8080/api/transactions/${deleteTx.id}`)
+    axios.delete(`/api/transactions/${deleteTx.id}`)
       .then(() => loadAll())
       .then(() => { setDeleteTx(null); setDeleting(false); })
       .catch(() => setDeleting(false));

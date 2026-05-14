@@ -47,7 +47,7 @@ const loadStoredUser = () => {
 
 const savePreferencesToBackend = (currency, theme) => {
   if (!localStorage.getItem('wp_token')) return;
-  axios.put('http://localhost:8080/api/user/me/preferences', { currency, theme }).catch(() => {});
+  axios.put('/api/user/me/preferences', { currency, theme }).catch(() => {});
 };
 
 export const AppContext = createContext(null);
@@ -124,7 +124,7 @@ export const AppProvider = ({ children }) => {
         const expiresIn = payload.exp * 1000 - Date.now();
         if (expiresIn < 120000 && expiresIn > 0) {
           if (!refreshing) {
-            refreshing = axios.post('http://localhost:8080/api/auth/refresh').then((res) => {
+            refreshing = axios.post('/api/auth/refresh').then((res) => {
               const newToken = res.data.token;
               localStorage.setItem('wp_token', newToken);
               axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;

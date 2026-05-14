@@ -9,7 +9,7 @@ const useLivePrices = () => {
 
   useEffect(() => {
     axios
-      .get('http://localhost:8080/api/market/prices')
+      .get('/api/market/prices')
       .then((res) => setPrices(res.data))
       .catch(() => {});
   }, []);

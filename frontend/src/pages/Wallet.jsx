@@ -79,11 +79,11 @@ const Wallet = () => {
   const [txError, setTxError] = useState('');
 
   const loadPortfolios = () =>
-    axios.get('http://localhost:8080/api/wallets')
+    axios.get('/api/wallets')
       .then((res) =>
         Promise.all(
           res.data.map((w) =>
-            axios.get(`http://localhost:8080/api/wallets/${w.id}/portfolio`).then((r) => ({
+            axios.get(`/api/wallets/${w.id}/portfolio`).then((r) => ({
               ...r.data,
               chainType: w.chainType ?? null,
               chainAddress: w.chainAddress ?? null,
@@ -96,7 +96,7 @@ const Wallet = () => {
   const loadTransactions = (portfolioData) =>
     Promise.all(
       (portfolioData.assets ?? []).map((asset) =>
-        axios.get(`http://localhost:8080/api/assets/${asset.id}/transactions`)
+        axios.get(`/api/assets/${asset.id}/transactions`)
           .then((r) => r.data.map((tx) => ({ ...tx, assetId: asset.id, coinId: asset.coinId })))
       )
     ).then((arrays) => arrays.flat());
@@ -134,7 +134,7 @@ const Wallet = () => {
     const body = { name: newWalletName.trim() };
     if (newWalletChainType) body.chainType = newWalletChainType;
     if (newWalletChainAddress.trim()) body.chainAddress = newWalletChainAddress.trim();
-    axios.post('http://localhost:8080/api/wallets', body)
+    axios.post('/api/wallets', body)
       .then(() => loadPortfolios())
       .then((data) => {
         setPortfolios(data);
@@ -155,7 +155,7 @@ const Wallet = () => {
       chainType: editWalletChainType || null,
       chainAddress: editWalletChainAddress.trim() || null,
     };
-    axios.put(`http://localhost:8080/api/wallets/${editWallet.id}`, body)
+    axios.put(`/api/wallets/${editWallet.id}`, body)
       .then(() => loadPortfolios())
       .then((data) => {
         setPortfolios(data);
@@ -172,14 +172,14 @@ const Wallet = () => {
     if (!selectedWalletId || importing) return;
     setImporting(true);
     setImportResult(null);
-    axios.post(`http://localhost:8080/api/wallets/${selectedWalletId}/import`)
+    axios.post(`/api/wallets/${selectedWalletId}/import`)
       .then((res) => {
         setImportResult(res.data);
         setImporting(false);
         // Reload portfolio + wallet metadata (to pick up updated lastImportTime)
         return Promise.all([
-          axios.get(`http://localhost:8080/api/wallets/${selectedWalletId}/portfolio`),
-          axios.get(`http://localhost:8080/api/wallets/${selectedWalletId}`),
+          axios.get(`/api/wallets/${selectedWalletId}/portfolio`),
+          axios.get(`/api/wallets/${selectedWalletId}`),
         ]).then(([portfolioRes, walletRes]) => {
           const w = walletRes.data;
           const updated = {
@@ -197,7 +197,7 @@ const Wallet = () => {
   const handleDeleteWallet = () => {
     if (!deleteWallet) return;
     setDeletingWallet(true);
-    axios.delete(`http://localhost:8080/api/wallets/${deleteWallet.id}`)
+    axios.delete(`/api/wallets/${deleteWallet.id}`)
       .then(() => loadPortfolios())
       .then((data) => { setPortfolios(data); setDeleteWallet(null); setDeletingWallet(false); })
       .catch(() => setDeletingWallet(false));
@@ -229,18 +229,18 @@ const Wallet = () => {
       if (existingAsset) {
         assetId = existingAsset.id;
       } else {
-        const res = await axios.post(`http://localhost:8080/api/wallets/${selectedWalletId}/assets`, { coinId });
+        const res = await axios.post(`/api/wallets/${selectedWalletId}/assets`, { coinId });
         assetId = res.data.id;
       }
 
-      await axios.post(`http://localhost:8080/api/assets/${assetId}/transactions`, {
+      await axios.post(`/api/assets/${assetId}/transactions`, {
         amount: parsedAmount,
         buyPrice: parsedPrice,
         date,
       });
 
       // Reload portfolio and transactions
-      const updatedPortfolio = await axios.get(`http://localhost:8080/api/wallets/${selectedWalletId}/portfolio`).then((r) => r.data);
+      const updatedPortfolio = await axios.get(`/api/wallets/${selectedWalletId}/portfolio`).then((r) => r.data);
       setPortfolios((prev) => prev.map((p) => (p.id === selectedWalletId ? updatedPortfolio : p)));
       const txs = await loadTransactions(updatedPortfolio);
       setTransactions(txs);

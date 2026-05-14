@@ -44,11 +44,11 @@ const Analytics = () => {
   const [activeRange, setActiveRange] = useState('1Y');
 
   useEffect(() => {
-    axios.get('http://localhost:8080/api/wallets')
+    axios.get('/api/wallets')
       .then((res) =>
         Promise.all(
           res.data.map((w) =>
-            axios.get(`http://localhost:8080/api/wallets/${w.id}/portfolio`).then((r) => r.data)
+            axios.get(`/api/wallets/${w.id}/portfolio`).then((r) => r.data)
           )
         )
       )
@@ -57,7 +57,7 @@ const Analytics = () => {
         const allAssets = portfolioData.flatMap((p) => p.assets ?? []);
         return Promise.all(
           allAssets.map((asset) =>
-            axios.get(`http://localhost:8080/api/assets/${asset.id}/transactions`)
+            axios.get(`/api/assets/${asset.id}/transactions`)
               .then((r) => r.data.map((tx) => ({ ...tx, assetId: asset.id, coinId: asset.coinId })))
           )
         );
