@@ -2,6 +2,7 @@ package de.dhbwravensburg.webengineering2.walletpulse.backend.controller;
 
 import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.ErrorResponse;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.service.BlockchainImportService;
+import de.dhbwravensburg.webengineering2.walletpulse.backend.service.blockchain.ImportResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -45,7 +46,7 @@ public class ImportController {
             @ApiResponse(responseCode = "500", description = "Unexpected error contacting the upstream chain API",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    public BlockchainImportService.ImportResult importWallet(
+    public ImportResult importWallet(
             @Parameter(description = "Wallet ID", example = "1") @PathVariable Long id,
             @AuthenticationPrincipal UserDetails user) {
         return blockchainImportService.importWallet(id, user.getUsername());
