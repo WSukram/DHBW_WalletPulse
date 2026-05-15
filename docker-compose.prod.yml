@@ -1,0 +1,10 @@
+services:
+  db:
+    ports: []
+
+  backend:
+    ports: []
+
+  frontend:
+    ports:
+      - "3000:80"
