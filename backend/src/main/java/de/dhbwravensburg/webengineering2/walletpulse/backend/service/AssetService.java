@@ -12,6 +12,13 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * CRUD for assets plus the mapping of an {@link Asset} to a portfolio response
+ * (live price from CoinGecko, holdings and P&amp;L derived from its transactions).
+ * Each method takes {@code ownerEmail} and rejects access to assets owned by
+ * other users by throwing {@link ResourceNotFoundException} (404 rather than
+ * 403, to avoid leaking the existence of foreign resources).
+ */
 @Service
 public class AssetService {
 

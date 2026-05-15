@@ -2,20 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useApp } from '../context/AppContext';
 import { downloadCsv } from '../utils/exportCsv';
-
-const COIN_META = {
-  bitcoin:  { name: 'Bitcoin',  symbol: 'BTC', color: '#F7931A', icon: '₿' },
-  ethereum: { name: 'Ethereum', symbol: 'ETH', color: '#627EEA', icon: 'Ξ' },
-  solana:   { name: 'Solana',   symbol: 'SOL', color: '#14F195', icon: 'S' },
-};
-
-const coinMeta = (coinId) =>
-  COIN_META[coinId] ?? {
-    name: coinId.charAt(0).toUpperCase() + coinId.slice(1),
-    symbol: coinId.slice(0, 4).toUpperCase(),
-    color: '#888888',
-    icon: coinId[0].toUpperCase(),
-  };
+import { coinMeta } from '../utils/coins';
+import { usePortfolioData } from '../hooks/usePortfolioData';
+import EditTransactionModal from '../components/history/EditTransactionModal';
+import DeleteTransactionModal from '../components/history/DeleteTransactionModal';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '—';
@@ -33,18 +23,12 @@ const explorerUrl = (chainType, txHash) => {
   }
 };
 
-const inputCls = 'w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg px-4 py-2.5 text-on-surface font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-on-surface-variant/50';
-const labelCls = 'block font-label-sm text-label-sm text-on-surface-variant mb-1';
-
 const PAGE_SIZE = 10;
 
 const History = () => {
   useEffect(() => { document.title = 'History · WalletPulse'; }, []);
   const { formatCurrency: formatEur } = useApp();
-  const [wallets, setWallets] = useState([]);
-  const [allTransactions, setAllTransactions] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { wallets, transactions: allTransactions, isLoading, error, reload } = usePortfolioData();
   const [activeWallet, setActiveWallet] = useState('All Wallets');
   const [assetFilter, setAssetFilter] = useState('All Assets');
   const [page, setPage] = useState(1);
@@ -59,48 +43,6 @@ const History = () => {
   const [deleteTx, setDeleteTx] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  const loadAll = () =>
-    axios.get('http://localhost:8080/api/wallets')
-      .then((res) => {
-        const walletList = res.data;
-        setWallets(walletList);
-        return Promise.all(
-          walletList.map((w) =>
-            axios.get(`http://localhost:8080/api/wallets/${w.id}/portfolio`).then((r) => ({
-              wallet: w,
-              portfolio: r.data,
-            }))
-          )
-        );
-      })
-      .then((walletPortfolios) =>
-        Promise.all(
-          walletPortfolios.flatMap(({ wallet, portfolio }) =>
-            (portfolio.assets ?? []).map((asset) =>
-              axios.get(`http://localhost:8080/api/assets/${asset.id}/transactions`).then((r) =>
-                r.data.map((tx) => ({
-                  ...tx,
-                  coinId: asset.coinId,
-                  walletId: wallet.id,
-                  walletName: wallet.name,
-                  chainType: wallet.chainType,
-                }))
-              )
-            )
-          )
-        )
-      )
-      .then((txArrays) => {
-        const flat = txArrays.flat().sort((a, b) => new Date(b.date) - new Date(a.date));
-        setAllTransactions(flat);
-      });
-
-  useEffect(() => {
-    loadAll()
-      .then(() => setIsLoading(false))
-      .catch(() => { setError('Failed to load transaction history.'); setIsLoading(false); });
-  }, []);
-
   const openEdit = (tx) => {
     setEditTx(tx);
     setEditForm({ amount: String(tx.amount), buyPrice: String(tx.buyPrice), date: tx.date });
@@ -114,16 +56,16 @@ const History = () => {
     if (isNaN(buyPrice) || buyPrice < 0) { setEditError('Buy price must be zero or a positive number.'); return; }
     setSavingEdit(true);
     setEditError('');
-    axios.put(`http://localhost:8080/api/transactions/${editTx.id}`, { amount, buyPrice, date: editForm.date })
-      .then(() => loadAll())
+    axios.put(`/api/transactions/${editTx.id}`, { amount, buyPrice, date: editForm.date })
+      .then(() => reload())
       .then(() => { setEditTx(null); setSavingEdit(false); })
       .catch(() => { setEditError('Failed to save changes.'); setSavingEdit(false); });
   };
 
   const handleDelete = () => {
     setDeleting(true);
-    axios.delete(`http://localhost:8080/api/transactions/${deleteTx.id}`)
-      .then(() => loadAll())
+    axios.delete(`/api/transactions/${deleteTx.id}`)
+      .then(() => reload())
       .then(() => { setDeleteTx(null); setDeleting(false); })
       .catch(() => setDeleting(false));
   };
@@ -161,110 +103,25 @@ const History = () => {
   return (
     <div className="flex-1 overflow-y-auto p-6 md:p-layout-margin flex flex-col gap-6">
 
-      {/* Edit Modal */}
-      {editTx && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setEditTx(null)}>
-          <div className="bg-surface-container rounded-xl p-6 w-full max-w-md border border-outline-variant/30 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-heading-md text-heading-md text-on-surface mb-1">Edit Transaction</h3>
-            <div className="flex items-center gap-2 mb-5">
-              <div
-                className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                style={{ backgroundColor: `${coinMeta(editTx.coinId).color}1a`, color: coinMeta(editTx.coinId).color }}
-              >
-                {coinMeta(editTx.coinId).icon}
-              </div>
-              <span className="text-sm text-on-surface-variant">{coinMeta(editTx.coinId).name} · {editTx.walletName}</span>
-            </div>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={labelCls}>Amount</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="any"
-                    className={inputCls}
-                    value={editForm.amount}
-                    onChange={(e) => setEditForm((f) => ({ ...f, amount: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <label className={labelCls}>Buy Price (EUR)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="any"
-                    className={inputCls}
-                    value={editForm.buyPrice}
-                    onChange={(e) => setEditForm((f) => ({ ...f, buyPrice: e.target.value }))}
-                  />
-                </div>
-              </div>
-              <div>
-                <label className={labelCls}>Purchase Date</label>
-                <input
-                  type="date"
-                  className={inputCls}
-                  value={editForm.date}
-                  max={new Date().toISOString().split('T')[0]}
-                  onChange={(e) => setEditForm((f) => ({ ...f, date: e.target.value }))}
-                />
-              </div>
-              {editForm.amount && editForm.buyPrice && (
-                <div className="bg-surface-container-highest rounded-lg px-4 py-3 text-sm text-on-surface-variant">
-                  Total cost: <span className="font-data-mono text-on-surface">
-                    {formatEur(parseFloat(editForm.amount || 0) * parseFloat(editForm.buyPrice || 0))}
-                  </span>
-                </div>
-              )}
-              {editError && <p className="text-error text-sm">{editError}</p>}
-            </div>
-            <div className="flex gap-3 justify-end mt-6">
-              <button onClick={() => setEditTx(null)} className="px-4 py-2 rounded-lg text-on-surface-variant font-label-sm text-label-sm hover:text-on-surface transition-colors">
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveEdit}
-                disabled={savingEdit}
-                className="px-4 py-2 rounded-lg bg-primary text-on-primary font-label-sm text-label-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {savingEdit ? 'Saving…' : 'Save Changes'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <EditTransactionModal
+        tx={editTx}
+        form={editForm}
+        setForm={setEditForm}
+        saving={savingEdit}
+        errorMsg={editError}
+        onClose={() => setEditTx(null)}
+        onSave={handleSaveEdit}
+        formatEur={formatEur}
+      />
 
-      {/* Delete Confirmation Modal */}
-      {deleteTx && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setDeleteTx(null)}>
-          <div className="bg-surface-container rounded-xl p-6 w-full max-w-sm border border-outline-variant/30 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center mb-4">
-              <span className="material-symbols-outlined text-error text-[20px]">delete</span>
-            </div>
-            <h3 className="font-heading-md text-heading-md text-on-surface mb-2">Delete Transaction</h3>
-            <p className="text-sm text-on-surface-variant mb-1">
-              {coinMeta(deleteTx.coinId).name} · {deleteTx.amount.toFixed(8)} units
-            </p>
-            <p className="text-sm text-on-surface-variant mb-5">
-              Purchased on {formatDate(deleteTx.date)} at {formatEur(deleteTx.buyPrice)}/unit
-            </p>
-            <p className="text-sm text-error/80 mb-5">This action cannot be undone.</p>
-            <div className="flex gap-3 justify-end">
-              <button onClick={() => setDeleteTx(null)} className="px-4 py-2 rounded-lg text-on-surface-variant font-label-sm text-label-sm hover:text-on-surface transition-colors">
-                Cancel
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="px-4 py-2 rounded-lg bg-error text-on-error font-label-sm text-label-sm hover:bg-error/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {deleting ? 'Deleting…' : 'Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteTransactionModal
+        tx={deleteTx}
+        deleting={deleting}
+        onClose={() => setDeleteTx(null)}
+        onConfirm={handleDelete}
+        formatEur={formatEur}
+        formatDate={formatDate}
+      />
 
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">

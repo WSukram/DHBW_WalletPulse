@@ -1,26 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
 import { isTokenExpired } from '../context/AppContext';
-
-const TICKER_COINS = [
-  { id: 'bitcoin',  symbol: 'BTC', name: 'Bitcoin',  color: '#F7931A' },
-  { id: 'ethereum', symbol: 'ETH', name: 'Ethereum', color: '#627EEA' },
-  { id: 'solana',   symbol: 'SOL', name: 'Solana',   color: '#14F195' },
-];
-
-const useLivePrices = () => {
-  const [prices, setPrices] = useState({});
-
-  useEffect(() => {
-    axios
-      .get('http://localhost:8080/api/market/prices')
-      .then((res) => setPrices(res.data))
-      .catch(() => {});
-  }, []);
-
-  return prices;
-};
+import { TICKER_COINS } from '../utils/coins';
+import { useLivePrices } from '../hooks/useLivePrices';
 
 const features = [
   {

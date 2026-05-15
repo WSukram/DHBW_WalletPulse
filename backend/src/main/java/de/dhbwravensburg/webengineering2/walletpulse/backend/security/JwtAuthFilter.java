@@ -15,6 +15,13 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+/**
+ * Reads the {@code Authorization: Bearer …} header on every request and, if the
+ * token is valid, populates the Spring Security context with the corresponding
+ * user. Requests without a token, or with an invalid one, simply pass through
+ * unauthenticated; access control is left to the authorisation rules in
+ * {@link de.dhbwravensburg.webengineering2.walletpulse.backend.config.SecurityConfig}.
+ */
 @Component
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -49,6 +56,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception ignored) {
+            // Malformed, expired or otherwise invalid tokens are swallowed on
+            // purpose: the request continues without an authentication, and the
+            // downstream authorisation rules return 401/403 as appropriate.
         }
 
         filterChain.doFilter(request, response);

@@ -20,6 +20,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -124,7 +125,7 @@ class TransactionServiceTest {
     }
 
     @Test
-    void shouldDeleteTransaction() {
+    void shouldDeleteTransactionAndAssetWhenLastOne() {
         Asset asset = assetWithOwner(10L, "test@test.com");
 
         Transaction existing = new Transaction();
@@ -132,9 +133,28 @@ class TransactionServiceTest {
         existing.setAsset(asset);
 
         when(transactionRepository.findById(100L)).thenReturn(Optional.of(existing));
+        when(transactionRepository.countByAssetId(10L)).thenReturn(0L);
 
         transactionService.deleteTransaction(100L, "test@test.com");
 
         verify(transactionRepository).delete(existing);
+        verify(assetRepository).delete(asset);
+    }
+
+    @Test
+    void shouldDeleteTransactionButKeepAssetWhenOthersRemain() {
+        Asset asset = assetWithOwner(10L, "test@test.com");
+
+        Transaction existing = new Transaction();
+        existing.setId(100L);
+        existing.setAsset(asset);
+
+        when(transactionRepository.findById(100L)).thenReturn(Optional.of(existing));
+        when(transactionRepository.countByAssetId(10L)).thenReturn(1L);
+
+        transactionService.deleteTransaction(100L, "test@test.com");
+
+        verify(transactionRepository).delete(existing);
+        verify(assetRepository, never()).delete(any(Asset.class));
     }
 }

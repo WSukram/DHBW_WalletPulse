@@ -22,6 +22,20 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+/**
+ * Spring Security setup. The API is stateless (no server-side session) and
+ * authentication is carried entirely by JWTs validated by {@link JwtAuthFilter},
+ * which is inserted before the username/password filter. CSRF is disabled
+ * because there is no cookie-based session for an attacker to ride on.
+ *
+ * <p>Public endpoints (no token required):
+ * <ul>
+ *   <li>{@code /api/auth/login}, {@code /api/auth/register} — account access</li>
+ *   <li>{@code /api/market/prices} — public price ticker on the landing page</li>
+ *   <li>{@code /swagger-ui/**}, {@code /v3/api-docs/**} — OpenAPI documentation</li>
+ *   <li>{@code /graphiql/**} — GraphQL playground (the {@code /graphql} endpoint itself still requires a token)</li>
+ * </ul>
+ */
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {

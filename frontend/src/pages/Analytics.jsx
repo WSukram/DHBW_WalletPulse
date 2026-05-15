@@ -1,42 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
 import { useApp } from '../context/AppContext';
-
-const COIN_META = {
-  bitcoin:  { name: 'Bitcoin',  symbol: 'BTC', color: '#F7931A', icon: '₿' },
-  ethereum: { name: 'Ethereum', symbol: 'ETH', color: '#627EEA', icon: 'Ξ' },
-  solana:   { name: 'Solana',   symbol: 'SOL', color: '#14F195', icon: 'S' },
-};
-
-const coinMeta = (coinId) =>
-  COIN_META[coinId] ?? {
-    name: coinId.charAt(0).toUpperCase() + coinId.slice(1),
-    symbol: coinId.slice(0, 4).toUpperCase(),
-    color: '#888888',
-    icon: coinId[0].toUpperCase(),
-  };
-
-const groupByCoin = (assets) => {
-  const map = {};
-  for (const a of assets) {
-    if (!map[a.coinId]) {
-      map[a.coinId] = { ...a };
-    } else {
-      const g = map[a.coinId];
-      g.totalAmount = (g.totalAmount ?? 0) + (a.totalAmount ?? 0);
-      g.totalInvested = (g.totalInvested ?? 0) + (a.totalInvested ?? 0);
-      g.profit = (g.profit ?? 0) + (a.profit ?? 0);
-      g.currentValue = (g.currentValue ?? 0) + (a.currentValue ?? 0);
-    }
-  }
-  return Object.values(map);
-};
-
-const formatPct = (profit, invested) => {
-  if (!invested || invested === 0) return '0.00%';
-  const pct = ((profit / invested) * 100).toFixed(2);
-  return (profit >= 0 ? '+' : '') + pct + '%';
-};
+import { coinMeta, formatPct } from '../utils/coins';
+import { timeRanges, getChartLabels, computePortfolioChartPoints, pointsToPath } from '../utils/chart';
+import { groupByCoin } from '../utils/groupByCoin';
+import { usePortfolioData } from '../hooks/usePortfolioData';
 
 const CIRCUMFERENCE = 2 * Math.PI * 40;
 
@@ -67,136 +34,11 @@ const DonutChart = ({ segments }) => {
   );
 };
 
-const timeRanges = ['1W', '1M', '1Y', 'ALL'];
-
-const getChartLabels = (range) => {
-  const now = new Date();
-  if (range === '1W') {
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(now);
-      d.setDate(d.getDate() - (6 - i));
-      return d.toLocaleDateString('en-US', { weekday: 'short' });
-    });
-  }
-  if (range === '1M') {
-    return Array.from({ length: 5 }, (_, i) => {
-      const d = new Date(now);
-      d.setDate(d.getDate() - (28 - i * 7));
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    });
-  }
-  if (range === '1Y') {
-    return Array.from({ length: 6 }, (_, i) => {
-      const d = new Date(now);
-      d.setMonth(d.getMonth() - (10 - i * 2));
-      return d.toLocaleDateString('en-US', { month: 'short' });
-    });
-  }
-  const year = now.getFullYear();
-  return [year - 4, year - 3, year - 2, year - 1, year].map(String);
-};
-
-const computePortfolioChartPoints = (txs, allAssets, range) => {
-  if (!txs.length) return [];
-
-  const now = new Date();
-  let cutoff = null;
-  if (range === '1W') { cutoff = new Date(now); cutoff.setDate(now.getDate() - 7); }
-  else if (range === '1M') { cutoff = new Date(now); cutoff.setMonth(now.getMonth() - 1); }
-  else if (range === '1Y') { cutoff = new Date(now); cutoff.setFullYear(now.getFullYear() - 1); }
-
-  const priceMap = {};
-  const assetCoinMap = {};
-  allAssets.forEach((a) => {
-    priceMap[a.coinId] = a.currentPrice;
-    assetCoinMap[String(a.id)] = a.coinId;
-  });
-
-  const sorted = [...txs].sort((a, b) => new Date(a.date) - new Date(b.date));
-  const firstTxDate = new Date(sorted[0].date);
-  const rangeStart = cutoff && cutoff > firstTxDate ? cutoff : firstTxDate;
-  const span = now - rangeStart;
-  if (span <= 0) return [];
-
-  const N = 40;
-  const holdings = {};
-  let cost = 0;
-  let txIdx = 0;
-
-  while (txIdx < sorted.length && new Date(sorted[txIdx].date) < rangeStart) {
-    const tx = sorted[txIdx];
-    holdings[tx.assetId] = (holdings[tx.assetId] || 0) + tx.amount;
-    cost += tx.amount * tx.buyPrice;
-    txIdx++;
-  }
-
-  const points = [];
-  for (let i = 0; i <= N; i++) {
-    const t = new Date(rangeStart.getTime() + (span * i) / N);
-    while (txIdx < sorted.length && new Date(sorted[txIdx].date) <= t) {
-      const tx = sorted[txIdx];
-      holdings[tx.assetId] = (holdings[tx.assetId] || 0) + tx.amount;
-      cost += tx.amount * tx.buyPrice;
-      txIdx++;
-    }
-    let value = 0;
-    Object.entries(holdings).forEach(([aid, amt]) => {
-      const coinId = assetCoinMap[String(aid)];
-      value += amt * (priceMap[coinId] || 0);
-    });
-    points.push({ t, cost, value });
-  }
-  return points;
-};
-
-const pointsToPath = (points, key, minV, maxV, closed = false) => {
-  if (!points.length || maxV === minV) return '';
-  const coords = points.map((p, i) => {
-    const x = (i / (points.length - 1)) * 100;
-    const y = 95 - ((p[key] - minV) / (maxV - minV)) * 85;
-    return [x, y];
-  });
-  const d = coords.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(2)} ${y.toFixed(2)}`).join(' ');
-  return closed ? `${d} L100 100 L0 100 Z` : d;
-};
-
 const Analytics = () => {
   useEffect(() => { document.title = 'Analytics · WalletPulse'; }, []);
   const { formatCurrency: formatEur } = useApp();
-  const [portfolios, setPortfolios] = useState([]);
-  const [transactions, setTransactions] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { portfolios, transactions, isLoading, error } = usePortfolioData();
   const [activeRange, setActiveRange] = useState('1Y');
-
-  useEffect(() => {
-    axios.get('http://localhost:8080/api/wallets')
-      .then((res) =>
-        Promise.all(
-          res.data.map((w) =>
-            axios.get(`http://localhost:8080/api/wallets/${w.id}/portfolio`).then((r) => r.data)
-          )
-        )
-      )
-      .then((portfolioData) => {
-        setPortfolios(portfolioData);
-        const allAssets = portfolioData.flatMap((p) => p.assets ?? []);
-        return Promise.all(
-          allAssets.map((asset) =>
-            axios.get(`http://localhost:8080/api/assets/${asset.id}/transactions`)
-              .then((r) => r.data.map((tx) => ({ ...tx, assetId: asset.id, coinId: asset.coinId })))
-          )
-        );
-      })
-      .then((txArrays) => {
-        setTransactions(txArrays.flat());
-        setIsLoading(false);
-      })
-      .catch(() => {
-        setError('Failed to load analytics data.');
-        setIsLoading(false);
-      });
-  }, []);
 
   const chartPoints = useMemo(
     () => computePortfolioChartPoints(transactions, portfolios.flatMap((p) => p.assets ?? []), activeRange),

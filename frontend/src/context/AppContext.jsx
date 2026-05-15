@@ -47,7 +47,7 @@ const loadStoredUser = () => {
 
 const savePreferencesToBackend = (currency, theme) => {
   if (!localStorage.getItem('wp_token')) return;
-  axios.put('http://localhost:8080/api/user/me/preferences', { currency, theme }).catch(() => {});
+  axios.put('/api/user/me/preferences', { currency, theme }).catch(() => {});
 };
 
 export const AppContext = createContext(null);
@@ -108,7 +108,11 @@ export const AppProvider = ({ children }) => {
     return () => clearTimeout(timer);
   }, [user]);
 
-  // Auto-refresh token when less than 2 minutes remain
+  // Auto-refresh the JWT shortly before it expires. We trigger a refresh on the
+  // first request that finds less than two minutes of lifetime left and share
+  // the in-flight request between concurrent callers so they all attach the new
+  // token. If the refresh fails we let the original request continue with the
+  // old token — the response interceptor below will catch the inevitable 401.
   useEffect(() => {
     let refreshing = null;
     const interceptor = axios.interceptors.request.use(async (config) => {
@@ -120,7 +124,7 @@ export const AppProvider = ({ children }) => {
         const expiresIn = payload.exp * 1000 - Date.now();
         if (expiresIn < 120000 && expiresIn > 0) {
           if (!refreshing) {
-            refreshing = axios.post('http://localhost:8080/api/auth/refresh').then((res) => {
+            refreshing = axios.post('/api/auth/refresh').then((res) => {
               const newToken = res.data.token;
               localStorage.setItem('wp_token', newToken);
               axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;

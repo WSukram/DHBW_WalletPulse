@@ -3,6 +3,12 @@ import axios from 'axios';
 import { useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { downloadCsv } from '../utils/exportCsv';
+import { COIN_META, KNOWN_COINS, coinMeta, formatPct } from '../utils/coins';
+import { timeRanges, getChartLabels, computePortfolioChartPoints, pointsToPath } from '../utils/chart';
+import AddWalletModal from '../components/wallet/AddWalletModal';
+import EditWalletModal from '../components/wallet/EditWalletModal';
+import DeleteWalletModal from '../components/wallet/DeleteWalletModal';
+import AddTransactionModal from '../components/wallet/AddTransactionModal';
 
 const CHAIN_META = {
   ETH: { label: 'Ethereum', color: '#627EEA', bg: '#627EEA22' },
@@ -30,129 +36,6 @@ const formatRelative = (dateStr) => {
   if (hrs < 24) return `${hrs}h ago`;
   return `${Math.floor(hrs / 24)}d ago`;
 };
-
-const COIN_META = {
-  bitcoin:  { name: 'Bitcoin',  symbol: 'BTC', icon: 'currency_bitcoin', color: '#F7931A' },
-  ethereum: { name: 'Ethereum', symbol: 'ETH', icon: 'token',            color: '#627EEA' },
-  solana:   { name: 'Solana',   symbol: 'SOL', icon: 'toll',             color: '#14F195' },
-};
-
-const KNOWN_COINS = [
-  { id: 'bitcoin',  name: 'Bitcoin',  symbol: 'BTC' },
-  { id: 'ethereum', name: 'Ethereum', symbol: 'ETH' },
-  { id: 'solana',   name: 'Solana',   symbol: 'SOL' },
-];
-
-const coinMeta = (coinId) =>
-  COIN_META[coinId] ?? {
-    name: coinId.charAt(0).toUpperCase() + coinId.slice(1),
-    symbol: coinId.slice(0, 4).toUpperCase(),
-    icon: 'generating_tokens',
-    color: '#888888',
-  };
-
-const formatPct = (profit, invested) => {
-  if (!invested || invested === 0) return '0.00%';
-  const pct = ((profit / invested) * 100).toFixed(2);
-  return (profit >= 0 ? '+' : '') + pct + '%';
-};
-
-const timeRanges = ['1W', '1M', '1Y', 'ALL'];
-
-const getChartLabels = (range) => {
-  const now = new Date();
-  if (range === '1W') {
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(now);
-      d.setDate(d.getDate() - (6 - i));
-      return d.toLocaleDateString('en-US', { weekday: 'short' });
-    });
-  }
-  if (range === '1M') {
-    return Array.from({ length: 5 }, (_, i) => {
-      const d = new Date(now);
-      d.setDate(d.getDate() - (28 - i * 7));
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    });
-  }
-  if (range === '1Y') {
-    return Array.from({ length: 6 }, (_, i) => {
-      const d = new Date(now);
-      d.setMonth(d.getMonth() - (10 - i * 2));
-      return d.toLocaleDateString('en-US', { month: 'short' });
-    });
-  }
-  const year = now.getFullYear();
-  return [year - 4, year - 3, year - 2, year - 1, year].map(String);
-};
-
-const computeChartPoints = (txs, assets, range) => {
-  if (!txs.length) return [];
-
-  const now = new Date();
-  let cutoff = null;
-  if (range === '1W') { cutoff = new Date(now); cutoff.setDate(now.getDate() - 7); }
-  else if (range === '1M') { cutoff = new Date(now); cutoff.setMonth(now.getMonth() - 1); }
-  else if (range === '1Y') { cutoff = new Date(now); cutoff.setFullYear(now.getFullYear() - 1); }
-
-  const priceMap = {};
-  const assetCoinMap = {};
-  assets.forEach((a) => {
-    priceMap[a.coinId] = a.currentPrice;
-    assetCoinMap[String(a.id)] = a.coinId;
-  });
-
-  const sorted = [...txs].sort((a, b) => new Date(a.date) - new Date(b.date));
-  const firstTxDate = new Date(sorted[0].date);
-  const rangeStart = cutoff && cutoff > firstTxDate ? cutoff : firstTxDate;
-  const span = now - rangeStart;
-  if (span <= 0) return [];
-
-  const N = 40;
-  const holdings = {};
-  let cost = 0;
-  let txIdx = 0;
-
-  while (txIdx < sorted.length && new Date(sorted[txIdx].date) < rangeStart) {
-    const tx = sorted[txIdx];
-    holdings[tx.assetId] = (holdings[tx.assetId] || 0) + tx.amount;
-    cost += tx.amount * tx.buyPrice;
-    txIdx++;
-  }
-
-  const points = [];
-  for (let i = 0; i <= N; i++) {
-    const t = new Date(rangeStart.getTime() + (span * i) / N);
-    while (txIdx < sorted.length && new Date(sorted[txIdx].date) <= t) {
-      const tx = sorted[txIdx];
-      holdings[tx.assetId] = (holdings[tx.assetId] || 0) + tx.amount;
-      cost += tx.amount * tx.buyPrice;
-      txIdx++;
-    }
-    let value = 0;
-    Object.entries(holdings).forEach(([aid, amt]) => {
-      const coinId = assetCoinMap[String(aid)];
-      value += amt * (priceMap[coinId] || 0);
-    });
-    points.push({ t, cost, value });
-  }
-  return points;
-};
-
-const pointsToPath = (points, key, minV, maxV, closed = false) => {
-  if (!points.length || maxV === minV) return '';
-  const coords = points.map((p, i) => {
-    const x = (i / (points.length - 1)) * 100;
-    const y = 95 - ((p[key] - minV) / (maxV - minV)) * 85;
-    return [x, y];
-  });
-  const d = coords.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(2)} ${y.toFixed(2)}`).join(' ');
-  return closed ? `${d} L100 100 L0 100 Z` : d;
-};
-
-// ── Shared modal styles ─────────────────────────────────────────────────────
-const inputCls = 'w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg px-4 py-2.5 text-on-surface font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-on-surface-variant/50';
-const labelCls = 'block font-label-sm text-label-sm text-on-surface-variant mb-1';
 
 const Wallet = () => {
   useEffect(() => { document.title = 'Wallets · WalletPulse'; }, []);
@@ -196,11 +79,11 @@ const Wallet = () => {
   const [txError, setTxError] = useState('');
 
   const loadPortfolios = () =>
-    axios.get('http://localhost:8080/api/wallets')
+    axios.get('/api/wallets')
       .then((res) =>
         Promise.all(
           res.data.map((w) =>
-            axios.get(`http://localhost:8080/api/wallets/${w.id}/portfolio`).then((r) => ({
+            axios.get(`/api/wallets/${w.id}/portfolio`).then((r) => ({
               ...r.data,
               chainType: w.chainType ?? null,
               chainAddress: w.chainAddress ?? null,
@@ -213,7 +96,7 @@ const Wallet = () => {
   const loadTransactions = (portfolioData) =>
     Promise.all(
       (portfolioData.assets ?? []).map((asset) =>
-        axios.get(`http://localhost:8080/api/assets/${asset.id}/transactions`)
+        axios.get(`/api/assets/${asset.id}/transactions`)
           .then((r) => r.data.map((tx) => ({ ...tx, assetId: asset.id, coinId: asset.coinId })))
       )
     ).then((arrays) => arrays.flat());
@@ -251,7 +134,7 @@ const Wallet = () => {
     const body = { name: newWalletName.trim() };
     if (newWalletChainType) body.chainType = newWalletChainType;
     if (newWalletChainAddress.trim()) body.chainAddress = newWalletChainAddress.trim();
-    axios.post('http://localhost:8080/api/wallets', body)
+    axios.post('/api/wallets', body)
       .then(() => loadPortfolios())
       .then((data) => {
         setPortfolios(data);
@@ -272,7 +155,7 @@ const Wallet = () => {
       chainType: editWalletChainType || null,
       chainAddress: editWalletChainAddress.trim() || null,
     };
-    axios.put(`http://localhost:8080/api/wallets/${editWallet.id}`, body)
+    axios.put(`/api/wallets/${editWallet.id}`, body)
       .then(() => loadPortfolios())
       .then((data) => {
         setPortfolios(data);
@@ -289,14 +172,14 @@ const Wallet = () => {
     if (!selectedWalletId || importing) return;
     setImporting(true);
     setImportResult(null);
-    axios.post(`http://localhost:8080/api/wallets/${selectedWalletId}/import`)
+    axios.post(`/api/wallets/${selectedWalletId}/import`)
       .then((res) => {
         setImportResult(res.data);
         setImporting(false);
         // Reload portfolio + wallet metadata (to pick up updated lastImportTime)
         return Promise.all([
-          axios.get(`http://localhost:8080/api/wallets/${selectedWalletId}/portfolio`),
-          axios.get(`http://localhost:8080/api/wallets/${selectedWalletId}`),
+          axios.get(`/api/wallets/${selectedWalletId}/portfolio`),
+          axios.get(`/api/wallets/${selectedWalletId}`),
         ]).then(([portfolioRes, walletRes]) => {
           const w = walletRes.data;
           const updated = {
@@ -314,7 +197,7 @@ const Wallet = () => {
   const handleDeleteWallet = () => {
     if (!deleteWallet) return;
     setDeletingWallet(true);
-    axios.delete(`http://localhost:8080/api/wallets/${deleteWallet.id}`)
+    axios.delete(`/api/wallets/${deleteWallet.id}`)
       .then(() => loadPortfolios())
       .then((data) => { setPortfolios(data); setDeleteWallet(null); setDeletingWallet(false); })
       .catch(() => setDeletingWallet(false));
@@ -346,18 +229,18 @@ const Wallet = () => {
       if (existingAsset) {
         assetId = existingAsset.id;
       } else {
-        const res = await axios.post(`http://localhost:8080/api/wallets/${selectedWalletId}/assets`, { coinId });
+        const res = await axios.post(`/api/wallets/${selectedWalletId}/assets`, { coinId });
         assetId = res.data.id;
       }
 
-      await axios.post(`http://localhost:8080/api/assets/${assetId}/transactions`, {
+      await axios.post(`/api/assets/${assetId}/transactions`, {
         amount: parsedAmount,
         buyPrice: parsedPrice,
         date,
       });
 
       // Reload portfolio and transactions
-      const updatedPortfolio = await axios.get(`http://localhost:8080/api/wallets/${selectedWalletId}/portfolio`).then((r) => r.data);
+      const updatedPortfolio = await axios.get(`/api/wallets/${selectedWalletId}/portfolio`).then((r) => r.data);
       setPortfolios((prev) => prev.map((p) => (p.id === selectedWalletId ? updatedPortfolio : p)));
       const txs = await loadTransactions(updatedPortfolio);
       setTransactions(txs);
@@ -384,7 +267,7 @@ const Wallet = () => {
   const portfolio = portfolios.find((p) => p.id === selectedWalletId) ?? null;
 
   const chartPoints = useMemo(
-    () => computeChartPoints(transactions, portfolio?.assets ?? [], activeRange),
+    () => computePortfolioChartPoints(transactions, portfolio?.assets ?? [], activeRange),
     [transactions, portfolio, activeRange]
   );
 
@@ -402,119 +285,32 @@ const Wallet = () => {
 
     return (
       <div className="flex-1 overflow-y-auto p-6 lg:p-layout-margin space-y-8">
-        {showAddWallet && (
-          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setShowAddWallet(false)}>
-            <div className="bg-surface-container rounded-xl p-6 w-full max-w-sm border border-outline-variant/30 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              <h3 className="font-heading-md text-heading-md text-on-surface mb-1">New Wallet</h3>
-              <p className="text-sm text-on-surface-variant mb-5">Give your wallet a name to get started.</p>
-              <div className="space-y-4 mb-5">
-                <div>
-                  <label className={labelCls}>Wallet Name</label>
-                  <input
-                    autoFocus
-                    className={inputCls}
-                    placeholder="e.g. Main Portfolio"
-                    value={newWalletName}
-                    onChange={(e) => setNewWalletName(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleCreateWallet()}
-                  />
-                </div>
-                <div>
-                  <label className={labelCls}>Blockchain (optional)</label>
-                  <select className={inputCls} value={newWalletChainType} onChange={(e) => setNewWalletChainType(e.target.value)}>
-                    <option value="">None — manual entry only</option>
-                    <option value="ETH">Ethereum (ETH)</option>
-                    <option value="BTC">Bitcoin (BTC)</option>
-                    <option value="SOL">Solana (SOL)</option>
-                  </select>
-                </div>
-                {newWalletChainType && (
-                  <div>
-                    <label className={labelCls}>Wallet Address</label>
-                    <input
-                      className={inputCls}
-                      placeholder={newWalletChainType === 'ETH' ? '0x...' : newWalletChainType === 'BTC' ? 'bc1q... or 1A...' : 'Sol address...'}
-                      value={newWalletChainAddress}
-                      onChange={(e) => setNewWalletChainAddress(e.target.value)}
-                    />
-                  </div>
-                )}
-              </div>
-              <div className="flex gap-3 justify-end">
-                <button onClick={() => { setShowAddWallet(false); setNewWalletChainType(''); setNewWalletChainAddress(''); }} className="px-4 py-2 rounded-lg text-on-surface-variant font-label-sm text-label-sm hover:text-on-surface transition-colors">Cancel</button>
-                <button onClick={handleCreateWallet} disabled={savingWallet || !newWalletName.trim()} className="px-4 py-2 rounded-lg bg-primary text-on-primary font-label-sm text-label-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                  {savingWallet ? 'Creating…' : 'Create Wallet'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <AddWalletModal
+          open={showAddWallet}
+          name={newWalletName} setName={setNewWalletName}
+          chainType={newWalletChainType} setChainType={setNewWalletChainType}
+          chainAddress={newWalletChainAddress} setChainAddress={setNewWalletChainAddress}
+          saving={savingWallet}
+          onClose={() => { setShowAddWallet(false); setNewWalletChainType(''); setNewWalletChainAddress(''); }}
+          onCreate={handleCreateWallet}
+        />
 
-        {editWallet && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setEditWallet(null)}>
-          <div className="bg-surface-container rounded-xl p-6 w-full max-w-sm border border-outline-variant/30 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-heading-md text-heading-md text-on-surface mb-1">Edit Wallet</h3>
-            <p className="text-sm text-on-surface-variant mb-5">Update name or blockchain address for "{editWallet.name}".</p>
-            <div className="space-y-4 mb-5">
-              <div>
-                <label className={labelCls}>Wallet Name</label>
-                <input
-                  autoFocus
-                  className={inputCls}
-                  placeholder="e.g. Main Portfolio"
-                  value={editWalletName}
-                  onChange={(e) => setEditWalletName(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleEditWallet()}
-                />
-              </div>
-              <div>
-                <label className={labelCls}>Blockchain (optional)</label>
-                <select className={inputCls} value={editWalletChainType} onChange={(e) => setEditWalletChainType(e.target.value)}>
-                  <option value="">None — manual entry only</option>
-                  <option value="ETH">Ethereum (ETH)</option>
-                  <option value="BTC">Bitcoin (BTC)</option>
-                  <option value="SOL">Solana (SOL)</option>
-                </select>
-              </div>
-              {editWalletChainType && (
-                <div>
-                  <label className={labelCls}>Wallet Address</label>
-                  <input
-                    className={inputCls}
-                    placeholder={editWalletChainType === 'ETH' ? '0x...' : editWalletChainType === 'BTC' ? 'bc1q... or 1A...' : 'Sol address...'}
-                    value={editWalletChainAddress}
-                    onChange={(e) => setEditWalletChainAddress(e.target.value)}
-                  />
-                </div>
-              )}
-            </div>
-            <div className="flex gap-3 justify-end">
-              <button onClick={() => setEditWallet(null)} className="px-4 py-2 rounded-lg text-on-surface-variant font-label-sm text-label-sm hover:text-on-surface transition-colors">Cancel</button>
-              <button onClick={handleEditWallet} disabled={savingEditWallet || !editWalletName.trim()} className="px-4 py-2 rounded-lg bg-primary text-on-primary font-label-sm text-label-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                {savingEditWallet ? 'Saving…' : 'Save'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+        <EditWalletModal
+          wallet={editWallet}
+          name={editWalletName} setName={setEditWalletName}
+          chainType={editWalletChainType} setChainType={setEditWalletChainType}
+          chainAddress={editWalletChainAddress} setChainAddress={setEditWalletChainAddress}
+          saving={savingEditWallet}
+          onClose={() => setEditWallet(null)}
+          onSave={handleEditWallet}
+        />
 
-      {deleteWallet && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setDeleteWallet(null)}>
-          <div className="bg-surface-container rounded-xl p-6 w-full max-w-sm border border-outline-variant/30 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-heading-md text-heading-md text-on-surface mb-1">Delete Wallet</h3>
-            <p className="text-sm text-on-surface-variant mb-2">
-              Are you sure you want to delete <span className="text-on-surface font-medium">"{deleteWallet.name}"</span>?
-            </p>
-            <p className="text-sm text-error mb-5">This will permanently remove the wallet and all its assets and transactions. This cannot be undone.</p>
-            <div className="flex gap-3 justify-end">
-              <button onClick={() => setDeleteWallet(null)} className="px-4 py-2 rounded-lg text-on-surface-variant font-label-sm text-label-sm hover:text-on-surface transition-colors">Cancel</button>
-              <button onClick={handleDeleteWallet} disabled={deletingWallet} className="px-4 py-2 rounded-lg bg-error text-on-error font-label-sm text-label-sm hover:bg-error/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                {deletingWallet ? 'Deleting…' : 'Delete Wallet'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+        <DeleteWalletModal
+          wallet={deleteWallet}
+          deleting={deletingWallet}
+          onClose={() => setDeleteWallet(null)}
+          onConfirm={handleDeleteWallet}
+        />
 
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
@@ -641,49 +437,16 @@ const Wallet = () => {
 
   return (
     <div className="flex-1 overflow-y-auto p-6 lg:p-layout-margin space-y-8">
-      {showAddTx && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setShowAddTx(false)}>
-          <div className="bg-surface-container rounded-xl p-6 w-full max-w-md border border-outline-variant/30 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-heading-md text-heading-md text-on-surface mb-1">Add Transaction</h3>
-            <p className="text-sm text-on-surface-variant mb-5">Record a new purchase for this wallet.</p>
-            <div className="space-y-4">
-              <div>
-                <label className={labelCls}>Coin</label>
-                <select className={inputCls} value={txForm.coinId} onChange={(e) => setTxForm((f) => ({ ...f, coinId: e.target.value }))}>
-                  <option value="">Select a coin…</option>
-                  {coinOptions.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={labelCls}>Amount</label>
-                  <input type="number" min="0" step="any" className={inputCls} placeholder="0.00" value={txForm.amount} onChange={(e) => setTxForm((f) => ({ ...f, amount: e.target.value }))} />
-                </div>
-                <div>
-                  <label className={labelCls}>Buy Price (EUR)</label>
-                  <input type="number" min="0" step="any" className={inputCls} placeholder="0.00" value={txForm.buyPrice} onChange={(e) => setTxForm((f) => ({ ...f, buyPrice: e.target.value }))} />
-                </div>
-              </div>
-              <div>
-                <label className={labelCls}>Purchase Date</label>
-                <input type="date" className={inputCls} value={txForm.date} max={new Date().toISOString().split('T')[0]} onChange={(e) => setTxForm((f) => ({ ...f, date: e.target.value }))} />
-              </div>
-              {txForm.amount && txForm.buyPrice && (
-                <div className="bg-surface-container-highest rounded-lg px-4 py-3 text-sm text-on-surface-variant">
-                  Total cost: <span className="font-data-mono text-on-surface">{formatEur(parseFloat(txForm.amount || 0) * parseFloat(txForm.buyPrice || 0))}</span>
-                </div>
-              )}
-              {txError && <p className="text-error text-sm font-label-sm">{txError}</p>}
-            </div>
-            <div className="flex gap-3 justify-end mt-6">
-              <button onClick={() => setShowAddTx(false)} className="px-4 py-2 rounded-lg text-on-surface-variant font-label-sm text-label-sm hover:text-on-surface transition-colors">Cancel</button>
-              <button onClick={handleAddTransaction} disabled={savingTx} className="px-4 py-2 rounded-lg bg-primary text-on-primary font-label-sm text-label-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                {savingTx ? 'Saving…' : 'Add Transaction'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AddTransactionModal
+        open={showAddTx}
+        form={txForm} setForm={setTxForm}
+        coinOptions={coinOptions}
+        saving={savingTx}
+        errorMsg={txError}
+        onClose={() => setShowAddTx(false)}
+        onSave={handleAddTransaction}
+        formatEur={formatEur}
+      />
 
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -931,7 +694,7 @@ const Wallet = () => {
                             className="w-8 h-8 rounded-full flex items-center justify-center"
                             style={{ backgroundColor: `${meta.color}33`, color: meta.color }}
                           >
-                            <span className="material-symbols-outlined text-[18px]">{meta.icon}</span>
+                            <span className="material-symbols-outlined text-[18px]">{meta.mui}</span>
                           </div>
                           <div>
                             <div className="font-body-md text-body-md font-medium">{meta.name}</div>

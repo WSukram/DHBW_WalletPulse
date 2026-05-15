@@ -38,8 +38,9 @@ public class CoinGeckoClient {
     }
 
     /**
-     * Ruft den aktuellen Preis eines Coins in Euro (EUR) ab.
-     * Beispiel-Aufruf an CoinGecko: /simple/price?ids=bitcoin&vs_currencies=eur
+     * Returns the current price of the given coin in EUR.
+     * Example CoinGecko call: /simple/price?ids=bitcoin&vs_currencies=eur
+     * Result is cached in-memory per coin id to keep us within the free-tier rate limit.
      */
     @Cacheable(value = "coinPrices", key = "#coinId")
     public BigDecimal getCurrentPriceInEur(String coinId) {
@@ -64,11 +65,11 @@ public class CoinGeckoClient {
             if (body != null && body.containsKey(coinId) && body.get(coinId).containsKey("eur")) {
                 return body.get(coinId).get("eur");
             } else {
-                throw new ResourceNotFoundException("Preis für Coin ID '" + coinId + "' konnte nicht gefunden werden.");
+                throw new ResourceNotFoundException("Price for coin id '" + coinId + "' could not be found.");
             }
 
         } catch (RestClientException e) {
-            throw new RuntimeException("Fehler beim Abrufen der Daten von CoinGecko für: " + coinId, e);
+            throw new RuntimeException("Failed to fetch data from CoinGecko for: " + coinId, e);
         }
     }
 
@@ -100,7 +101,7 @@ public class CoinGeckoClient {
             }
             return result;
         } catch (RestClientException e) {
-            throw new RuntimeException("Fehler beim Abrufen der Marktpreise von CoinGecko", e);
+            throw new RuntimeException("Failed to fetch market prices from CoinGecko", e);
         }
     }
 
@@ -127,7 +128,7 @@ public class CoinGeckoClient {
                         return new BigDecimal(currentPrice.get("eur").toString());
                     }
                 }
-                throw new ResourceNotFoundException("Historischer Preis für '" + coinId + "' am " + date + " nicht verfügbar.");
+                throw new ResourceNotFoundException("Historical price for '" + coinId + "' on " + date + " is not available.");
             } catch (HttpClientErrorException e) {
                 if (e.getStatusCode().value() == 429 && attempt == 0) {
                     System.err.println("[CoinGecko] Rate limited (429) — waiting 65s before retry for " + coinId + " on " + date);
@@ -135,10 +136,10 @@ public class CoinGeckoClient {
                     continue;
                 }
                 System.err.println("[CoinGecko] HTTP " + e.getStatusCode().value() + " for " + coinId + " on " + date);
-                throw new RuntimeException("Fehler beim Abrufen des historischen Preises von CoinGecko für: " + coinId, e);
+                throw new RuntimeException("Failed to fetch historical price from CoinGecko for: " + coinId, e);
             } catch (RestClientException e) {
                 System.err.println("[CoinGecko] Request failed for " + coinId + " on " + date + ": " + e.getMessage());
-                throw new RuntimeException("Fehler beim Abrufen des historischen Preises von CoinGecko für: " + coinId, e);
+                throw new RuntimeException("Failed to fetch historical price from CoinGecko for: " + coinId, e);
             }
         }
         throw new RuntimeException("CoinGecko rate limit persists after retry for: " + coinId);

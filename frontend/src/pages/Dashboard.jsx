@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   useEffect(() => { document.title = 'Dashboard · WalletPulse'; }, []);
   const [wallets, setWallets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -14,26 +15,30 @@ const Dashboard = () => {
   const [saving, setSaving] = useState(false);
 
   const loadWallets = () =>
-    axios.get('http://localhost:8080/api/wallets')
+    axios.get('/api/wallets')
       .then((res) =>
         Promise.all(
           res.data.map((w) =>
-            axios.get(`http://localhost:8080/api/wallets/${w.id}/portfolio`).then((r) => r.data)
+            axios.get(`/api/wallets/${w.id}/portfolio`).then((r) => r.data)
           )
         )
       )
       .then(setWallets);
 
+  // Refetch on every navigation to this page so mutations made elsewhere
+  // (transaction edit/delete in History, etc.) are reflected without a hard
+  // reload. `isLoading` only flips true on the first mount — subsequent
+  // refetches happen silently in the background.
   useEffect(() => {
     loadWallets()
       .then(() => setIsLoading(false))
       .catch(() => { setError('Failed to load portfolio data.'); setIsLoading(false); });
-  }, []);
+  }, [location.key]);
 
   const handleCreateWallet = () => {
     if (!newWalletName.trim()) return;
     setSaving(true);
-    axios.post('http://localhost:8080/api/wallets', { name: newWalletName.trim() })
+    axios.post('/api/wallets', { name: newWalletName.trim() })
       .then(() => loadWallets())
       .then(() => { setShowAddWallet(false); setNewWalletName(''); setSaving(false); })
       .catch(() => setSaving(false));

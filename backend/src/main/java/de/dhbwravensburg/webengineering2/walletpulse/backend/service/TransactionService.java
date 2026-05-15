@@ -57,7 +57,11 @@ public class TransactionService {
 
     public void deleteTransaction(Long transactionId, String ownerEmail) {
         Transaction existing = getTransactionById(transactionId, ownerEmail);
+        Asset asset = existing.getAsset();
         transactionRepository.delete(existing);
+        if (transactionRepository.countByAssetId(asset.getId()) == 0) {
+            assetRepository.delete(asset);
+        }
     }
 
     private Asset requireAsset(Long assetId) {

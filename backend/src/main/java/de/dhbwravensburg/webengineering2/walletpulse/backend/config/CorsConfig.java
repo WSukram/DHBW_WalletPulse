@@ -13,7 +13,6 @@ public class CorsConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                // Erlaubt dem React-Frontend (Port 5173 oder 3000) Anfragen an unser Backend zu stellen
                 registry.addMapping("/api/**")
                         .allowedOrigins("http://localhost:5173", "http://localhost:3000")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")

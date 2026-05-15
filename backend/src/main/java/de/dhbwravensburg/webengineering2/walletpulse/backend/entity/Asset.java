@@ -19,18 +19,15 @@ public class Asset {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // z. B. "bitcoin", "ethereum"
     @NotBlank(message = "Coin id must not be blank")
     @Column(nullable = false)
     private String coinId;
 
-    // Relation to Wallet (Many assets belong to one wallet)
     @ManyToOne
     @JoinColumn(name = "wallet_id", nullable = false)
     @JsonIgnore
     private Wallet wallet;
 
-    // Relation to Transaction
     @OneToMany(mappedBy = "asset", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Transaction> transactions;
 }
