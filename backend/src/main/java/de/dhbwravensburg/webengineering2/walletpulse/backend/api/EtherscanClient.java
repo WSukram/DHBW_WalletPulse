@@ -1,5 +1,7 @@
 package de.dhbwravensburg.webengineering2.walletpulse.backend.api;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -12,6 +14,8 @@ import java.util.Map;
 
 @Service
 public class EtherscanClient {
+
+    private static final Logger log = LoggerFactory.getLogger(EtherscanClient.class);
 
     private final RestTemplate restTemplate;
 
@@ -51,9 +55,9 @@ public class EtherscanClient {
                     new ParameterizedTypeReference<Map<String, Object>>() {}
             ).getBody();
         } catch (RestClientException e) {
-            // RestTemplate echoes the URL in exception messages; scrub the API key before rethrowing.
             String msg = e.getMessage() != null ? e.getMessage().replaceAll("apikey=[^&\\s]+", "apikey=***") : "unknown error";
-            throw new RuntimeException("Etherscan request failed: " + msg);
+            log.warn("Etherscan request failed: {}", msg);
+            return List.of();
         }
 
         if (response == null) return List.of();
@@ -62,8 +66,8 @@ public class EtherscanClient {
         String message = String.valueOf(response.get("message"));
 
         if (!"1".equals(status)) {
-            if ("No transactions found".equalsIgnoreCase(message)) return List.of();
-            throw new RuntimeException("Etherscan error: " + message);
+            log.warn("Etherscan returned non-success status: {}", message);
+            return List.of();
         }
 
         @SuppressWarnings("unchecked")

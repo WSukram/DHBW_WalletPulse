@@ -2,7 +2,6 @@ package de.dhbwravensburg.webengineering2.walletpulse.backend.service;
 
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.ChainType;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Wallet;
-import de.dhbwravensburg.webengineering2.walletpulse.backend.exception.BusinessException;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.exception.ResourceNotFoundException;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.WalletRepository;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.service.blockchain.ChainImporter;
@@ -20,9 +19,13 @@ import java.util.stream.Collectors;
  * {@link ChainImporter} implementations under {@code service.blockchain}; this
  * class only resolves the wallet, dispatches to the matching importer and
  * stamps {@code lastImportTime}.
+ *
+ * Intentionally not @Transactional at the class level: wrapping the entire
+ * import in one session means a price-lookup failure for any individual token
+ * corrupts the Hibernate session and rolls back every previously-saved
+ * transaction. Each save() runs in its own short transaction instead.
  */
 @Service
-@Transactional
 public class BlockchainImportService {
 
     private final WalletRepository walletRepository;
@@ -34,28 +37,34 @@ public class BlockchainImportService {
                 .collect(Collectors.toMap(ChainImporter::chainType, i -> i));
     }
 
-    public ImportResult importWallet(Long walletId, String ownerEmail) {
+    @Transactional(readOnly = true)
+    public Wallet resolveWallet(Long walletId, String ownerEmail) {
         Wallet wallet = walletRepository.findByIdAndOwnerEmail(walletId, ownerEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("Wallet with id " + walletId + " not found"));
-
         if (wallet.getChainType() == null || wallet.getChainAddress() == null) {
             throw new IllegalStateException("Wallet has no chain address configured.");
         }
+        return wallet;
+    }
+
+    @Transactional
+    public void stampImportTime(Long walletId, String ownerEmail) {
+        walletRepository.findByIdAndOwnerEmail(walletId, ownerEmail).ifPresent(w -> {
+            w.setLastImportTime(LocalDateTime.now());
+            walletRepository.save(w);
+        });
+    }
+
+    public ImportResult importWallet(Long walletId, String ownerEmail) {
+        Wallet wallet = resolveWallet(walletId, ownerEmail);
 
         ChainImporter importer = importersByChain.get(wallet.getChainType());
         if (importer == null) {
             throw new IllegalStateException("No importer registered for chain " + wallet.getChainType());
         }
 
-        ImportResult result;
-        try {
-            result = importer.importTransactions(wallet);
-        } catch (RuntimeException e) {
-            throw new BusinessException("Import failed: " + e.getMessage());
-        }
-
-        wallet.setLastImportTime(LocalDateTime.now());
-        walletRepository.save(wallet);
+        ImportResult result = importer.importTransactions(wallet);
+        stampImportTime(walletId, ownerEmail);
         return result;
     }
 }
