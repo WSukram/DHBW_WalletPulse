@@ -10,7 +10,7 @@
 ![CI](https://github.com/WSukram/DHBW_WalletPulse/actions/workflows/ci.yml/badge.svg)
 ![CD](https://github.com/WSukram/DHBW_WalletPulse/actions/workflows/cd.yml/badge.svg)
 
-**Live**: [https://walletpulse.de](https://walletpulse.de)
+**Live**: [https://walletpulse.de](https://walletpulse.de) · **Docs**: [https://wsukram.github.io/DHBW_WalletPulse/](https://wsukram.github.io/DHBW_WalletPulse/)
 
 WalletPulse is a full-stack web application for managing a personal crypto portfolio. It tracks holdings across multiple wallets, calculates profit and loss against current market prices, and can import on-chain transactions directly from Ethereum, Bitcoin, and Solana.
 
@@ -94,7 +94,7 @@ The frontend is a React SPA. Axios is configured once in `utils/api.js` with a b
 | Java | 21 | Runtime |
 | Spring Boot | 4.0.5 | Framework (web, security, data JPA, graphql, validation) |
 | springdoc-openapi | 2.8.x | OpenAPI 3 spec + Swagger UI |
-| jjwt | 0.12.6 | HS256 JWT signing and validation |
+| jjwt | 0.12.6 | JWT signing and validation |
 | PostgreSQL driver | 42.x | Production database |
 | H2 | 2.x | In-memory database for tests |
 | Lombok | 1.18.x | Boilerplate reduction |
@@ -201,7 +201,7 @@ The frontend is a React SPA. Axios is configured once in `utils/api.js` with a b
 ```
 User
  ├── email (unique), firstName, lastName
- ├── passwordHash (BCrypt)
+ ├── passwordHash
  └── preferences (currency, theme)
   │
   └──► Wallet (OneToMany)
@@ -329,9 +329,7 @@ Used by `HeliusClient` to fetch incoming SOL transfers and SPL token transfers (
 
 ## Authentication
 
-WalletPulse uses stateless JWT (HS256). All wallet, asset, and transaction data is scoped to the authenticated user at the database query level — you can never access another user's data.
-
-Public endpoints (no token required): `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/market/prices`, `/v3/api-docs/**`, `/graphiql` (local only — disabled in production).
+WalletPulse uses stateless JWT authentication. All wallet, asset, and transaction data is scoped to the authenticated user at the database query level — you can never access another user's data.
 
 ```bash
 # Log in — returns { "token": "..." }
@@ -351,6 +349,7 @@ curl http://localhost:3000/api/wallets \
 | Interface | URL (local) |
 |---|---|
 | Scalar UI (interactive) | http://localhost:3000/docs |
+| Swagger UI | http://localhost:3000/swagger-ui/index.html |
 | Raw OpenAPI 3 spec | http://localhost:3000/v3/api-docs |
 | GraphQL endpoint | `POST http://localhost:3000/graphql` (use curl or Scalar — not a browser URL) |
 | GraphiQL playground | http://localhost:3000/graphiql (local Docker only — disabled in production) |
