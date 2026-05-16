@@ -30,7 +30,7 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env}
-      JWT_EXPIRATION: 600000
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-600000}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
       CORS_ALLOWED_ORIGINS: "http://localhost:5173,http://localhost:3000"
