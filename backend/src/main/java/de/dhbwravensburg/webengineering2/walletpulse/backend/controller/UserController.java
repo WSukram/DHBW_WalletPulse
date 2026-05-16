@@ -1,6 +1,7 @@
 package de.dhbwravensburg.webengineering2.walletpulse.backend.controller;
 
 import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.ChangePasswordRequest;
+import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.DeleteAccountRequest;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.ErrorResponse;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.PreferencesRequest;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.UserResponse;
@@ -52,6 +53,22 @@ public class UserController {
             @Valid @RequestBody PreferencesRequest request,
             @AuthenticationPrincipal UserDetails user) {
         return userService.updatePreferences(user.getUsername(), request.currency(), request.theme());
+    }
+
+    @DeleteMapping
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Delete the current user's account and all associated data")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Account deleted successfully"),
+            @ApiResponse(responseCode = "400", description = "Wrong password",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Not authenticated",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public void deleteAccount(
+            @Valid @RequestBody DeleteAccountRequest request,
+            @AuthenticationPrincipal UserDetails user) {
+        userService.deleteAccount(user.getUsername(), request.currentPassword());
     }
 
     @PutMapping("/password")

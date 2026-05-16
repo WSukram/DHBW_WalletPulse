@@ -19,9 +19,13 @@ import java.util.stream.Collectors;
  * {@link ChainImporter} implementations under {@code service.blockchain}; this
  * class only resolves the wallet, dispatches to the matching importer and
  * stamps {@code lastImportTime}.
+ *
+ * Intentionally not @Transactional at the class level: wrapping the entire
+ * import in one session means a price-lookup failure for any individual token
+ * corrupts the Hibernate session and rolls back every previously-saved
+ * transaction. Each save() runs in its own short transaction instead.
  */
 @Service
-@Transactional
 public class BlockchainImportService {
 
     private final WalletRepository walletRepository;
@@ -33,13 +37,26 @@ public class BlockchainImportService {
                 .collect(Collectors.toMap(ChainImporter::chainType, i -> i));
     }
 
-    public ImportResult importWallet(Long walletId, String ownerEmail) {
+    @Transactional(readOnly = true)
+    public Wallet resolveWallet(Long walletId, String ownerEmail) {
         Wallet wallet = walletRepository.findByIdAndOwnerEmail(walletId, ownerEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("Wallet with id " + walletId + " not found"));
-
         if (wallet.getChainType() == null || wallet.getChainAddress() == null) {
             throw new IllegalStateException("Wallet has no chain address configured.");
         }
+        return wallet;
+    }
+
+    @Transactional
+    public void stampImportTime(Long walletId, String ownerEmail) {
+        walletRepository.findByIdAndOwnerEmail(walletId, ownerEmail).ifPresent(w -> {
+            w.setLastImportTime(LocalDateTime.now());
+            walletRepository.save(w);
+        });
+    }
+
+    public ImportResult importWallet(Long walletId, String ownerEmail) {
+        Wallet wallet = resolveWallet(walletId, ownerEmail);
 
         ChainImporter importer = importersByChain.get(wallet.getChainType());
         if (importer == null) {
@@ -47,9 +64,7 @@ public class BlockchainImportService {
         }
 
         ImportResult result = importer.importTransactions(wallet);
-
-        wallet.setLastImportTime(LocalDateTime.now());
-        walletRepository.save(wallet);
+        stampImportTime(walletId, ownerEmail);
         return result;
     }
 }

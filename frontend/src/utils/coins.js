@@ -24,7 +24,7 @@ export const coinMeta = (coinId) => {
     name: coinId.charAt(0).toUpperCase() + coinId.slice(1),
     symbol: coinId.slice(0, 4).toUpperCase(),
     color: '#888888',
-    icon: coinId[0].toUpperCase(),
+    icon: coinId?.[0]?.toUpperCase() ?? '?',
     mui: 'generating_tokens',
   };
 };

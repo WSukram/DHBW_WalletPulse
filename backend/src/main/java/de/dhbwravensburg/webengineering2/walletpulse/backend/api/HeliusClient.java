@@ -1,5 +1,7 @@
 package de.dhbwravensburg.webengineering2.walletpulse.backend.api;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -13,6 +15,8 @@ import java.util.Map;
 
 @Service
 public class HeliusClient {
+
+    private static final Logger log = LoggerFactory.getLogger(HeliusClient.class);
 
     private final RestTemplate restTemplate;
 
@@ -45,9 +49,9 @@ public class HeliusClient {
                         new ParameterizedTypeReference<List<Map<String, Object>>>() {}
                 ).getBody();
             } catch (RestClientException e) {
-                // RestTemplate echoes the URL in exception messages; scrub the API key before rethrowing.
                 String msg = e.getMessage() != null ? e.getMessage().replaceAll("api-key=[^&\\s]+", "api-key=***") : "unknown error";
-                throw new RuntimeException("Helius request failed: " + msg);
+                log.warn("Helius request failed: {}", msg);
+                break;
             }
 
             if (page == null || page.isEmpty()) break;

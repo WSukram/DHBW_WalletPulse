@@ -18,7 +18,7 @@ The Scalar API reference (`/docs`) and the GraphiQL playground (`/graphiql`) are
 
 ## Password Storage
 
-Passwords are hashed before storage. Plaintext passwords are never persisted or logged.
+Passwords are hashed before storage. Plaintext passwords are never persisted or logged. The minimum password length is 12 characters; BCrypt truncates beyond 72 bytes.
 
 ## Transport Security
 

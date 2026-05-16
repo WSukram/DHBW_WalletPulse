@@ -1,9 +1,12 @@
 package de.dhbwravensburg.webengineering2.walletpulse.backend.api;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
@@ -12,6 +15,8 @@ import java.util.Map;
 
 @Service
 public class BlockstreamClient {
+
+    private static final Logger log = LoggerFactory.getLogger(BlockstreamClient.class);
 
     private final RestTemplate restTemplate;
 
@@ -32,12 +37,18 @@ public class BlockstreamClient {
                 url += "/chain/" + lastSeenTxid;
             }
 
-            List<Map<String, Object>> page = restTemplate.exchange(
-                    url,
-                    HttpMethod.GET,
-                    null,
-                    new ParameterizedTypeReference<List<Map<String, Object>>>() {}
-            ).getBody();
+            List<Map<String, Object>> page;
+            try {
+                page = restTemplate.exchange(
+                        url,
+                        HttpMethod.GET,
+                        null,
+                        new ParameterizedTypeReference<List<Map<String, Object>>>() {}
+                ).getBody();
+            } catch (RestClientException e) {
+                log.warn("Blockstream request failed: {}", e.getMessage());
+                break;
+            }
 
             if (page == null || page.isEmpty()) break;
             all.addAll(page);
