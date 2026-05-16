@@ -16,14 +16,18 @@ export const KNOWN_COINS = [
   { id: 'solana',   name: 'Solana',   symbol: 'SOL' },
 ];
 
-export const coinMeta = (coinId) =>
-  COIN_META[coinId] ?? {
+export const coinMeta = (coinId) => {
+  if (!coinId) {
+    return { name: 'Unknown', symbol: '?', color: '#888888', icon: '?', mui: 'generating_tokens' };
+  }
+  return COIN_META[coinId] ?? {
     name: coinId.charAt(0).toUpperCase() + coinId.slice(1),
     symbol: coinId.slice(0, 4).toUpperCase(),
     color: '#888888',
     icon: coinId[0].toUpperCase(),
     mui: 'generating_tokens',
   };
+};
 
 export const formatPct = (profit, invested) => {
   if (!invested || invested === 0) return '0.00%';

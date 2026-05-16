@@ -29,7 +29,7 @@ const History = () => {
   useEffect(() => { document.title = 'History · WalletPulse'; }, []);
   const { formatCurrency: formatEur } = useApp();
   const { wallets, transactions: allTransactions, isLoading, error, reload } = usePortfolioData();
-  const [activeWallet, setActiveWallet] = useState('All Wallets');
+  const [activeWallet, setActiveWallet] = useState('all');
   const [assetFilter, setAssetFilter] = useState('All Assets');
   const [page, setPage] = useState(1);
 
@@ -73,12 +73,12 @@ const History = () => {
   if (isLoading) return <div className="p-6 text-on-surface text-center">Loading Live-Data from Backend...</div>;
   if (error) return <div className="p-6 text-error text-center">{error}</div>;
 
-  const walletNames = ['All Wallets', ...wallets.map((w) => w.name)];
+  const walletOptions = [{ id: 'all', name: 'All Wallets' }, ...wallets.map((w) => ({ id: w.id, name: w.name }))];
   const uniqueCoins = [...new Set(allTransactions.map((tx) => tx.coinId))];
   const assetOptions = ['All Assets', ...uniqueCoins];
 
   const filtered = allTransactions.filter((tx) => {
-    const walletMatch = activeWallet === 'All Wallets' || tx.walletName === activeWallet;
+    const walletMatch = activeWallet === 'all' || tx.walletId === activeWallet;
     const assetMatch = assetFilter === 'All Assets' || tx.coinId === assetFilter;
     return walletMatch && assetMatch;
   });
@@ -87,7 +87,7 @@ const History = () => {
   const currentPage = Math.min(page, totalPages);
   const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-  const handleWalletChange = (name) => { setActiveWallet(name); setPage(1); };
+  const handleWalletChange = (id) => { setActiveWallet(id); setPage(1); };
   const handleAssetChange = (e) => { setAssetFilter(e.target.value); setPage(1); };
 
   const handleExportCsv = () => {
@@ -96,7 +96,8 @@ const History = () => {
       const meta = coinMeta(tx.coinId);
       return [tx.date, meta.name, meta.symbol, tx.amount, tx.buyPrice, tx.amount * tx.buyPrice, tx.walletName, tx.source ?? 'MANUAL', tx.txHash ?? ''];
     });
-    const walletSlug = activeWallet === 'All Wallets' ? 'all' : activeWallet.replace(/\s+/g, '_');
+    const activeName = walletOptions.find((w) => w.id === activeWallet)?.name ?? 'all';
+    const walletSlug = activeWallet === 'all' ? 'all' : activeName.replace(/\s+/g, '_');
     downloadCsv(`transactions_${walletSlug}.csv`, headers, rows);
   };
 
@@ -154,17 +155,17 @@ const History = () => {
           </div>
         </div>
         <div className="flex items-center gap-1 bg-surface-container-lowest border border-outline-variant rounded-lg p-1">
-          {walletNames.map((w) => (
+          {walletOptions.map((w) => (
             <button
-              key={w}
-              onClick={() => handleWalletChange(w)}
+              key={w.id}
+              onClick={() => handleWalletChange(w.id)}
               className={`px-3 py-1.5 rounded font-label-sm text-label-sm transition-colors ${
-                activeWallet === w
+                activeWallet === w.id
                   ? 'bg-surface-bright text-on-surface shadow-sm'
                   : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
               }`}
             >
-              {w}
+              {w.name}
             </button>
           ))}
         </div>

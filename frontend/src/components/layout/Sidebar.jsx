@@ -20,7 +20,7 @@ const Sidebar = () => {
         <img src="/wp-icon.svg" alt="WalletPulse" className="w-8 h-8 shrink-0" />
         <div>
           <h1 className="text-lg font-black text-on-surface">WalletPulse</h1>
-          <p className="text-[10px] text-on-surface-variant uppercase tracking-wider">Terminal v1.0</p>
+          <p className="text-[10px] text-on-surface-variant uppercase tracking-wider">Portfolio Tracker</p>
         </div>
       </Link>
 

@@ -139,12 +139,18 @@ export const AppProvider = ({ children }) => {
     return () => axios.interceptors.request.eject(interceptor);
   }, []);
 
-  // Intercept 401 responses and redirect to login
+  // Intercept 401 responses and redirect to login. The guard on the current
+  // path stops a burst of concurrent 401s (e.g. after a refresh failure) from
+  // each firing its own navigate + clearSession.
   useEffect(() => {
     const interceptor = axios.interceptors.response.use(
       (res) => res,
       (error) => {
-        if (error.response?.status === 401 && !error.config?.url?.includes('/api/auth/')) {
+        if (
+          error.response?.status === 401 &&
+          !error.config?.url?.includes('/api/auth/') &&
+          window.location.pathname !== '/login'
+        ) {
           clearSession();
           navigate('/login');
         }
