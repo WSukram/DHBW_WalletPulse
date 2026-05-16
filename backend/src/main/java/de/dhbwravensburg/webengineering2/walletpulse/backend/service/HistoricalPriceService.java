@@ -82,8 +82,8 @@ public class HistoricalPriceService {
     private BigDecimal fetchPrice(String coinId, LocalDate date) {
         LocalDate today = LocalDate.now();
 
-        // For today / yesterday CoinGecko has no historical endpoint yet — use the live price.
-        if (!date.isBefore(today.minusDays(1))) {
+        // Only same-day uses the live ticker; yesterday has a finalised close on the historical endpoint.
+        if (!date.isBefore(today)) {
             return coinGeckoClient.getCurrentPriceInEur(coinId);
         }
 
