@@ -1,0 +1,27 @@
+# Security
+
+## Authentication
+
+Authentication is stateless — no server-side sessions are maintained. On login the server issues a signed JWT. The client attaches it as a `Bearer` token on every subsequent request.
+
+Each request is validated before reaching any business logic. Invalid or expired tokens are rejected; the request proceeds unauthenticated and receives a 401 response from any protected path.
+
+## Authorization
+
+All data access is scoped to the authenticated user at the database query level. A user can never read or modify another user's wallets, assets, or transactions, regardless of how the request is constructed.
+
+## Public Endpoints
+
+A small set of endpoints require no authentication: user registration, login, and the live market price feed. Everything else — including the GraphQL endpoint — requires a valid token.
+
+## Password Storage
+
+Passwords are hashed before storage. Plaintext passwords are never persisted or logged.
+
+## Transport Security
+
+In production, TLS is terminated at the reverse proxy layer. The backend and database are not exposed to the internet — only the frontend is reachable externally, behind HTTPS.
+
+## CORS
+
+Allowed origins are controlled via an environment variable set at deploy time. In production this is locked to the frontend domain.

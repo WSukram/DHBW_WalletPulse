@@ -1,0 +1,27 @@
+site_name: WalletPulse
+site_url: https://wsukram.github.io/DHBW_WalletPulse/
+repo_url: https://github.com/WSukram/DHBW_WalletPulse
+repo_name: WSukram/DHBW_WalletPulse
+
+theme:
+  name: material
+  palette:
+    scheme: slate
+    primary: deep purple
+    accent: cyan
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+
+nav:
+  - Overview: index.md
+  - Architecture: architecture.md
+  - Setup: setup.md
+  - API: api.md
+  - Security: security.md
+  - Frontend: frontend.md
+  - Testing: testing.md
+  - Docker: docker.md
