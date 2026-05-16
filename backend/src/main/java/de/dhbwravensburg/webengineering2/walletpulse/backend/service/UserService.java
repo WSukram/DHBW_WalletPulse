@@ -2,6 +2,7 @@ package de.dhbwravensburg.webengineering2.walletpulse.backend.service;
 
 import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.UserResponse;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.User;
+import de.dhbwravensburg.webengineering2.walletpulse.backend.exception.BusinessException;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,7 +30,7 @@ public class UserService {
     public void changePassword(String email, String currentPassword, String newPassword) {
         User user = load(email);
         if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
-            throw new IllegalArgumentException("Current password is incorrect");
+            throw new BusinessException("Current password is incorrect");
         }
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
