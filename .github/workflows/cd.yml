@@ -66,7 +66,7 @@ jobs:
         uses: chrnorm/deployment-status@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          deployment-id: ${{ steps.deployment.id }}
+          deployment-id: ${{ steps.deployment.outputs.deployment_id }}
           state: success
           environment-url: https://walletpulse.de
 
@@ -75,6 +75,6 @@ jobs:
         uses: chrnorm/deployment-status@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          deployment-id: ${{ steps.deployment.id }}
+          deployment-id: ${{ steps.deployment.outputs.deployment_id }}
           state: failure
           environment-url: https://walletpulse.de
