@@ -211,7 +211,7 @@ The frontend is a React SPA. Axios is configured once in `utils/api.js` with a b
 ```
 User
  ├── email (unique), firstName, lastName
- ├── passwordHash
+ ├── password (BCrypt hash)
  └── preferences (currency, theme)
   │
   └──► Wallet (OneToMany)
@@ -421,9 +421,9 @@ cd backend
 
 ## CI/CD
 
-On every push and PR to `main`, GitHub Actions runs backend tests and a frontend production build in parallel (`.github/workflows/ci.yml`).
+On every push (any branch) and every PR targeting `main`, GitHub Actions runs backend tests and a frontend production build in parallel (`.github/workflows/ci.yml`).
 
-On every merge to `main`:
+On every commit landing on `main` (via push or merged PR), once CI is green:
 
 **CD** (`.github/workflows/cd.yml`) — deploys to the production server, gated on a successful CI run for the same commit:
 1. Builds backend and frontend Docker images for the CI-tested commit

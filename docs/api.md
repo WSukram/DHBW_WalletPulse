@@ -8,18 +8,20 @@ All protected endpoints require a `Bearer` token in the `Authorization` header. 
 
 ## REST Endpoints
 
-### Auth (public)
+### Auth (public except `/refresh`)
 
 | Method | Path | Description |
 |---|---|---|
 | `POST` | `/api/auth/register` | Create a new user account |
 | `POST` | `/api/auth/login` | Authenticate and receive a JWT |
+| `POST` | `/api/auth/refresh` | Issue a fresh JWT (requires the current one) |
 
 ### Wallets
 
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/api/wallets` | List all wallets for the authenticated user |
+| `GET` | `/api/wallets/{id}` | Get a single wallet |
 | `POST` | `/api/wallets` | Create a new wallet |
 | `PUT` | `/api/wallets/{id}` | Update a wallet |
 | `DELETE` | `/api/wallets/{id}` | Delete a wallet and all its assets |
@@ -33,6 +35,7 @@ All protected endpoints require a `Bearer` token in the `Authorization` header. 
 | `GET` | `/api/wallets/{id}/assets` | List assets in a wallet |
 | `POST` | `/api/wallets/{id}/assets` | Add an asset to a wallet |
 | `GET` | `/api/assets/{id}` | Get a single asset |
+| `PUT` | `/api/assets/{id}` | Update an asset's coin id |
 | `DELETE` | `/api/assets/{id}` | Delete an asset and its transactions |
 
 ### Transactions
@@ -40,6 +43,7 @@ All protected endpoints require a `Bearer` token in the `Authorization` header. 
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/api/assets/{id}/transactions` | List transactions for an asset |
+| `GET` | `/api/transactions/{id}` | Get a single transaction |
 | `POST` | `/api/assets/{id}/transactions` | Add a transaction |
 | `PUT` | `/api/transactions/{id}` | Update a transaction (manual only) |
 | `DELETE` | `/api/transactions/{id}` | Delete a transaction (manual only) |
@@ -56,7 +60,7 @@ All protected endpoints require a `Bearer` token in the `Authorization` header. 
 
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/api/market/prices` | Live BTC, ETH, SOL prices in EUR. Cached in memory. |
+| `GET` | `/api/market/prices` | Live BTC, ETH, SOL prices in EUR. Cached in Caffeine for 60 s. |
 
 ## GraphQL
 

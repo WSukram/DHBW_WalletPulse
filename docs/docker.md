@@ -7,7 +7,7 @@
 `backend/Dockerfile` — two-stage build:
 
 1. **Builder**: `maven:3-eclipse-temurin-21` — runs `./mvnw package -DskipTests` to produce the JAR.
-2. **Runtime**: `eclipse-temurin:21-jre-alpine` — copies the JAR and runs it. Minimal image size.
+2. **Runtime**: `eclipse-temurin:21-jre` (Ubuntu) — copies the JAR and runs it. `curl` is installed for the compose healthcheck.
 
 `backend/.dockerignore` excludes `application.properties` so the committed defaults never shadow environment variable secrets injected by Docker Compose.
 
@@ -44,11 +44,7 @@ Applied on the server as:
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 
-Changes over the base file:
-
-| Change | Reason |
-|---|---|
-| Removes `ports` for `db` and `backend` | Only the frontend container is reachable from the internet |
+Changes over the base file: none today. The base `docker-compose.yml` already binds `db` and `backend` to `127.0.0.1:` (loopback), so they are not reachable from the internet on the server. The overlay exists as a hook for environment-specific overrides if the deployment topology changes.
 
 ## Data Persistence
 
