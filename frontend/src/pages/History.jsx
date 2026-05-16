@@ -212,8 +212,8 @@ const History = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-right font-data-mono text-data-mono text-secondary">
-                      +{tx.amount.toFixed(8)}
+                    <td className={`px-6 py-4 text-right font-data-mono text-data-mono ${tx.amount >= 0 ? 'text-secondary' : 'text-error'}`}>
+                      {tx.amount >= 0 ? '+' : ''}{tx.amount.toFixed(8)}
                     </td>
                     <td className="px-6 py-4 text-right font-data-mono text-data-mono text-on-surface-variant">
                       {formatEur(tx.buyPrice)}

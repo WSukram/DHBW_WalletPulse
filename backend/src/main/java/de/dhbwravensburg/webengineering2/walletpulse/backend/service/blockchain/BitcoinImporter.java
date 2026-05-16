@@ -3,6 +3,8 @@ package de.dhbwravensburg.webengineering2.walletpulse.backend.service.blockchain
 import de.dhbwravensburg.webengineering2.walletpulse.backend.api.BlockstreamClient;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.ChainType;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Wallet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -16,6 +18,7 @@ import java.util.Map;
 @Component
 public class BitcoinImporter implements ChainImporter {
 
+    private static final Logger log = LoggerFactory.getLogger(BitcoinImporter.class);
     private static final BigDecimal SATOSHI_PER_BTC = new BigDecimal("100000000");
 
     private final BlockstreamClient blockstreamClient;
@@ -44,7 +47,11 @@ public class BitcoinImporter implements ChainImporter {
                 if (receivedSatoshi <= 0) continue;
 
                 long blockTime = ImportSupport.toLong(tx.get("status") instanceof Map<?, ?> s ? s.get("block_time") : null);
-                if (blockTime == 0) continue;
+                if (blockTime == 0) {
+                    // Mempool tx not yet mined — skip until it confirms (it'll be picked up on the next import).
+                    log.debug("Skipping unconfirmed BTC tx {} for {}", txid, address);
+                    continue;
+                }
 
                 LocalDate date = Instant.ofEpochSecond(blockTime).atZone(ZoneOffset.UTC).toLocalDate();
                 double amount = new BigDecimal(receivedSatoshi).divide(SATOSHI_PER_BTC, 8, RoundingMode.HALF_UP).doubleValue();
