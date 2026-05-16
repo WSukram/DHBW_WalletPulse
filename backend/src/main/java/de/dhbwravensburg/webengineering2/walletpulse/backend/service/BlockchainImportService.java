@@ -2,6 +2,7 @@ package de.dhbwravensburg.webengineering2.walletpulse.backend.service;
 
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.ChainType;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Wallet;
+import de.dhbwravensburg.webengineering2.walletpulse.backend.exception.BusinessException;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.exception.ResourceNotFoundException;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.WalletRepository;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.service.blockchain.ChainImporter;
@@ -46,7 +47,12 @@ public class BlockchainImportService {
             throw new IllegalStateException("No importer registered for chain " + wallet.getChainType());
         }
 
-        ImportResult result = importer.importTransactions(wallet);
+        ImportResult result;
+        try {
+            result = importer.importTransactions(wallet);
+        } catch (RuntimeException e) {
+            throw new BusinessException("Import failed: " + e.getMessage());
+        }
 
         wallet.setLastImportTime(LocalDateTime.now());
         walletRepository.save(wallet);
