@@ -42,7 +42,7 @@ const Login = () => {
               </span>
             </Link>
             <h1 className="font-heading-lg text-heading-lg text-on-surface">Sign in to WalletPulse</h1>
-            <p className="font-body-md text-body-md text-on-surface-variant">Access your high-fidelity crypto analytics</p>
+            <p className="font-body-md text-body-md text-on-surface-variant">Sign in to your portfolio</p>
           </div>
 
           {error && (

@@ -55,7 +55,7 @@ const Register = () => {
             </span>
           </Link>
           <h1 className="font-heading-lg text-heading-lg text-on-surface">Create your Account</h1>
-          <p className="font-body-md text-body-md text-on-surface-variant">Register to access your high-stakes portfolio.</p>
+          <p className="font-body-md text-body-md text-on-surface-variant">Create an account to start tracking your wallets.</p>
         </header>
 
         {error && (
