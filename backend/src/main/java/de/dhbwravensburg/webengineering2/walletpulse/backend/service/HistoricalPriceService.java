@@ -4,6 +4,8 @@ import de.dhbwravensburg.webengineering2.walletpulse.backend.api.CoinGeckoClient
 import de.dhbwravensburg.webengineering2.walletpulse.backend.api.CryptoCompareClient;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.HistoricalPrice;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.HistoricalPriceRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +26,8 @@ import java.util.Map;
 @Service
 @Transactional
 public class HistoricalPriceService {
+
+    private static final Logger log = LoggerFactory.getLogger(HistoricalPriceService.class);
 
     private static final Map<String, String> COINGECKO_TO_CC_SYMBOL = Map.ofEntries(
             Map.entry("bitcoin", "BTC"),
@@ -95,7 +99,7 @@ public class HistoricalPriceService {
             try {
                 return coinGeckoClient.getHistoricalPriceInEur(coinId, date);
             } catch (Exception e) {
-                System.err.println("[HistoricalPrice] CoinGecko failed for " + coinId + " on " + date + ", trying CryptoCompare: " + e.getMessage());
+                log.warn("CoinGecko historical lookup failed for {} on {}, trying CryptoCompare: {}", coinId, date, e.getMessage());
             }
         }
 

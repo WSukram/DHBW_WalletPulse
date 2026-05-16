@@ -1,6 +1,8 @@
 package de.dhbwravensburg.webengineering2.walletpulse.backend.api;
 
 import de.dhbwravensburg.webengineering2.walletpulse.backend.exception.ResourceNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,7 @@ import java.util.Map;
 @Service
 public class CryptoCompareClient {
 
+    private static final Logger log = LoggerFactory.getLogger(CryptoCompareClient.class);
     private static final String API_URL = "https://min-api.cryptocompare.com/data/v2/histoday";
 
     private final RestTemplate restTemplate;
@@ -45,7 +48,9 @@ public class CryptoCompareClient {
                     }
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            log.warn("CryptoCompare lookup failed for {} on {}: {}", symbol, date, e.toString());
+        }
 
         throw new ResourceNotFoundException("No CryptoCompare price for " + symbol + " on " + date);
     }
