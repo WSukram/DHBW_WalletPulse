@@ -4,6 +4,9 @@ services:
 
   backend:
     ports: []
+    environment:
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_GRAPHQL_GRAPHIQL_ENABLED: "false"
 
   frontend:
     ports:
