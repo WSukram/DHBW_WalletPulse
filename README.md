@@ -252,7 +252,6 @@ This starts PostgreSQL, the Spring Boot backend, and the React frontend in the c
 | Service | URL |
 |---|---|
 | App | http://localhost:3000 |
-| API | http://localhost:3000/api |
 | API Docs | http://localhost:3000/docs |
 | GraphiQL | http://localhost:3000/graphiql (local Docker only — disabled in production) |
 
