@@ -254,7 +254,7 @@ This starts PostgreSQL, the Spring Boot backend, and the React frontend in the c
 | App | http://localhost:3000 |
 | API | http://localhost:3000/api |
 | API Docs | http://localhost:3000/docs |
-| GraphiQL | http://localhost:3000/graphiql (disabled in production) |
+| GraphiQL | http://localhost:3000/graphiql (local Docker only — disabled in production) |
 
 After the initial build, subsequent runs are much faster. To stop the container without losing data, type `docker-compose down`. The PostgreSQL data is persisted in a Docker volume, so your wallets and transactions remain intact across restarts. To start the database, run `docker-compose up -d`. If you want to wipe all data and start fresh, run `docker-compose down -v` to remove the volume.
 
@@ -353,8 +353,8 @@ curl http://localhost:3000/api/wallets \
 |---|---|
 | Scalar UI (interactive) | http://localhost:3000/docs |
 | Raw OpenAPI 3 spec | http://localhost:3000/v3/api-docs |
-| GraphQL endpoint | `POST` http://localhost:3000/graphql |
-| GraphiQL playground | http://localhost:3000/graphiql (local only — disabled in production) |
+| GraphQL endpoint | `POST http://localhost:3000/graphql` (use curl or Scalar — not a browser URL) |
+| GraphiQL playground | http://localhost:3000/graphiql (local Docker only — disabled in production) |
 
 Every REST endpoint has `@Operation` annotations with request/response schemas including 4xx error payloads. Protected endpoints show a padlock in Scalar. The GraphQL schema is at `backend/src/main/resources/graphql/schema.graphqls`.
 
