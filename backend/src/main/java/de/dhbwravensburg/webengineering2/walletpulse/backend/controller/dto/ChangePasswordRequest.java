@@ -7,6 +7,6 @@ import jakarta.validation.constraints.Size;
 public record ChangePasswordRequest(
         @Schema(description = "Current password", example = "oldSecret1234")
         @NotBlank String currentPassword,
-        @Schema(description = "New password (minimum 8 characters)", example = "newSecret1234")
-        @NotBlank @Size(min = 8) String newPassword
+        @Schema(description = "New password (minimum 12 characters)", example = "newSecret1234!!")
+        @NotBlank @Size(min = 12) String newPassword
 ) {}

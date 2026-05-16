@@ -100,7 +100,7 @@ class WalletControllerTest {
         Map<String, String> body = Map.of(
                 "name", "My ETH Wallet",
                 "chainType", "ETH",
-                "chainAddress", "0xabc123"
+                "chainAddress", "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
         );
 
         mockMvc.perform(post("/api/wallets")

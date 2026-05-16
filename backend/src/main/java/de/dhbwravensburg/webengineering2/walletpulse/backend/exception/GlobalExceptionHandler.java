@@ -22,10 +22,16 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public Map<String, String> handleIllegalArgument(IllegalArgumentException ex) {
+    @ExceptionHandler(BusinessException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> handleBusiness(BusinessException ex) {
         return Map.of("error", ex.getMessage());
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> handleIllegalArgument(IllegalArgumentException ex) {
+        return Map.of("error", "Invalid request");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -57,6 +63,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Map<String, String> handleRuntime(RuntimeException ex) {
-        return Map.of("error", ex.getMessage() != null ? ex.getMessage() : "Unexpected error");
+        return Map.of("error", "An unexpected error occurred");
     }
 }
