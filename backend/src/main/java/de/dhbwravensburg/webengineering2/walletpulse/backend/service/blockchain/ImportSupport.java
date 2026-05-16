@@ -7,6 +7,7 @@ import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Wallet;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.AssetRepository;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.TransactionRepository;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.service.HistoricalPriceService;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -52,7 +53,15 @@ public class ImportSupport {
 
     public Asset findOrCreateAsset(Wallet wallet, String coinId) {
         return assetRepository.findByWalletIdAndCoinId(wallet.getId(), coinId)
-                .orElseGet(() -> assetRepository.save(Asset.builder().coinId(coinId).wallet(wallet).build()));
+                .orElseGet(() -> {
+                    try {
+                        return assetRepository.save(Asset.builder().coinId(coinId).wallet(wallet).build());
+                    } catch (DataIntegrityViolationException race) {
+                        // Concurrent import created the same (wallet, coin) row first — re-query and use it.
+                        return assetRepository.findByWalletIdAndCoinId(wallet.getId(), coinId)
+                                .orElseThrow(() -> race);
+                    }
+                });
     }
 
     /**

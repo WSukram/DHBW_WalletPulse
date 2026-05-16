@@ -7,6 +7,7 @@ import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.WalletRe
 import de.dhbwravensburg.webengineering2.walletpulse.backend.service.blockchain.ChainImporter;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.service.blockchain.ImportResult;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
  * stamps {@code lastImportTime}.
  */
 @Service
+@Transactional
 public class BlockchainImportService {
 
     private final WalletRepository walletRepository;

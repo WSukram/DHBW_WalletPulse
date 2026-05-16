@@ -5,6 +5,7 @@ import de.dhbwravensburg.webengineering2.walletpulse.backend.api.CryptoCompareCl
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.HistoricalPrice;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.HistoricalPriceRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -21,6 +22,7 @@ import java.util.Map;
  * the network at most once.
  */
 @Service
+@Transactional
 public class HistoricalPriceService {
 
     private static final Map<String, String> COINGECKO_TO_CC_SYMBOL = Map.ofEntries(

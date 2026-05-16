@@ -8,6 +8,10 @@ import lombok.*;
 import java.util.List;
 
 @Entity
+@Table(name = "asset", uniqueConstraints = @UniqueConstraint(
+        name = "uk_asset_wallet_coin",
+        columnNames = {"wallet_id", "coin_id"}
+))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -20,7 +24,7 @@ public class Asset {
     private Long id;
 
     @NotBlank(message = "Coin id must not be blank")
-    @Column(nullable = false)
+    @Column(name = "coin_id", nullable = false)
     private String coinId;
 
     @ManyToOne

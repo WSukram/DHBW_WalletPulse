@@ -9,6 +9,7 @@ import de.dhbwravensburg.webengineering2.walletpulse.backend.exception.ResourceN
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.AssetRepository;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.WalletRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -20,6 +21,7 @@ import java.util.List;
  * 403, to avoid leaking the existence of foreign resources).
  */
 @Service
+@Transactional
 public class AssetService {
 
     private final AssetRepository assetRepository;

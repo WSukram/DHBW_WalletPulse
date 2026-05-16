@@ -11,10 +11,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class AuthService {
 
@@ -45,7 +48,8 @@ public class AuthService {
     }
 
     public AuthResponse refresh(String email) {
-        User user = userRepository.findByEmail(email).orElseThrow();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Account no longer exists"));
         UserDetails userDetails = org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmail())
                 .password(user.getPassword())
@@ -59,7 +63,8 @@ public class AuthService {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.email(), request.password())
         );
-        User user = userRepository.findByEmail(request.email()).orElseThrow();
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new UsernameNotFoundException("Account no longer exists"));
         UserDetails userDetails = org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmail())
                 .password(user.getPassword())
