@@ -10,16 +10,18 @@ export const getChartLabels = (range) => {
     });
   }
   if (range === '1M') {
-    return Array.from({ length: 5 }, (_, i) => {
+    // 6 labels over 30 days (cutoff = -1 month). Stride 6 days. Aligned with cutoff.
+    return Array.from({ length: 6 }, (_, i) => {
       const d = new Date(now);
-      d.setDate(d.getDate() - (28 - i * 7));
+      d.setDate(d.getDate() - (30 - i * 6));
       return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     });
   }
   if (range === '1Y') {
-    return Array.from({ length: 6 }, (_, i) => {
+    // 7 labels over 12 months (cutoff = -1 year). Stride 2 months. Aligned with cutoff.
+    return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(now);
-      d.setMonth(d.getMonth() - (10 - i * 2));
+      d.setMonth(d.getMonth() - (12 - i * 2));
       return d.toLocaleDateString('en-US', { month: 'short' });
     });
   }

@@ -17,12 +17,12 @@ const Dashboard = () => {
   const [newWalletChainAddress, setNewWalletChainAddress] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const loadWallets = () =>
-    axios.get('/api/wallets')
+  const loadWallets = (signal) =>
+    axios.get('/api/wallets', { signal })
       .then((res) =>
         Promise.all(
           res.data.map((w) =>
-            axios.get(`/api/wallets/${w.id}/portfolio`).then((r) => r.data)
+            axios.get(`/api/wallets/${w.id}/portfolio`, { signal }).then((r) => r.data)
           )
         )
       )
@@ -31,11 +31,19 @@ const Dashboard = () => {
   // Refetch on every navigation to this page so mutations made elsewhere
   // (transaction edit/delete in History, etc.) are reflected without a hard
   // reload. `isLoading` only flips true on the first mount — subsequent
-  // refetches happen silently in the background.
+  // refetches happen silently in the background. AbortController cancels any
+  // in-flight request when the user navigates away (or re-navigates), so
+  // setState never fires on an unmounted component.
   useEffect(() => {
-    loadWallets()
+    const controller = new AbortController();
+    loadWallets(controller.signal)
       .then(() => setIsLoading(false))
-      .catch(() => { setError('Failed to load portfolio data.'); setIsLoading(false); });
+      .catch((err) => {
+        if (axios.isCancel(err) || err?.name === 'CanceledError') return;
+        setError('Failed to load portfolio data.');
+        setIsLoading(false);
+      });
+    return () => controller.abort();
   }, [location.key]);
 
   const handleCreateWallet = () => {

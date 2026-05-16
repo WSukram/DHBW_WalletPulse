@@ -264,7 +264,10 @@ const Wallet = () => {
     downloadCsv(`${slug}_transactions.csv`, headers, rows);
   };
 
-  const portfolio = portfolios.find((p) => p.id === selectedWalletId) ?? null;
+  const portfolio = useMemo(
+    () => portfolios.find((p) => p.id === selectedWalletId) ?? null,
+    [portfolios, selectedWalletId]
+  );
 
   const chartPoints = useMemo(
     () => computePortfolioChartPoints(transactions, portfolio?.assets ?? [], activeRange),

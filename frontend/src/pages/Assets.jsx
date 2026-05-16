@@ -29,7 +29,10 @@ const Assets = () => {
     }
   }, [portfolio, activeCompare]);
 
-  const activeAsset = (portfolio?.assets ?? []).find((a) => a.coinId === activeCompare) ?? null;
+  const activeAsset = useMemo(
+    () => (portfolio?.assets ?? []).find((a) => a.coinId === activeCompare) ?? null,
+    [portfolio, activeCompare]
+  );
 
   const chartPoints = useMemo(
     () => computeAssetChartPoints(transactions, activeAsset, activeRange),
