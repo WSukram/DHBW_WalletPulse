@@ -5,7 +5,7 @@ import { usePageTitle } from '../hooks/usePageTitle';
 
 const Security = () => {
   usePageTitle('Security');
-  const { currency, setCurrency, theme, setTheme, user } = useApp();
+  const { currency, setCurrency, theme, setTheme, user, logout } = useApp();
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -14,11 +14,30 @@ const Security = () => {
   const [pwSuccess, setPwSuccess] = useState('');
   const [pwLoading, setPwLoading] = useState(false);
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteError, setDeleteError] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const handleDeleteAccount = async (e) => {
+    e.preventDefault();
+    setDeleteError('');
+    setDeleteLoading(true);
+    try {
+      await axios.delete('/api/user/me', { data: { currentPassword: deletePassword } });
+      logout();
+    } catch (err) {
+      setDeleteError(err.response?.data?.error ?? 'Failed to delete account.');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   const handlePasswordUpdate = async (e) => {
     e.preventDefault();
     setPwError('');
     setPwSuccess('');
-    if (newPassword.length < 8) { setPwError('New password must be at least 8 characters.'); return; }
+    if (newPassword.length < 12) { setPwError('New password must be at least 12 characters.'); return; }
     if (newPassword !== confirmPassword) { setPwError('Passwords do not match.'); return; }
 
     setPwLoading(true);
@@ -131,7 +150,7 @@ const Security = () => {
             </section>
           </div>
 
-          {/* Right Column: Change Password */}
+          {/* Right Column: Change Password + Danger Zone */}
           <div className="col-span-12 lg:col-span-8 space-y-layout-gutter">
             <section className="bg-surface-container rounded-xl border border-outline-variant">
               <div className="p-lg border-b border-outline-variant">
@@ -156,7 +175,7 @@ const Security = () => {
                     <input
                       type="password"
                       className={inputCls}
-                      placeholder="Min. 8 characters"
+                      placeholder="Min. 12 characters"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       required
@@ -189,10 +208,77 @@ const Security = () => {
                 </div>
               </form>
             </section>
+
+            {/* Danger Zone */}
+            <section className="bg-surface-container rounded-xl border border-error/30">
+              <div className="p-lg border-b border-error/20">
+                <h3 className="font-heading-md text-heading-md text-error">Danger Zone</h3>
+                <p className="font-body-md text-body-md text-on-surface-variant mt-1">Irreversible actions for your account.</p>
+              </div>
+              <div className="p-lg flex items-center justify-between gap-md">
+                <div>
+                  <p className="font-label-md text-label-md text-on-surface">Delete Account</p>
+                  <p className="font-body-sm text-body-sm text-on-surface-variant mt-xs">Permanently delete your account and all wallets, assets, and transaction history. This cannot be undone.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setDeleteError(''); setDeletePassword(''); setShowDeleteModal(true); }}
+                  className="shrink-0 bg-error/10 text-error border border-error/30 px-lg py-sm rounded-lg font-label-sm text-label-sm hover:bg-error/20 transition-colors"
+                >
+                  Delete Account
+                </button>
+              </div>
+            </section>
           </div>
 
         </div>
       </div>
+
+      {/* Delete confirmation modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-md bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-surface-container border border-error/30 rounded-xl shadow-2xl">
+            <div className="p-lg border-b border-outline-variant flex items-center gap-sm">
+              <span className="material-symbols-outlined text-error">warning</span>
+              <h3 className="font-heading-md text-heading-md text-on-surface">Delete Account</h3>
+            </div>
+            <form className="p-lg space-y-md" onSubmit={handleDeleteAccount}>
+              <p className="font-body-md text-body-md text-on-surface-variant">
+                This will permanently delete your account and <span className="text-on-surface font-medium">all data</span> associated with it — wallets, assets, and transaction history. Enter your current password to confirm.
+              </p>
+              <div className="space-y-xs">
+                <label className="block font-label-sm text-label-sm text-on-surface-variant">Current Password</label>
+                <input
+                  type="password"
+                  className={inputCls}
+                  placeholder="Enter your password to confirm"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  required
+                  autoFocus
+                />
+              </div>
+              {deleteError && <p className="text-sm text-error">{deleteError}</p>}
+              <div className="flex justify-end gap-sm pt-sm">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteModal(false)}
+                  className="px-lg py-sm rounded-lg font-label-sm text-label-sm border border-outline-variant text-on-surface-variant hover:text-on-surface hover:border-outline transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={deleteLoading}
+                  className="bg-error text-on-error px-lg py-sm rounded-lg font-label-sm text-label-sm hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {deleteLoading ? 'Deleting...' : 'Delete my account'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

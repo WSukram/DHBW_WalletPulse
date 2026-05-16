@@ -125,7 +125,7 @@ const Register = () => {
                 name="password"
                 placeholder="••••••••"
                 required
-                minLength={8}
+                minLength={12}
                 className="w-full bg-background border border-outline-variant rounded-lg pl-[44px] pr-[44px] py-sm font-body-md text-body-md text-on-surface placeholder:text-outline focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all outline-none"
               />
               <button
