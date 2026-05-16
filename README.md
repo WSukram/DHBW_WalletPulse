@@ -117,7 +117,7 @@ The frontend is a React SPA. Axios is configured once in `utils/api.js` with a b
 |---|---|
 | Docker + Docker Compose | Local development and production containers |
 | nginx (Alpine) | Frontend container — serves SPA, proxies API calls |
-| GitHub Actions | CI (test + build on every push) and CD (deploy on merge to main) |
+| GitHub Actions | CI (test + build on every push) and CD (deploy on green CI on main) |
 | GitHub Container Registry | Stores built Docker images (`ghcr.io/wsukram/`) |
 | GitHub Pages | MkDocs Material documentation site (see `docs/`, `mkdocs.yml`) |
 | Let's Encrypt / certbot | HTTPS certificate with auto-renewal |
@@ -186,7 +186,7 @@ The frontend is a React SPA. Axios is configured once in `utils/api.js` with a b
 │   └── package.json
 ├── .github/workflows/
 │   ├── ci.yml                      # Tests + build on every push and PR
-│   ├── cd.yml                      # Build images, push to ghcr.io, SSH deploy on main
+│   ├── cd.yml                      # On green CI on main: build images, push to ghcr.io (latest + sha tag), SSH deploy
 │   └── pages.yml                   # Build and deploy to GitHub Pages on main
 ├── docker-compose.yml              # Base stack: db + backend + frontend
 ├── docker-compose.prod.yml         # Production overrides: validate DDL, prod CORS
@@ -425,9 +425,9 @@ On every push and PR to `main`, GitHub Actions runs backend tests and a frontend
 
 On every merge to `main`:
 
-**CD** (`.github/workflows/cd.yml`) — deploys to the production server:
-1. Builds backend and frontend Docker images
-2. Pushes them to GitHub Container Registry (`ghcr.io/wsukram/`)
+**CD** (`.github/workflows/cd.yml`) — deploys to the production server, gated on a successful CI run for the same commit:
+1. Builds backend and frontend Docker images for the CI-tested commit
+2. Pushes them to GitHub Container Registry (`ghcr.io/wsukram/`) with both `:latest` and `:<sha>` tags (rollback target)
 3. SSHes into the production server as a dedicated `deploy` user
 4. Pulls the new images and restarts containers
 

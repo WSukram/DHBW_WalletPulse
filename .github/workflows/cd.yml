@@ -1,11 +1,15 @@
 name: CD
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
     branches: [main]
 
 jobs:
   build-and-deploy:
+    # Only deploy if the CI run that triggered us actually passed.
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -14,6 +18,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4.2.2
+        with:
+          # Check out the exact commit CI tested, not whatever is on main now.
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Create GitHub deployment
         uses: chrnorm/deployment-action@v2
@@ -22,6 +29,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           environment: production
           initial-status: in_progress
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Set lowercase owner
         run: echo "OWNER=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
@@ -38,14 +46,18 @@ jobs:
         with:
           context: ./backend
           push: true
-          tags: ghcr.io/${{ env.OWNER }}/walletpulse-backend:latest
+          tags: |
+            ghcr.io/${{ env.OWNER }}/walletpulse-backend:latest
+            ghcr.io/${{ env.OWNER }}/walletpulse-backend:${{ github.event.workflow_run.head_sha }}
 
       - name: Build and push frontend image
         uses: docker/build-push-action@v6
         with:
           context: ./frontend
           push: true
-          tags: ghcr.io/${{ env.OWNER }}/walletpulse-frontend:latest
+          tags: |
+            ghcr.io/${{ env.OWNER }}/walletpulse-frontend:latest
+            ghcr.io/${{ env.OWNER }}/walletpulse-frontend:${{ github.event.workflow_run.head_sha }}
           build-args: VITE_API_URL=
 
       - name: Copy compose files to server
@@ -63,12 +75,18 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+          # Pass the registry token through the SSH session env so it never
+          # appears in the remote shell trace.
+          envs: GHCR_TOKEN,GHCR_USER
           script: |
             cd /opt/walletpulse
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
             docker image prune -f
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
 
       - name: Update deployment status (success)
         if: success()

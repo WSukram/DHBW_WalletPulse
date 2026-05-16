@@ -67,11 +67,12 @@ No Docker or Postgres required — backend tests use H2.
 
 ### CD (`cd.yml`)
 
-Runs on push to `main`:
+Triggered by a successful CI run on `main` (via `workflow_run`). If CI fails, CD does not run.
 
-1. Builds `walletpulse-backend` and `walletpulse-frontend` Docker images with appropriate build args.
-2. Pushes images to `ghcr.io/wsukram/`.
-3. Pulls the new images and restarts the containers with the production Compose overlay.
+1. Checks out the exact commit CI tested.
+2. Builds `walletpulse-backend` and `walletpulse-frontend` Docker images with appropriate build args.
+3. Pushes images to `ghcr.io/wsukram/` with two tags: `:latest` and `:<commit-sha>` (so rollback is `docker pull …:<previous-sha>`).
+4. Pulls the new images and restarts the containers with the production Compose overlay.
 
 ### GitHub Pages (`pages.yml`)
 
