@@ -43,7 +43,7 @@ Developed for the **Web Engineering 2** module at **DHBW Ravensburg** Campus Fri
 - **Multiple wallets per user**, each scoped to ETH / BTC / SOL or used for manual tracking
 - **Manual transaction entry** and **automated on-chain import** for Ethereum, Bitcoin, and Solana
 - **Live and historical prices** from CoinGecko (CryptoCompare fallback for dates > 365 days old)
-- **Display currency** switchable between EUR, USD, and BTC per user
+- **Display currency** switchable between EUR (native), USD (live ECB rate via frankfurter.app), and BTC (live BTC/EUR price via CoinGecko)
 - **JWT authentication** — all data is user-scoped at the database query level
 - **REST and GraphQL** API surfaces backed by the same services and security context
 - **Interactive API reference** (Scalar at `/docs`) and GraphiQL playground (`/graphiql`)

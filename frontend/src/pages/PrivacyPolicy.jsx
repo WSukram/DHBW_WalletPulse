@@ -90,6 +90,7 @@ const PrivacyPolicy = () => {
               <DataRow label="Etherscan" value="Your Ethereum wallet address — to import on-chain transaction history" />
               <DataRow label="Blockstream" value="Your Bitcoin wallet address — to import on-chain transaction history" />
               <DataRow label="Helius" value="Your Solana wallet address — to import on-chain transaction history" />
+              <DataRow label="Frankfurter" value="No personal data — only a fixed EUR→USD rate query for currency display" />
             </div>
             <p className="mt-3">These services have their own privacy policies which we recommend reviewing.</p>
           </Section>

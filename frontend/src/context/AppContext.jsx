@@ -2,9 +2,15 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const fmt = (value, currency) => {
-  const RATES = { EUR: 1, USD: 1.09, BTC: 0.0000148 };
-  const v = (value ?? 0) * RATES[currency];
+// Fallback rates used only when the live FX/BTC lookups have not yet completed
+// or have failed. The defaults are deliberately conservative so a first paint
+// before the fetches resolve still shows a sensible number.
+const FALLBACK_RATES = { EUR: 1, USD: 1.09, BTC: 0.0000148 };
+
+const fmt = (value, currency, rates) => {
+  const effective = rates ?? FALLBACK_RATES;
+  const rate = effective[currency] ?? FALLBACK_RATES[currency];
+  const v = (value ?? 0) * rate;
   if (currency === 'BTC') return `₿ ${v.toFixed(6)}`;
   return new Intl.NumberFormat(currency === 'EUR' ? 'de-DE' : 'en-US', {
     style: 'currency',
@@ -12,6 +18,8 @@ const fmt = (value, currency) => {
     minimumFractionDigits: 2,
   }).format(v);
 };
+
+const FX_REFRESH_MS = 5 * 60 * 1000;
 
 const applyTheme = (theme) => {
   const html = document.documentElement;
@@ -61,9 +69,35 @@ export const AppProvider = ({ children }) => {
 
   const currencyRef = useRef(currency);
   const themeRef = useRef(theme);
+  const [rates, setRates] = useState(FALLBACK_RATES);
 
   useEffect(() => {
     applyTheme(theme);
+  }, []);
+
+  // Pull a live EUR→USD rate from frankfurter.app (free, no key) and the
+  // current BTC/EUR price from our own backend. BTC moves quickly; FX moves
+  // slowly. One 5-minute refresh covers both. We use native fetch for the
+  // third-party call so axios's default Authorization header isn't sent to
+  // frankfurter.app.
+  useEffect(() => {
+    let cancelled = false;
+    const fetchRates = async () => {
+      try {
+        const [fxResp, pricesResp] = await Promise.all([
+          fetch('https://api.frankfurter.app/latest?from=EUR&to=USD').then((r) => r.json()).catch(() => null),
+          axios.get('/api/market/prices').then((r) => r.data).catch(() => null),
+        ]);
+        if (cancelled) return;
+        const usd = fxResp?.rates?.USD ?? FALLBACK_RATES.USD;
+        const btcEur = pricesResp?.bitcoin?.eur;
+        const btc = btcEur && btcEur > 0 ? 1 / Number(btcEur) : FALLBACK_RATES.BTC;
+        setRates({ EUR: 1, USD: usd, BTC: btc });
+      } catch { /* keep last good rates */ }
+    };
+    fetchRates();
+    const timer = setInterval(fetchRates, FX_REFRESH_MS);
+    return () => { cancelled = true; clearInterval(timer); };
   }, []);
 
   // Restore axios header if session is still valid
@@ -212,7 +246,7 @@ export const AppProvider = ({ children }) => {
     clearSession();
   };
 
-  const formatCurrency = (value) => fmt(value, currency);
+  const formatCurrency = (value) => fmt(value, currency, rates);
 
   return (
     <AppContext.Provider value={{ currency, setCurrency, theme, setTheme, formatCurrency, user, login, logout }}>
