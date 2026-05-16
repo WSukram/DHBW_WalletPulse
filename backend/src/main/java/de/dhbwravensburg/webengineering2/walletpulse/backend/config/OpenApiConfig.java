@@ -28,6 +28,7 @@ public class OpenApiConfig {
                                 .name("MIT")
                                 .url("https://opensource.org/licenses/MIT")))
                 .servers(List.of(
+                        new Server().url("https://walletpulse.de").description("Production"),
                         new Server().url("http://localhost:8080").description("Local development"),
                         new Server().url("/").description("Same-origin (when served behind a reverse proxy)")))
                 .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
