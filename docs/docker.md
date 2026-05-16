@@ -49,7 +49,6 @@ Changes over the base file:
 | Change | Reason |
 |---|---|
 | Removes `ports` for `db` and `backend` | Only the frontend container is reachable from the internet |
-| Sets `SPRING_GRAPHQL_GRAPHIQL_ENABLED=false` | GraphiQL playground is disabled in production |
 
 ## Data Persistence
 

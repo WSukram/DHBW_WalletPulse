@@ -70,7 +70,7 @@ docker-compose down -v && docker-compose up --build
 |---|---|
 | App | [http://localhost:3000](http://localhost:3000) |
 | API Docs (Scalar) | [http://localhost:3000/docs](http://localhost:3000/docs) |
-| GraphiQL playground | [http://localhost:3000/graphiql](http://localhost:3000/graphiql) — local Docker only, disabled in production |
+| GraphiQL playground | [http://localhost:3000/graphiql](http://localhost:3000/graphiql) |
 | Raw OpenAPI spec | [http://localhost:3000/v3/api-docs](http://localhost:3000/v3/api-docs) |
 
 ## Backend Development (without Docker)

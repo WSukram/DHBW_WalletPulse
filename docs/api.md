@@ -64,7 +64,7 @@ All protected endpoints require a `Bearer` token in the `Authorization` header. 
 |---|---|
 | Endpoint | `POST /graphql` |
 | Auth | Bearer token required |
-| Playground | `GET /graphiql` — local Docker only, disabled in production |
+| Playground | `GET /graphiql` |
 
 ### Available Queries
 

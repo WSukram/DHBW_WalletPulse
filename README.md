@@ -46,7 +46,7 @@ Developed for the **Web Engineering 2** module at **DHBW Ravensburg** Campus Fri
 - **Display currency** switchable between EUR, USD, and BTC per user
 - **JWT authentication** — all data is user-scoped at the database query level
 - **REST and GraphQL** API surfaces backed by the same services and security context
-- **Interactive API reference** (Scalar at `/docs`) and GraphiQL playground (`/graphiql`, local only)
+- **Interactive API reference** (Scalar at `/docs`) and GraphiQL playground (`/graphiql`)
 
 ---
 
@@ -189,7 +189,7 @@ The frontend is a React SPA. Axios is configured once in `utils/api.js` with a b
 │   ├── cd.yml                      # Build images, push to ghcr.io, SSH deploy on main
 │   └── pages.yml                   # Build and deploy to GitHub Pages on main
 ├── docker-compose.yml              # Base stack: db + backend + frontend
-├── docker-compose.prod.yml         # Production overrides: no GraphiQL, validate DDL, prod CORS
+├── docker-compose.prod.yml         # Production overrides: validate DDL, prod CORS
 ├── docs/                           # MkDocs documentation source (deployed to GitHub Pages)
 │   ├── index.md                    # Overview
 │   ├── architecture.md
@@ -263,7 +263,7 @@ This starts PostgreSQL, the Spring Boot backend, and the React frontend in the c
 |---|---|
 | App | http://localhost:3000 |
 | API Docs | http://localhost:3000/docs |
-| GraphiQL | http://localhost:3000/graphiql (local Docker only — disabled in production) |
+| GraphiQL | http://localhost:3000/graphiql |
 
 After the initial build, subsequent runs are much faster. To stop the container without losing data, type `docker-compose down`. The PostgreSQL data is persisted in a Docker volume, so your wallets and transactions remain intact across restarts. To start the database, run `docker-compose up -d`. If you want to wipe all data and start fresh, run `docker-compose down -v` to remove the volume.
 
