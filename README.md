@@ -190,6 +190,16 @@ The frontend is a React SPA. Axios is configured once in `utils/api.js` with a b
 │   └── pages.yml                   # Build and deploy to GitHub Pages on main
 ├── docker-compose.yml              # Base stack: db + backend + frontend
 ├── docker-compose.prod.yml         # Production overrides: no GraphiQL, validate DDL, prod CORS
+├── docs/                           # MkDocs documentation source (deployed to GitHub Pages)
+│   ├── index.md                    # Overview
+│   ├── architecture.md
+│   ├── setup.md
+│   ├── api.md
+│   ├── security.md
+│   ├── frontend.md
+│   ├── testing.md
+│   └── docker.md
+├── mkdocs.yml                      # MkDocs Material config
 ├── .env.example                    # Template — copy to .env and fill in values
 └── README.md
 ```
