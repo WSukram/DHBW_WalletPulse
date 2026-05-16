@@ -50,8 +50,7 @@ public class HistoricalPriceService {
             Map.entry("jupiter-exchange-solana", "JUP"),
             Map.entry("raydium", "RAY"),
             Map.entry("orca", "ORCA"),
-            Map.entry("dogwifcoin", "WIF"),
-            Map.entry("pluton", "PLU")
+            Map.entry("dogwifcoin", "WIF")
     );
 
     private final HistoricalPriceRepository historicalPriceRepository;

@@ -9,6 +9,5 @@ import java.util.Optional;
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
     List<Transaction> findByAssetId(Long assetId);
     long countByAssetId(Long assetId);
-    boolean existsByTxHash(String txHash);
     Optional<Transaction> findByTxHash(String txHash);
 }

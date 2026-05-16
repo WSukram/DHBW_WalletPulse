@@ -39,6 +39,7 @@ public class Wallet {
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "wallet",
             cascade = CascadeType.ALL,
             orphanRemoval = true)
