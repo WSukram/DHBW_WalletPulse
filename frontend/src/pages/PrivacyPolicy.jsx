@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import LegalLayout from '../components/layout/LegalLayout';
 
 const Section = ({ title, children }) => (
   <section className="mb-10">
@@ -23,22 +23,7 @@ const DataRow = ({ label, value }) => (
 const PrivacyPolicy = () => {
   useEffect(() => { document.title = 'Privacy Policy · WalletPulse'; }, []);
   return (
-  <div className="bg-surface-container-lowest text-on-surface min-h-screen flex flex-col font-sans">
-    {/* Nav */}
-    <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-white/10">
-      <div className="flex justify-between items-center w-full px-6 h-16 max-w-[1440px] mx-auto">
-        <Link to="/" className="text-xl font-bold tracking-tighter text-slate-50 hover:text-primary transition-colors">
-          WalletPulse
-        </Link>
-        <Link to="/" className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-100 transition-colors">
-          <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-          Back to Home
-        </Link>
-      </div>
-    </header>
-
-    <main className="flex-grow max-w-3xl mx-auto w-full px-6 py-16">
-      {/* Header */}
+    <LegalLayout>
       <div className="mb-12">
         <div className="inline-flex items-center gap-2 bg-secondary/10 text-secondary border border-secondary/20 rounded-full px-4 py-1.5 text-xs font-semibold tracking-widest uppercase mb-6">
           <span className="material-symbols-outlined text-[14px]">shield</span>
@@ -53,8 +38,6 @@ const PrivacyPolicy = () => {
       </div>
 
       <div className="space-y-6">
-
-        {/* Summary card */}
         <div className="bg-secondary/5 border border-secondary/20 rounded-2xl p-6 md:p-8">
           <h2 className="font-heading-md text-heading-md text-inverse-surface mb-4 flex items-center gap-2">
             <span className="material-symbols-outlined text-secondary text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>info</span>
@@ -63,7 +46,7 @@ const PrivacyPolicy = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
               { icon: 'lock', label: 'Passwords', value: 'Hashed with BCrypt, never stored in plain text' },
-              { icon: 'storage', label: 'Storage', value: 'PostgreSQL database, hosted locally' },
+              { icon: 'storage', label: 'Storage', value: 'PostgreSQL database, hosted on the project server' },
               { icon: 'block', label: 'Data Sales', value: 'We never sell your data to third parties' },
             ].map((item) => (
               <div key={item.label} className="bg-surface-container rounded-xl p-4 flex flex-col gap-2">
@@ -76,7 +59,6 @@ const PrivacyPolicy = () => {
         </div>
 
         <div className="bg-surface-container border border-outline-variant/30 rounded-2xl p-8 md:p-12">
-
           <Section title="What Data We Collect">
             <p>When you create an account and use WalletPulse, we collect and store the following information:</p>
             <div className="bg-surface-container-low rounded-xl p-4 mt-2">
@@ -134,23 +116,9 @@ const PrivacyPolicy = () => {
           <Section title="Contact">
             <p>For any privacy-related questions or data deletion requests, please reach out via the project repository.</p>
           </Section>
-
         </div>
       </div>
-    </main>
-
-    {/* Footer */}
-    <footer className="border-t border-white/5 bg-slate-950">
-      <div className="max-w-[1440px] mx-auto px-6 py-8 flex flex-col md:flex-row justify-between items-center gap-4">
-        <p className="text-sm font-bold text-slate-300">WalletPulse</p>
-        <p className="text-xs text-slate-500">© 2026 WalletPulse. For educational purposes only.</p>
-        <div className="flex gap-6">
-          <Link to="/terms" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Terms of Service</Link>
-          <Link to="/privacy" className="text-xs text-secondary">Privacy Policy</Link>
-        </div>
-      </div>
-    </footer>
-  </div>
+    </LegalLayout>
   );
 };
 

@@ -312,7 +312,9 @@ const Home = () => {
           <div className="flex gap-6">
             <Link to="/terms" className="text-xs text-slate-500 font-light hover:text-slate-300 transition-colors">Terms of Service</Link>
             <Link to="/privacy" className="text-xs text-slate-500 font-light hover:text-slate-300 transition-colors">Privacy Policy</Link>
+            <Link to="/impressum" className="text-xs text-slate-500 font-light hover:text-slate-300 transition-colors">Impressum</Link>
             <Link to="/docs" className="text-xs text-slate-500 font-light hover:text-slate-300 transition-colors">API Docs</Link>
+            <a href="https://github.com/WSukram/DHBW_WalletPulse" target="_blank" rel="noopener noreferrer" className="text-xs text-slate-500 font-light hover:text-slate-300 transition-colors">GitHub</a>
           </div>
         </div>
       </footer>

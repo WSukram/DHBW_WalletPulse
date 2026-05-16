@@ -15,6 +15,7 @@ import Register from "./pages/Register.jsx";
 import Home from "./pages/Home.jsx";
 import TermsOfService from "./pages/TermsOfService.jsx";
 import PrivacyPolicy from "./pages/PrivacyPolicy.jsx";
+import Impressum from "./pages/Impressum.jsx";
 const Docs = lazy(() => import('./pages/Docs.jsx'))
 
 
@@ -29,6 +30,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/impressum" element={<Impressum />} />
         <Route path="/docs" element={<Suspense fallback={null}><Docs /></Suspense>} />
 
         {/* Protected Routes */}

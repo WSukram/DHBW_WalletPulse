@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import LegalLayout from '../components/layout/LegalLayout';
 
 const Section = ({ title, children }) => (
   <section className="mb-10">
@@ -16,22 +17,7 @@ const Section = ({ title, children }) => (
 const TermsOfService = () => {
   useEffect(() => { document.title = 'Terms of Service · WalletPulse'; }, []);
   return (
-  <div className="bg-surface-container-lowest text-on-surface min-h-screen flex flex-col font-sans">
-    {/* Nav */}
-    <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-white/10">
-      <div className="flex justify-between items-center w-full px-6 h-16 max-w-[1440px] mx-auto">
-        <Link to="/" className="text-xl font-bold tracking-tighter text-slate-50 hover:text-primary transition-colors">
-          WalletPulse
-        </Link>
-        <Link to="/" className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-100 transition-colors">
-          <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-          Back to Home
-        </Link>
-      </div>
-    </header>
-
-    <main className="flex-grow max-w-3xl mx-auto w-full px-6 py-16">
-      {/* Header */}
+    <LegalLayout>
       <div className="mb-12">
         <div className="inline-flex items-center gap-2 bg-primary/10 text-primary border border-primary/20 rounded-full px-4 py-1.5 text-xs font-semibold tracking-widest uppercase mb-6">
           <span className="material-symbols-outlined text-[14px]">gavel</span>
@@ -46,7 +32,6 @@ const TermsOfService = () => {
       </div>
 
       <div className="bg-surface-container border border-outline-variant/30 rounded-2xl p-8 md:p-12">
-
         <Section title="Acceptance of Terms">
           <p>By accessing or using WalletPulse, you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, you may not use the service.</p>
           <p>WalletPulse is a personal portfolio tracking tool developed as part of a university project. It is provided for educational and personal use only.</p>
@@ -97,20 +82,7 @@ const TermsOfService = () => {
           <p>For questions about these terms, please reach out via the project repository.</p>
         </Section>
       </div>
-    </main>
-
-    {/* Footer */}
-    <footer className="border-t border-white/5 bg-slate-950">
-      <div className="max-w-[1440px] mx-auto px-6 py-8 flex flex-col md:flex-row justify-between items-center gap-4">
-        <p className="text-sm font-bold text-slate-300">WalletPulse</p>
-        <p className="text-xs text-slate-500">© 2026 WalletPulse. For educational purposes only.</p>
-        <div className="flex gap-6">
-          <Link to="/terms" className="text-xs text-primary">Terms of Service</Link>
-          <Link to="/privacy" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Privacy Policy</Link>
-        </div>
-      </div>
-    </footer>
-  </div>
+    </LegalLayout>
   );
 };
 
