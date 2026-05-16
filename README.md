@@ -119,7 +119,7 @@ The frontend is a React SPA. Axios is configured once in `utils/api.js` with a b
 | nginx (Alpine) | Frontend container — serves SPA, proxies API calls |
 | GitHub Actions | CI (test + build on every push) and CD (deploy on merge to main) |
 | GitHub Container Registry | Stores built Docker images (`ghcr.io/wsukram/`) |
-| GitHub Pages | Static frontend deployment connected to the live backend |
+| GitHub Pages | MkDocs Material documentation site (see `docs/`, `mkdocs.yml`) |
 | Let's Encrypt / certbot | HTTPS certificate with auto-renewal |
 
 ---
@@ -431,9 +431,9 @@ On every merge to `main`:
 3. SSHes into the production server as a dedicated `deploy` user
 4. Pulls the new images and restarts containers
 
-**Pages** (`.github/workflows/pages.yml`) — deploys to GitHub Pages:
-1. Builds the frontend with `VITE_API_URL=https://walletpulse.de` and `--base=/DHBW_WalletPulse/`
-2. Deploys to GitHub Pages at `https://wsukram.github.io/DHBW_WalletPulse/`
+**Pages** (`.github/workflows/pages.yml`) — deploys the MkDocs documentation site:
+1. Installs `mkdocs-material` and runs `mkdocs build` against `docs/` + `mkdocs.yml`
+2. Deploys the generated `site/` to GitHub Pages at `https://wsukram.github.io/DHBW_WalletPulse/`
 
 Required GitHub Secrets: `SERVER_HOST`, `SERVER_USER`, `SERVER_SSH_KEY`.
 

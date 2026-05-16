@@ -77,6 +77,7 @@ Runs on push to `main`:
 
 Runs on push to `main`:
 
-1. Builds the frontend with `--base=/DHBW_WalletPulse/` and `VITE_API_URL=https://walletpulse.de`.
-2. Deploys to GitHub Pages at `https://wsukram.github.io/DHBW_WalletPulse/`.
-3. Adds `404.html = index.html` for React Router SPA routing support.
+1. Installs `mkdocs-material` and builds the documentation site from `docs/` + `mkdocs.yml`.
+2. Deploys the generated `site/` to GitHub Pages at `https://wsukram.github.io/DHBW_WalletPulse/`.
+
+The live React app itself ships via the CD pipeline (above), not GitHub Pages.
