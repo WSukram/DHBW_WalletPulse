@@ -8,6 +8,10 @@
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791?logo=postgresql&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-06B6D4?logo=tailwindcss&logoColor=white)
+![CI](https://github.com/WSukram/DHBW_WalletPulse/actions/workflows/ci.yml/badge.svg)
+![CD](https://github.com/WSukram/DHBW_WalletPulse/actions/workflows/cd.yml/badge.svg)
+
+**Live**: [https://walletpulse.de](https://walletpulse.de)
 
 WalletPulse is a full-stack web application for managing a personal crypto portfolio. It tracks holdings across multiple wallets, calculates profit and loss against current market prices in EUR, USD, BTC and can import on-chain transactions directly from public blockchain APIs.
 
@@ -28,9 +32,10 @@ This project was developed for the **Web Engineering 2** module at **DHBW Ravens
 9. [Third-Party APIs](#third-party-apis)
 10. [Triggering an On-Chain Import](#triggering-an-on-chain-import)
 11. [Testing](#testing)
-12. [Continuous Integration](#continuous-integration)
+12. [CI/CD](#cicd)
 13. [Docker](#docker)
-14. [License](#license)
+14. [Production Deployment](#production-deployment)
+15. [License](#license)
 
 ---
 
@@ -42,7 +47,7 @@ This project was developed for the **Web Engineering 2** module at **DHBW Ravens
 - **Live and historical prices** fetched in EUR from CoinGecko (CryptoCompare fallback for prices older than 365 days) and converted to the user's display currency (EUR / USD / BTC) on the frontend. Live prices cached in memory; historical prices cached in the database.
 - **JWT authentication** (Spring Security). All wallet/asset/transaction data is user-scoped at the query level.
 - **Two API surfaces**: REST and GraphQL — both backed by the same services and security context.
-- **Interactive API reference** with Scalar (`/docs`) and a GraphiQL playground (`/graphiql`).
+- **Interactive API reference** with Scalar (`/docs`) and a GraphiQL playground (`/graphiql`, local dev only).
 - **Material 3 dark/light theme** with a custom Tailwind palette.
 
 ---
@@ -50,23 +55,31 @@ This project was developed for the **Web Engineering 2** module at **DHBW Ravens
 ## Architecture
 
 ```
-                ┌────────────────────┐
-                │   React 19 SPA     │
-                │   (Vite, Tailwind) │
-                └──────────┬─────────┘
-                           │  HTTPS / JSON
-                           ▼
-                ┌────────────────────┐         ┌──────────────────────┐
-                │  Spring Boot 4     │ ───────►│  CoinGecko           │
-                │  REST + GraphQL    │         │  CryptoCompare       │
-                │  Spring Security   │ ───────►│  Etherscan (ETH)     │
-                │  Spring Data JPA   │         │  Blockstream (BTC)   │
-                └──────────┬─────────┘ ───────►│  Helius (SOL)        │
-                           │                   └──────────────────────┘
-                           ▼
-                ┌────────────────────┐
-                │  PostgreSQL 15     │
-                └────────────────────┘
+  Browser
+     │  HTTPS
+     ▼
+┌─────────────────────┐
+│  Host nginx (443)   │  SSL termination, rate limiting on /api/auth/
+└──────────┬──────────┘
+           │  HTTP
+           ▼
+┌─────────────────────┐
+│  nginx in Docker    │  Serves React SPA, proxies /api/* /graphql to backend
+│  (frontend:3000)    │
+└──────────┬──────────┘
+           │  Docker internal network
+           ▼
+┌─────────────────────┐         ┌──────────────────────┐
+│  Spring Boot 4      │ ───────►│  CoinGecko           │
+│  REST + GraphQL     │         │  CryptoCompare       │
+│  Spring Security    │ ───────►│  Etherscan (ETH)     │
+│  Spring Data JPA    │         │  Blockstream (BTC)   │
+└──────────┬──────────┘ ───────►│  Helius (SOL)        │
+           │                    └──────────────────────┘
+           ▼
+┌─────────────────────┐
+│  PostgreSQL 15      │  Not exposed to internet
+└─────────────────────┘
 ```
 
 The **backend** follows a classical layered architecture: `controller → service → repository → entity`. Chain-specific import logic is split into a `ChainImporter` interface with one implementation per chain (`EthereumImporter`, `BitcoinImporter`, `SolanaImporter`) under `service/blockchain/`, dispatched by a Spring-assembled `Map<ChainType, ChainImporter>`.
@@ -143,8 +156,11 @@ User ─┬─► Wallet ──► Asset ──► Transaction
 │   ├── nginx.conf
 │   ├── Dockerfile
 │   └── package.json
-├── .github/workflows/ci.yml
+├── .github/workflows/
+│   ├── ci.yml             # backend tests + frontend build on every push
+│   └── cd.yml             # build images, push to ghcr.io, deploy to server on main
 ├── docker-compose.yml
+├── docker-compose.prod.yml
 ├── .env.example
 └── README.md
 ```
@@ -230,23 +246,25 @@ Bitcoin and the CryptoCompare fallback do not require keys.
 
 WalletPulse uses **stateless JWT** authentication. There is no seeded test user — register your own account through the UI or the API:
 
+Passwords must be **at least 12 characters**.
+
 ```bash
 # Register
 curl -X POST http://localhost:8080/api/auth/register \
   -H 'Content-Type: application/json' \
-  -d '{"email":"you@example.com","password":"your-password"}'
+  -d '{"firstName":"John","lastName":"Doe","email":"you@example.com","password":"your-password-12"}'
 
 # Log in (returns { "token": "..." })
 curl -X POST http://localhost:8080/api/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"email":"you@example.com","password":"your-password"}'
+  -d '{"email":"you@example.com","password":"your-password-12"}'
 
 # Subsequent requests
 curl http://localhost:8080/api/wallets \
   -H 'Authorization: Bearer <token>'
 ```
 
-Public endpoints: `/api/auth/login`, `/api/auth/register`, `/api/market/prices`, `/v3/api-docs/**`, `/swagger-ui/**`, `/graphiql/**`. Everything else (including `POST /graphql`) requires a valid bearer token.
+Public endpoints: `/api/auth/login`, `/api/auth/register`, `/api/market/prices`, `/v3/api-docs/**`, `/swagger-ui/**`. Everything else (including `POST /graphql`) requires a valid bearer token.
 
 ---
 
@@ -347,14 +365,27 @@ cd backend
 
 ---
 
-## Continuous Integration
+## CI/CD
 
-GitHub Actions runs on every push and pull request to `main` (`.github/workflows/ci.yml`):
+### Continuous Integration
+
+GitHub Actions runs on every push and pull request (`.github/workflows/ci.yml`):
 
 | Job             | Runtime              | Command                    |
 |-----------------|----------------------|----------------------------|
 | `backend-test`  | Java 21 (Temurin)    | `./mvnw test -B`           |
 | `frontend-build`| Node 20              | `npm ci && npm run build`  |
+
+### Continuous Deployment
+
+On every push to `main` (`.github/workflows/cd.yml`):
+
+1. Builds backend and frontend Docker images
+2. Pushes them to GitHub Container Registry (`ghcr.io/wsukram/`)
+3. SSHes into the production server as a dedicated `deploy` user
+4. Pulls the new images and restarts containers with zero-downtime (`docker compose up -d`)
+
+Secrets required in GitHub repository settings: `SERVER_HOST`, `SERVER_USER`, `SERVER_SSH_KEY`.
 
 ---
 
@@ -367,6 +398,25 @@ GitHub Actions runs on every push and pull request to `main` (`.github/workflows
 - **frontend** — built from `frontend/Dockerfile` (multi-stage Node → nginx:alpine), serves the SPA via `nginx.conf`.
 
 `backend/.dockerignore` excludes `application.properties` so the placeholder values are never baked into the image — secrets always come from environment variables. Make sure `.env` exists at the repo root before running `docker compose up`.
+
+`docker-compose.prod.yml` is an override file used in production that disables GraphiQL, switches `ddl-auto` to `validate`, restricts CORS to the production domain, and closes the DB and backend host ports. Run with:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+---
+
+## Production Deployment
+
+The app runs on an Ionos VPS (Ubuntu 24.04). The deployment stack:
+
+- **UFW firewall** — only ports 22, 80, and 443 are open
+- **Host nginx** — terminates HTTPS (Let's Encrypt / certbot), rate-limits `/api/auth/` to 10 req/min per IP, forwards to the frontend container
+- **Docker Compose** — runs db, backend, and frontend containers; DB and backend ports are bound to `127.0.0.1` (not reachable from internet)
+- **Let's Encrypt** — TLS certificate with auto-renewal via certbot
+- **fail2ban** — auto-bans IPs after repeated failed SSH attempts
+- **deploy user** — dedicated SSH user with Docker group permissions only (no sudo)
 
 ---
 
