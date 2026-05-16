@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { isTokenExpired } from '../context/AppContext';
 import { TICKER_COINS } from '../utils/coins';
 import { useLivePrices } from '../hooks/useLivePrices';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 const features = [
   {
@@ -28,7 +29,7 @@ const features = [
 const Home = () => {
   const navigate = useNavigate();
   const prices = useLivePrices();
-  useEffect(() => { document.title = 'WalletPulse'; }, []);
+  usePageTitle('');
 
   const handleEnter = () => {
     const token = localStorage.getItem('wp_token');

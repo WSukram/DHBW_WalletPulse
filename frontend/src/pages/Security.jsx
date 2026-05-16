@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { useApp } from '../context/AppContext';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 const Security = () => {
-  useEffect(() => { document.title = 'Security · WalletPulse'; }, []);
+  usePageTitle('Security');
   const { currency, setCurrency, theme, setTheme, user } = useApp();
 
   const [currentPassword, setCurrentPassword] = useState('');

@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
 import LegalLayout from '../components/layout/LegalLayout';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 const Section = ({ title, children }) => (
   <section className="mb-10">
@@ -21,7 +21,7 @@ const DataRow = ({ label, value }) => (
 );
 
 const PrivacyPolicy = () => {
-  useEffect(() => { document.title = 'Privacy Policy · WalletPulse'; }, []);
+  usePageTitle('Privacy Policy');
   return (
     <LegalLayout>
       <div className="mb-12">

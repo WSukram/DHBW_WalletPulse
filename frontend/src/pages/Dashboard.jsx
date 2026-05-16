@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import AddWalletModal from '../components/wallet/AddWalletModal';
+import { usePageTitle } from '../hooks/usePageTitle';
+import WalletFormModal from '../components/wallet/WalletFormModal';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  useEffect(() => { document.title = 'Dashboard · WalletPulse'; }, []);
+  usePageTitle('Dashboard');
   const [wallets, setWallets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -82,7 +83,8 @@ const Dashboard = () => {
 
   return (
     <div className="flex-1 overflow-y-auto p-6 lg:p-layout-margin space-y-8">
-      <AddWalletModal
+      <WalletFormModal
+        mode="create"
         open={showAddWallet}
         name={newWalletName}
         setName={setNewWalletName}
@@ -92,7 +94,7 @@ const Dashboard = () => {
         setChainAddress={setNewWalletChainAddress}
         saving={saving}
         onClose={() => setShowAddWallet(false)}
-        onCreate={handleCreateWallet}
+        onSubmit={handleCreateWallet}
       />
 
       {/* Header */}

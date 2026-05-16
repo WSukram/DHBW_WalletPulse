@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { useApp } from '../context/AppContext';
 import { downloadCsv } from '../utils/exportCsv';
 import { coinMeta } from '../utils/coins';
 import { usePortfolioData } from '../hooks/usePortfolioData';
+import { usePageTitle } from '../hooks/usePageTitle';
 import EditTransactionModal from '../components/history/EditTransactionModal';
 import DeleteTransactionModal from '../components/history/DeleteTransactionModal';
 
@@ -26,7 +27,7 @@ const explorerUrl = (chainType, txHash) => {
 const PAGE_SIZE = 10;
 
 const History = () => {
-  useEffect(() => { document.title = 'History · WalletPulse'; }, []);
+  usePageTitle('History');
   const { formatCurrency: formatEur } = useApp();
   const { wallets, transactions: allTransactions, isLoading, error, reload } = usePortfolioData();
   const [activeWallet, setActiveWallet] = useState('all');

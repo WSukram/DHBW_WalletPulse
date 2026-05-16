@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useApp } from '../context/AppContext';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 const Register = () => {
-  useEffect(() => { document.title = 'Register · WalletPulse'; }, []);
+  usePageTitle('Register');
   const navigate = useNavigate();
   const { login } = useApp();
   const [showPassword, setShowPassword] = useState(false);

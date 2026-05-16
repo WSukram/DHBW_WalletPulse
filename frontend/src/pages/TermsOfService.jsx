@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import LegalLayout from '../components/layout/LegalLayout';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 const Section = ({ title, children }) => (
   <section className="mb-10">
@@ -15,7 +15,7 @@ const Section = ({ title, children }) => (
 );
 
 const TermsOfService = () => {
-  useEffect(() => { document.title = 'Terms of Service · WalletPulse'; }, []);
+  usePageTitle('Terms of Service');
   return (
     <LegalLayout>
       <div className="mb-12">

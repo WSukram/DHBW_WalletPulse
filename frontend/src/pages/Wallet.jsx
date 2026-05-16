@@ -5,9 +5,9 @@ import { useApp } from '../context/AppContext';
 import { downloadCsv } from '../utils/exportCsv';
 import { COIN_META, KNOWN_COINS, coinMeta, formatPct } from '../utils/coins';
 import { timeRanges, getChartLabels, computePortfolioChartPoints, pointsToPath } from '../utils/chart';
-import AddWalletModal from '../components/wallet/AddWalletModal';
-import EditWalletModal from '../components/wallet/EditWalletModal';
+import WalletFormModal from '../components/wallet/WalletFormModal';
 import DeleteWalletModal from '../components/wallet/DeleteWalletModal';
+import { usePageTitle } from '../hooks/usePageTitle';
 import AddTransactionModal from '../components/wallet/AddTransactionModal';
 
 const CHAIN_META = {
@@ -38,7 +38,7 @@ const formatRelative = (dateStr) => {
 };
 
 const Wallet = () => {
-  useEffect(() => { document.title = 'Wallets · WalletPulse'; }, []);
+  usePageTitle('Wallets');
   const location = useLocation();
   const { formatCurrency: formatEur } = useApp();
   const [portfolios, setPortfolios] = useState([]);
@@ -288,24 +288,26 @@ const Wallet = () => {
 
     return (
       <div className="flex-1 overflow-y-auto p-6 lg:p-layout-margin space-y-8">
-        <AddWalletModal
+        <WalletFormModal
+          mode="create"
           open={showAddWallet}
           name={newWalletName} setName={setNewWalletName}
           chainType={newWalletChainType} setChainType={setNewWalletChainType}
           chainAddress={newWalletChainAddress} setChainAddress={setNewWalletChainAddress}
           saving={savingWallet}
           onClose={() => { setShowAddWallet(false); setNewWalletChainType(''); setNewWalletChainAddress(''); }}
-          onCreate={handleCreateWallet}
+          onSubmit={handleCreateWallet}
         />
 
-        <EditWalletModal
+        <WalletFormModal
+          mode="edit"
           wallet={editWallet}
           name={editWalletName} setName={setEditWalletName}
           chainType={editWalletChainType} setChainType={setEditWalletChainType}
           chainAddress={editWalletChainAddress} setChainAddress={setEditWalletChainAddress}
           saving={savingEditWallet}
           onClose={() => setEditWallet(null)}
-          onSave={handleEditWallet}
+          onSubmit={handleEditWallet}
         />
 
         <DeleteWalletModal

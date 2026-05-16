@@ -4,9 +4,10 @@ import { coinMeta, formatPct } from '../utils/coins';
 import { timeRanges, getChartLabels, computeAssetChartPoints, pointsToPath } from '../utils/chart';
 import { groupByCoin } from '../utils/groupByCoin';
 import { usePortfolioData } from '../hooks/usePortfolioData';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 const Assets = () => {
-  useEffect(() => { document.title = 'Assets · WalletPulse'; }, []);
+  usePageTitle('Assets');
   const { formatCurrency: formatEur } = useApp();
   const { portfolios, transactions, isLoading, error } = usePortfolioData();
   const [activeCompare, setActiveCompare] = useState(null);
