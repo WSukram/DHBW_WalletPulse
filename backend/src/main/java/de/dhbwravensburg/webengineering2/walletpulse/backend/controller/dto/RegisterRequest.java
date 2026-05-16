@@ -12,6 +12,6 @@ public record RegisterRequest(
         @NotBlank String lastName,
         @Schema(description = "Email address (used as login)", example = "john.doe@example.com")
         @Email @NotBlank String email,
-        @Schema(description = "Password (minimum 8 characters)", example = "secret1234")
-        @NotBlank @Size(min = 8) String password
+        @Schema(description = "Password (minimum 12 characters)", example = "secret1234!!")
+        @NotBlank @Size(min = 12) String password
 ) {}
