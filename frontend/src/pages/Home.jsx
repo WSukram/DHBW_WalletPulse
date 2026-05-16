@@ -209,6 +209,18 @@ const Home = () => {
             <p className="font-body-md text-body-md text-on-surface-variant max-w-xl mx-auto">
               On-chain import requires free API keys from these providers. All of them have a free tier — no credit card needed.
             </p>
+            <p className="font-body-sm text-body-sm text-on-surface-variant/60 mt-3">
+              This only applies if you are running WalletPulse locally. See the{' '}
+              <a
+                href="https://github.com/WSukram/DHBW_WalletPulse"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                GitHub repository
+              </a>
+              {' '}for setup instructions.
+            </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
