@@ -9,7 +9,6 @@ export default {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
-    "./import_frontend/**/*.{html,js,jsx}",
   ],
   theme: {
     extend: {
