@@ -2,24 +2,28 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { usePageTitle } from '../hooks/usePageTitle';
+import WalletFormModal from '../components/wallet/WalletFormModal';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  useEffect(() => { document.title = 'Dashboard · WalletPulse'; }, []);
+  usePageTitle('Dashboard');
   const [wallets, setWallets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showAddWallet, setShowAddWallet] = useState(false);
   const [newWalletName, setNewWalletName] = useState('');
+  const [newWalletChainType, setNewWalletChainType] = useState('');
+  const [newWalletChainAddress, setNewWalletChainAddress] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const loadWallets = () =>
-    axios.get('/api/wallets')
+  const loadWallets = (signal) =>
+    axios.get('/api/wallets', { signal })
       .then((res) =>
         Promise.all(
           res.data.map((w) =>
-            axios.get(`/api/wallets/${w.id}/portfolio`).then((r) => r.data)
+            axios.get(`/api/wallets/${w.id}/portfolio`, { signal }).then((r) => r.data)
           )
         )
       )
@@ -28,19 +32,38 @@ const Dashboard = () => {
   // Refetch on every navigation to this page so mutations made elsewhere
   // (transaction edit/delete in History, etc.) are reflected without a hard
   // reload. `isLoading` only flips true on the first mount — subsequent
-  // refetches happen silently in the background.
+  // refetches happen silently in the background. AbortController cancels any
+  // in-flight request when the user navigates away (or re-navigates), so
+  // setState never fires on an unmounted component.
   useEffect(() => {
-    loadWallets()
+    const controller = new AbortController();
+    loadWallets(controller.signal)
       .then(() => setIsLoading(false))
-      .catch(() => { setError('Failed to load portfolio data.'); setIsLoading(false); });
+      .catch((err) => {
+        if (axios.isCancel(err) || err?.name === 'CanceledError') return;
+        setError('Failed to load portfolio data.');
+        setIsLoading(false);
+      });
+    return () => controller.abort();
   }, [location.key]);
 
   const handleCreateWallet = () => {
     if (!newWalletName.trim()) return;
     setSaving(true);
-    axios.post('/api/wallets', { name: newWalletName.trim() })
+    const payload = { name: newWalletName.trim() };
+    if (newWalletChainType) {
+      payload.chainType = newWalletChainType;
+      payload.chainAddress = newWalletChainAddress.trim();
+    }
+    axios.post('/api/wallets', payload)
       .then(() => loadWallets())
-      .then(() => { setShowAddWallet(false); setNewWalletName(''); setSaving(false); })
+      .then(() => {
+        setShowAddWallet(false);
+        setNewWalletName('');
+        setNewWalletChainType('');
+        setNewWalletChainAddress('');
+        setSaving(false);
+      })
       .catch(() => setSaving(false));
   };
 
@@ -60,36 +83,19 @@ const Dashboard = () => {
 
   return (
     <div className="flex-1 overflow-y-auto p-6 lg:p-layout-margin space-y-8">
-      {/* Add Wallet Modal */}
-      {showAddWallet && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setShowAddWallet(false)}>
-          <div className="bg-surface-container rounded-xl p-6 w-full max-w-sm border border-outline-variant/30 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-heading-md text-heading-md text-on-surface mb-1">New Wallet</h3>
-            <p className="text-sm text-on-surface-variant mb-5">Give your wallet a name to get started.</p>
-            <label className="block font-label-sm text-label-sm text-on-surface-variant mb-1">Wallet Name</label>
-            <input
-              autoFocus
-              className="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg px-4 py-2.5 text-on-surface font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-on-surface-variant/50 mb-5"
-              placeholder="e.g. Main Portfolio"
-              value={newWalletName}
-              onChange={(e) => setNewWalletName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleCreateWallet()}
-            />
-            <div className="flex gap-3 justify-end">
-              <button onClick={() => setShowAddWallet(false)} className="px-4 py-2 rounded-lg text-on-surface-variant font-label-sm text-label-sm hover:text-on-surface transition-colors">
-                Cancel
-              </button>
-              <button
-                onClick={handleCreateWallet}
-                disabled={saving || !newWalletName.trim()}
-                className="px-4 py-2 rounded-lg bg-primary text-on-primary font-label-sm text-label-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {saving ? 'Creating…' : 'Create Wallet'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <WalletFormModal
+        mode="create"
+        open={showAddWallet}
+        name={newWalletName}
+        setName={setNewWalletName}
+        chainType={newWalletChainType}
+        setChainType={setNewWalletChainType}
+        chainAddress={newWalletChainAddress}
+        setChainAddress={setNewWalletChainAddress}
+        saving={saving}
+        onClose={() => setShowAddWallet(false)}
+        onSubmit={handleCreateWallet}
+      />
 
       {/* Header */}
       <div>

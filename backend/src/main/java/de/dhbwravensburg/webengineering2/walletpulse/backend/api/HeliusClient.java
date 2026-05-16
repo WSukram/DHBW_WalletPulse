@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
@@ -35,12 +36,19 @@ public class HeliusClient {
                 url += "&before=" + before;
             }
 
-            List<Map<String, Object>> page = restTemplate.exchange(
-                    url,
-                    HttpMethod.GET,
-                    null,
-                    new ParameterizedTypeReference<List<Map<String, Object>>>() {}
-            ).getBody();
+            List<Map<String, Object>> page;
+            try {
+                page = restTemplate.exchange(
+                        url,
+                        HttpMethod.GET,
+                        null,
+                        new ParameterizedTypeReference<List<Map<String, Object>>>() {}
+                ).getBody();
+            } catch (RestClientException e) {
+                // RestTemplate echoes the URL in exception messages; scrub the API key before rethrowing.
+                String msg = e.getMessage() != null ? e.getMessage().replaceAll("api-key=[^&\\s]+", "api-key=***") : "unknown error";
+                throw new RuntimeException("Helius request failed: " + msg);
+            }
 
             if (page == null || page.isEmpty()) break;
             all.addAll(page);

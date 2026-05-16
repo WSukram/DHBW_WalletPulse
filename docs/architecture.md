@@ -26,8 +26,8 @@ Java package: `de.dhbwravensburg.webengineering2.walletpulse.backend`
 | `controller/dto/` | Request and response DTOs |
 | `api/` | External API clients (CoinGecko, Etherscan, Blockstream, Helius, CryptoCompare) |
 | `security/` | `JwtService`, `JwtAuthFilter`, `UserDetailsServiceImpl` |
-| `config/` | `SecurityConfig`, `RestTemplateConfig`, `OpenApiConfig`, `CorsConfig` |
-| `exception/` | `GlobalExceptionHandler`, `ResourceNotFoundException` |
+| `config/` | `SecurityConfig` (includes CORS), `RestTemplateConfig` (Caffeine cache), `OpenApiConfig` |
+| `exception/` | `GlobalExceptionHandler`, `ResourceNotFoundException`, `BusinessException`, `ConflictException` |
 
 ## Data Model
 

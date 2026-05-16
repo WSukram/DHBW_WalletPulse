@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useApp } from '../context/AppContext';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 const Login = () => {
-  useEffect(() => { document.title = 'Login · WalletPulse'; }, []);
+  usePageTitle('Login');
   const navigate = useNavigate();
   const { login } = useApp();
   const [error, setError] = useState('');
@@ -41,7 +42,7 @@ const Login = () => {
               </span>
             </Link>
             <h1 className="font-heading-lg text-heading-lg text-on-surface">Sign in to WalletPulse</h1>
-            <p className="font-body-md text-body-md text-on-surface-variant">Access your high-fidelity crypto analytics</p>
+            <p className="font-body-md text-body-md text-on-surface-variant">Sign in to your portfolio</p>
           </div>
 
           {error && (

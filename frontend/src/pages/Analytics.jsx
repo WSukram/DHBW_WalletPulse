@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { coinMeta, formatPct } from '../utils/coins';
 import { timeRanges, getChartLabels, computePortfolioChartPoints, pointsToPath } from '../utils/chart';
 import { groupByCoin } from '../utils/groupByCoin';
 import { usePortfolioData } from '../hooks/usePortfolioData';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 const CIRCUMFERENCE = 2 * Math.PI * 40;
 
@@ -35,7 +36,7 @@ const DonutChart = ({ segments }) => {
 };
 
 const Analytics = () => {
-  useEffect(() => { document.title = 'Analytics · WalletPulse'; }, []);
+  usePageTitle('Analytics');
   const { formatCurrency: formatEur } = useApp();
   const { portfolios, transactions, isLoading, error } = usePortfolioData();
   const [activeRange, setActiveRange] = useState('1Y');

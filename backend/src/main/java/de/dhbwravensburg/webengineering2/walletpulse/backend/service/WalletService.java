@@ -7,7 +7,9 @@ import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Wallet;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.exception.ResourceNotFoundException;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.UserRepository;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.WalletRepository;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -17,6 +19,7 @@ import java.util.List;
  * user — a user can never observe or modify another user's wallets.
  */
 @Service
+@Transactional
 public class WalletService {
 
     private final WalletRepository walletRepository;
@@ -34,7 +37,8 @@ public class WalletService {
     }
 
     public Wallet createWallet(Wallet wallet, String ownerEmail) {
-        User owner = userRepository.findByEmail(ownerEmail).orElseThrow();
+        User owner = userRepository.findByEmail(ownerEmail)
+                .orElseThrow(() -> new UsernameNotFoundException("Account no longer exists"));
         wallet.setOwner(owner);
         return walletRepository.save(wallet);
     }

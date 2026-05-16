@@ -14,6 +14,8 @@ All data access is scoped to the authenticated user at the database query level.
 
 A small set of endpoints require no authentication: user registration, login, and the live market price feed. Everything else — including the GraphQL endpoint — requires a valid token.
 
+The Scalar API reference (`/docs`) and the GraphiQL playground (`/graphiql`) are also public. Both expose schema-level information, which is intentional — discoverability of the API surface is a feature, not a leak. Neither lets a caller execute anything without a valid JWT; the read-only schema view is symmetric to publishing the OpenAPI spec.
+
 ## Password Storage
 
 Passwords are hashed before storage. Plaintext passwords are never persisted or logged.

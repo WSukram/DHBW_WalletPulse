@@ -8,7 +8,10 @@ import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Wallet;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.exception.ResourceNotFoundException;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.AssetRepository;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.WalletRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -20,7 +23,10 @@ import java.util.List;
  * 403, to avoid leaking the existence of foreign resources).
  */
 @Service
+@Transactional
 public class AssetService {
+
+    private static final Logger log = LoggerFactory.getLogger(AssetService.class);
 
     private final AssetRepository assetRepository;
     private final WalletRepository walletRepository;
@@ -69,7 +75,7 @@ public class AssetService {
         try {
             currentPrice = coinGeckoClient.getCurrentPriceInEur(asset.getCoinId()).doubleValue();
         } catch (Exception e) {
-            System.err.println("Could not fetch price for " + asset.getCoinId() + ": " + e.getMessage());
+            log.warn("Could not fetch live price for {}: {}", asset.getCoinId(), e.getMessage());
         }
 
         double totalAmount = 0.0;

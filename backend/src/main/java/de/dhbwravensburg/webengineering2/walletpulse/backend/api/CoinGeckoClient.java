@@ -9,7 +9,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -73,7 +72,7 @@ public class CoinGeckoClient {
         }
     }
 
-    @Cacheable(value = "marketPrices", key = "#coinIds.toString()")
+    @Cacheable(value = "marketPrices", key = "new java.util.TreeSet(#coinIds).toString()")
     public Map<String, MarketPrice> getMarketPrices(List<String> coinIds) {
         String ids = String.join(",", coinIds);
         String url = String.format("%s/simple/price?ids=%s&vs_currencies=eur&include_24hr_change=true", apiUrl, ids);
@@ -115,34 +114,24 @@ public class CoinGeckoClient {
         }
         HttpEntity<Void> entity = new HttpEntity<>(headers);
 
-        for (int attempt = 0; attempt < 2; attempt++) {
-            try {
-                ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                        url, HttpMethod.GET, entity, new ParameterizedTypeReference<>() {}
-                );
-                Map<String, Object> body = response.getBody();
-                if (body != null && body.get("market_data") instanceof Map<?, ?> md) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> currentPrice = (Map<String, Object>) md.get("current_price");
-                    if (currentPrice != null && currentPrice.containsKey("eur")) {
-                        return new BigDecimal(currentPrice.get("eur").toString());
-                    }
+        try {
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                    url, HttpMethod.GET, entity, new ParameterizedTypeReference<>() {}
+            );
+            Map<String, Object> body = response.getBody();
+            if (body != null && body.get("market_data") instanceof Map<?, ?> md) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> currentPrice = (Map<String, Object>) md.get("current_price");
+                if (currentPrice != null && currentPrice.containsKey("eur")) {
+                    return new BigDecimal(currentPrice.get("eur").toString());
                 }
-                throw new ResourceNotFoundException("Historical price for '" + coinId + "' on " + date + " is not available.");
-            } catch (HttpClientErrorException e) {
-                if (e.getStatusCode().value() == 429 && attempt == 0) {
-                    System.err.println("[CoinGecko] Rate limited (429) — waiting 65s before retry for " + coinId + " on " + date);
-                    try { Thread.sleep(65_000); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
-                    continue;
-                }
-                System.err.println("[CoinGecko] HTTP " + e.getStatusCode().value() + " for " + coinId + " on " + date);
-                throw new RuntimeException("Failed to fetch historical price from CoinGecko for: " + coinId, e);
-            } catch (RestClientException e) {
-                System.err.println("[CoinGecko] Request failed for " + coinId + " on " + date + ": " + e.getMessage());
-                throw new RuntimeException("Failed to fetch historical price from CoinGecko for: " + coinId, e);
             }
+            throw new ResourceNotFoundException("Historical price for '" + coinId + "' on " + date + " is not available.");
+        } catch (RestClientException e) {
+            // Caller (HistoricalPriceService) falls back to CryptoCompare on any failure,
+            // including 429 rate limits — no point burning the request thread on a retry.
+            throw new RuntimeException("Failed to fetch historical price from CoinGecko for: " + coinId, e);
         }
-        throw new RuntimeException("CoinGecko rate limit persists after retry for: " + coinId);
     }
 }
 

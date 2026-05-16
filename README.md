@@ -43,7 +43,7 @@ Developed for the **Web Engineering 2** module at **DHBW Ravensburg** Campus Fri
 - **Multiple wallets per user**, each scoped to ETH / BTC / SOL or used for manual tracking
 - **Manual transaction entry** and **automated on-chain import** for Ethereum, Bitcoin, and Solana
 - **Live and historical prices** from CoinGecko (CryptoCompare fallback for dates > 365 days old)
-- **Display currency** switchable between EUR, USD, and BTC per user
+- **Display currency** switchable between EUR (native), USD (live ECB rate via frankfurter.app), and BTC (live BTC/EUR price via CoinGecko)
 - **JWT authentication** — all data is user-scoped at the database query level
 - **REST and GraphQL** API surfaces backed by the same services and security context
 - **Interactive API reference** (Scalar at `/docs`) and GraphiQL playground (`/graphiql`)
@@ -117,9 +117,9 @@ The frontend is a React SPA. Axios is configured once in `utils/api.js` with a b
 |---|---|
 | Docker + Docker Compose | Local development and production containers |
 | nginx (Alpine) | Frontend container — serves SPA, proxies API calls |
-| GitHub Actions | CI (test + build on every push) and CD (deploy on merge to main) |
+| GitHub Actions | CI (test + build on every push) and CD (deploy on green CI on main) |
 | GitHub Container Registry | Stores built Docker images (`ghcr.io/wsukram/`) |
-| GitHub Pages | Static frontend deployment connected to the live backend |
+| GitHub Pages | MkDocs Material documentation site (see `docs/`, `mkdocs.yml`) |
 | Let's Encrypt / certbot | HTTPS certificate with auto-renewal |
 
 ---
@@ -186,7 +186,7 @@ The frontend is a React SPA. Axios is configured once in `utils/api.js` with a b
 │   └── package.json
 ├── .github/workflows/
 │   ├── ci.yml                      # Tests + build on every push and PR
-│   ├── cd.yml                      # Build images, push to ghcr.io, SSH deploy on main
+│   ├── cd.yml                      # On green CI on main: build images, push to ghcr.io (latest + sha tag), SSH deploy
 │   └── pages.yml                   # Build and deploy to GitHub Pages on main
 ├── docker-compose.yml              # Base stack: db + backend + frontend
 ├── docker-compose.prod.yml         # Production overrides: validate DDL, prod CORS
@@ -211,7 +211,7 @@ The frontend is a React SPA. Axios is configured once in `utils/api.js` with a b
 ```
 User
  ├── email (unique), firstName, lastName
- ├── passwordHash
+ ├── password (BCrypt hash)
  └── preferences (currency, theme)
   │
   └──► Wallet (OneToMany)
@@ -421,19 +421,19 @@ cd backend
 
 ## CI/CD
 
-On every push and PR to `main`, GitHub Actions runs backend tests and a frontend production build in parallel (`.github/workflows/ci.yml`).
+On every push (any branch) and every PR targeting `main`, GitHub Actions runs backend tests and a frontend production build in parallel (`.github/workflows/ci.yml`).
 
-On every merge to `main`:
+On every commit landing on `main` (via push or merged PR), once CI is green:
 
-**CD** (`.github/workflows/cd.yml`) — deploys to the production server:
-1. Builds backend and frontend Docker images
-2. Pushes them to GitHub Container Registry (`ghcr.io/wsukram/`)
+**CD** (`.github/workflows/cd.yml`) — deploys to the production server, gated on a successful CI run for the same commit:
+1. Builds backend and frontend Docker images for the CI-tested commit
+2. Pushes them to GitHub Container Registry (`ghcr.io/wsukram/`) with both `:latest` and `:<sha>` tags (rollback target)
 3. SSHes into the production server as a dedicated `deploy` user
 4. Pulls the new images and restarts containers
 
-**Pages** (`.github/workflows/pages.yml`) — deploys to GitHub Pages:
-1. Builds the frontend with `VITE_API_URL=https://walletpulse.de` and `--base=/DHBW_WalletPulse/`
-2. Deploys to GitHub Pages at `https://wsukram.github.io/DHBW_WalletPulse/`
+**Pages** (`.github/workflows/pages.yml`) — deploys the MkDocs documentation site:
+1. Installs `mkdocs-material` and runs `mkdocs build` against `docs/` + `mkdocs.yml`
+2. Deploys the generated `site/` to GitHub Pages at `https://wsukram.github.io/DHBW_WalletPulse/`
 
 Required GitHub Secrets: `SERVER_HOST`, `SERVER_USER`, `SERVER_SSH_KEY`.
 

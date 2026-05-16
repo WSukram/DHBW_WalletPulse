@@ -15,13 +15,9 @@ cp .env.example .env
 
 ### Required
 
-| Variable | Description                                               |
-|---|-----------------------------------------------------------|
-| `POSTGRES_DB` | Database name                                             |
-| `POSTGRES_USER` | Database user                                             |
-| `POSTGRES_PASSWORD` | Database password                                         |
-| `JWT_SECRET` | Digning secret (min 32 characters)                        |
-| `JWT_EXPIRATION_MS` | Token lifetime in milliseconds (e.g. `86400000` for 24 h) |
+| Variable | Description |
+|---|---|
+| `JWT_SECRET` | Signing secret for JWT tokens. Generate with `openssl rand -base64 48`. |
 
 ### Strongly Recommended
 
@@ -37,6 +33,14 @@ cp .env.example .env
 | `HELIUS_API_KEY` | Required to import Solana transactions. Get one at [helius.dev](https://www.helius.dev/). |
 
 Bitcoin import uses Blockstream's public API and requires no key.
+
+### Optional
+
+| Variable | Description |
+|---|---|
+| `DB_PASSWORD` | PostgreSQL password. Defaults to `postgres` (fine for local; override for prod). |
+
+Database name (`walletpulse`) and user (`postgres`) are hardcoded in `docker-compose.yml`. Token lifetime is hardcoded to 10 minutes (`JWT_EXPIRATION: 600000`) in the compose file; auto-refresh keeps sessions alive transparently.
 
 ## Starting the Application
 

@@ -7,6 +7,9 @@ import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Wallet;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.AssetRepository;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.TransactionRepository;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.service.HistoricalPriceService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -19,6 +22,8 @@ import java.time.LocalDate;
  */
 @Component
 public class ImportSupport {
+
+    private static final Logger log = LoggerFactory.getLogger(ImportSupport.class);
 
     public enum UpsertOutcome { IMPORTED, SKIPPED }
 
@@ -44,15 +49,22 @@ public class ImportSupport {
         try {
             return historicalPriceService.getEurPrice(coinId, date);
         } catch (Exception e) {
-            System.err.println("[Import] Price lookup failed for " + coinId + " on " + date + ": "
-                    + e.getClass().getSimpleName() + " – " + e.getMessage());
+            log.warn("Price lookup failed for {} on {}: {} - {}", coinId, date, e.getClass().getSimpleName(), e.getMessage());
             return BigDecimal.ZERO;
         }
     }
 
     public Asset findOrCreateAsset(Wallet wallet, String coinId) {
         return assetRepository.findByWalletIdAndCoinId(wallet.getId(), coinId)
-                .orElseGet(() -> assetRepository.save(Asset.builder().coinId(coinId).wallet(wallet).build()));
+                .orElseGet(() -> {
+                    try {
+                        return assetRepository.save(Asset.builder().coinId(coinId).wallet(wallet).build());
+                    } catch (DataIntegrityViolationException race) {
+                        // Concurrent import created the same (wallet, coin) row first — re-query and use it.
+                        return assetRepository.findByWalletIdAndCoinId(wallet.getId(), coinId)
+                                .orElseThrow(() -> race);
+                    }
+                });
     }
 
     /**

@@ -4,7 +4,10 @@ import de.dhbwravensburg.webengineering2.walletpulse.backend.api.CoinGeckoClient
 import de.dhbwravensburg.webengineering2.walletpulse.backend.api.CryptoCompareClient;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.HistoricalPrice;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.HistoricalPriceRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -21,7 +24,10 @@ import java.util.Map;
  * the network at most once.
  */
 @Service
+@Transactional
 public class HistoricalPriceService {
+
+    private static final Logger log = LoggerFactory.getLogger(HistoricalPriceService.class);
 
     private static final Map<String, String> COINGECKO_TO_CC_SYMBOL = Map.ofEntries(
             Map.entry("bitcoin", "BTC"),
@@ -44,8 +50,7 @@ public class HistoricalPriceService {
             Map.entry("jupiter-exchange-solana", "JUP"),
             Map.entry("raydium", "RAY"),
             Map.entry("orca", "ORCA"),
-            Map.entry("dogwifcoin", "WIF"),
-            Map.entry("pluton", "PLU")
+            Map.entry("dogwifcoin", "WIF")
     );
 
     private final HistoricalPriceRepository historicalPriceRepository;
@@ -82,8 +87,8 @@ public class HistoricalPriceService {
     private BigDecimal fetchPrice(String coinId, LocalDate date) {
         LocalDate today = LocalDate.now();
 
-        // For today / yesterday CoinGecko has no historical endpoint yet — use the live price.
-        if (!date.isBefore(today.minusDays(1))) {
+        // Only same-day uses the live ticker; yesterday has a finalised close on the historical endpoint.
+        if (!date.isBefore(today)) {
             return coinGeckoClient.getCurrentPriceInEur(coinId);
         }
 
@@ -93,7 +98,7 @@ public class HistoricalPriceService {
             try {
                 return coinGeckoClient.getHistoricalPriceInEur(coinId, date);
             } catch (Exception e) {
-                System.err.println("[HistoricalPrice] CoinGecko failed for " + coinId + " on " + date + ", trying CryptoCompare: " + e.getMessage());
+                log.warn("CoinGecko historical lookup failed for {} on {}, trying CryptoCompare: {}", coinId, date, e.getMessage());
             }
         }
 

@@ -1,7 +1,8 @@
 package de.dhbwravensburg.webengineering2.walletpulse.backend.controller;
 
 import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.AssetResponse;
-import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Asset;
+import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.TransactionResponse;
+import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.WalletResponse;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Transaction;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Wallet;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.service.AssetService;
@@ -17,6 +18,13 @@ import org.springframework.stereotype.Controller;
 
 import java.util.List;
 
+/**
+ * GraphQL resolvers return DTOs (never JPA entities) so that schema traversal
+ * never triggers a LazyInitializationException after the service-layer
+ * transaction has closed. Nested relations are fetched via @SchemaMapping
+ * resolvers that call back into the services with the original authenticated
+ * user.
+ */
 @Controller
 @RequiredArgsConstructor
 public class GraphQLController {
@@ -26,81 +34,84 @@ public class GraphQLController {
     private final TransactionService transactionService;
 
     @QueryMapping
-    public List<Wallet> wallets(@AuthenticationPrincipal UserDetails user) {
-        return walletService.getAllWallets(user.getUsername());
+    public List<WalletResponse> wallets(@AuthenticationPrincipal UserDetails user) {
+        return walletService.getAllWallets(user.getUsername()).stream()
+                .map(GraphQLController::toWalletResponse)
+                .toList();
     }
 
     @QueryMapping
-    public Wallet wallet(@Argument Long id, @AuthenticationPrincipal UserDetails user) {
-        return walletService.getWalletById(id, user.getUsername());
+    public WalletResponse wallet(@Argument Long id, @AuthenticationPrincipal UserDetails user) {
+        return toWalletResponse(walletService.getWalletById(id, user.getUsername()));
     }
 
     @QueryMapping
-    public List<Asset> assets(@Argument Long walletId, @AuthenticationPrincipal UserDetails user) {
-        return assetService.getAssetsByWalletId(walletId, user.getUsername());
+    public List<AssetResponse> assets(@Argument Long walletId, @AuthenticationPrincipal UserDetails user) {
+        return assetService.getAssetsByWalletId(walletId, user.getUsername()).stream()
+                .map(assetService::mapToPortfolioResponse)
+                .toList();
     }
 
     @QueryMapping
-    public Asset asset(@Argument Long id, @AuthenticationPrincipal UserDetails user) {
-        return assetService.getAssetById(id, user.getUsername());
+    public AssetResponse asset(@Argument Long id, @AuthenticationPrincipal UserDetails user) {
+        return assetService.mapToPortfolioResponse(assetService.getAssetById(id, user.getUsername()));
     }
 
     @QueryMapping
-    public List<Transaction> transactions(@Argument Long assetId, @AuthenticationPrincipal UserDetails user) {
-        return transactionService.getTransactionsByAssetId(assetId, user.getUsername());
+    public List<TransactionResponse> transactions(@Argument Long assetId, @AuthenticationPrincipal UserDetails user) {
+        return transactionService.getTransactionsByAssetId(assetId, user.getUsername()).stream()
+                .map(GraphQLController::toTransactionResponse)
+                .toList();
     }
 
     @SchemaMapping(typeName = "Wallet")
-    public String chainType(Wallet wallet) {
-        return wallet.getChainType() == null ? null : wallet.getChainType().name();
+    public String chainType(WalletResponse wallet) {
+        return wallet.chainType() == null ? null : wallet.chainType().name();
+    }
+
+    @SchemaMapping(typeName = "Wallet")
+    public List<AssetResponse> assets(WalletResponse wallet, @AuthenticationPrincipal UserDetails user) {
+        return assetService.getAssetsByWalletId(wallet.id(), user.getUsername()).stream()
+                .map(assetService::mapToPortfolioResponse)
+                .toList();
     }
 
     @SchemaMapping(typeName = "Asset")
-    public Long walletId(Asset asset) {
-        return asset.getWallet().getId();
-    }
-
-    @SchemaMapping(typeName = "Asset")
-    public Double totalAmount(Asset asset) {
-        return computed(asset).totalAmount();
-    }
-
-    @SchemaMapping(typeName = "Asset")
-    public Double totalInvested(Asset asset) {
-        return computed(asset).totalInvested();
-    }
-
-    @SchemaMapping(typeName = "Asset")
-    public Double currentPrice(Asset asset) {
-        return computed(asset).currentPrice();
-    }
-
-    @SchemaMapping(typeName = "Asset")
-    public Double currentValue(Asset asset) {
-        return computed(asset).currentValue();
-    }
-
-    @SchemaMapping(typeName = "Asset")
-    public Double profit(Asset asset) {
-        return computed(asset).profit();
+    public List<TransactionResponse> transactions(AssetResponse asset, @AuthenticationPrincipal UserDetails user) {
+        return transactionService.getTransactionsByAssetId(asset.id(), user.getUsername()).stream()
+                .map(GraphQLController::toTransactionResponse)
+                .toList();
     }
 
     @SchemaMapping(typeName = "Transaction")
-    public Long assetId(Transaction transaction) {
-        return transaction.getAsset().getId();
+    public String source(TransactionResponse tx) {
+        return tx.source() == null ? null : tx.source().name();
     }
 
     @SchemaMapping(typeName = "Transaction")
-    public String source(Transaction transaction) {
-        return transaction.getSource() == null ? null : transaction.getSource().name();
+    public String date(TransactionResponse tx) {
+        return tx.date() == null ? null : tx.date().toString();
     }
 
-    @SchemaMapping(typeName = "Transaction")
-    public String date(Transaction transaction) {
-        return transaction.getDate().toString();
+    private static WalletResponse toWalletResponse(Wallet wallet) {
+        return new WalletResponse(
+                wallet.getId(),
+                wallet.getName(),
+                wallet.getChainType(),
+                wallet.getChainAddress(),
+                wallet.getLastImportTime()
+        );
     }
 
-    private AssetResponse computed(Asset asset) {
-        return assetService.mapToPortfolioResponse(asset);
+    private static TransactionResponse toTransactionResponse(Transaction transaction) {
+        return new TransactionResponse(
+                transaction.getId(),
+                transaction.getAsset().getId(),
+                transaction.getAmount(),
+                transaction.getBuyPrice(),
+                transaction.getDate(),
+                transaction.getSource(),
+                transaction.getTxHash()
+        );
     }
 }

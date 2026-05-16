@@ -8,7 +8,7 @@
 | Build tool | Vite |
 | Styling | Tailwind CSS v3 with Material 3 color tokens |
 | HTTP client | axios |
-| Icons | Material Symbols Outlined (Google Fonts), lucide-react |
+| Icons | Material Symbols Outlined (Google Fonts) |
 | API docs UI | Scalar (`@scalar/api-reference-react`) |
 
 ## Route Structure
@@ -59,8 +59,9 @@ Protected routes are wrapped by `PrivateRoute` (redirects to `/login` if unauthe
 
 | File | Purpose |
 |---|---|
-| `hooks/useLivePrices.js` | Fetches `GET /api/market/prices` (public). Used by `Home.jsx`. |
-| `hooks/usePortfolioData.js` | Cascades `GET /wallets → /portfolios → /transactions`. Returns `{ wallets, portfolios, transactions, isLoading, error, reload }`. Used by Analytics, Assets, and History. |
+| `hooks/useLivePrices.js` | Fetches `GET /api/market/prices` (public) on mount and every 60 s. Used by `Home.jsx` and `AppContext` (for the BTC/EUR conversion rate). |
+| `hooks/usePortfolioData.js` | Cascades `GET /api/wallets → GET /api/wallets/{id}/portfolio → GET /api/assets/{id}/transactions`. Returns `{ wallets, portfolios, transactions, isLoading, error, reload }`. Used by Analytics, Assets, and History. |
+| `hooks/usePageTitle.js` | One-liner that sets `document.title = '${title} · WalletPulse'`. |
 
 ## Styling
 
@@ -68,7 +69,7 @@ Tailwind CSS v3 with a custom Material 3 palette defined in `tailwind.config.js`
 
 ## API Communication
 
-`VITE_API_URL` is baked into the bundle at build time. In production Docker builds it is set to an empty string so axios uses same-origin relative paths — the frontend nginx then proxies API requests to the backend container. In GitHub Pages builds it is set to `https://walletpulse.de`.
+`VITE_API_URL` is baked into the bundle at build time. In production Docker builds it is set to an empty string so axios uses same-origin relative paths — the frontend nginx then proxies API requests to the backend container. For local dev it defaults to `http://localhost:8080`.
 
 ## The Docs Page
 

@@ -4,9 +4,10 @@ import { coinMeta, formatPct } from '../utils/coins';
 import { timeRanges, getChartLabels, computeAssetChartPoints, pointsToPath } from '../utils/chart';
 import { groupByCoin } from '../utils/groupByCoin';
 import { usePortfolioData } from '../hooks/usePortfolioData';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 const Assets = () => {
-  useEffect(() => { document.title = 'Assets · WalletPulse'; }, []);
+  usePageTitle('Assets');
   const { formatCurrency: formatEur } = useApp();
   const { portfolios, transactions, isLoading, error } = usePortfolioData();
   const [activeCompare, setActiveCompare] = useState(null);
@@ -29,7 +30,10 @@ const Assets = () => {
     }
   }, [portfolio, activeCompare]);
 
-  const activeAsset = (portfolio?.assets ?? []).find((a) => a.coinId === activeCompare) ?? null;
+  const activeAsset = useMemo(
+    () => (portfolio?.assets ?? []).find((a) => a.coinId === activeCompare) ?? null,
+    [portfolio, activeCompare]
+  );
 
   const chartPoints = useMemo(
     () => computeAssetChartPoints(transactions, activeAsset, activeRange),
@@ -205,12 +209,6 @@ const Assets = () => {
       <div className="bg-surface-container rounded-xl border border-outline-variant/30 overflow-hidden">
         <div className="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-high/50">
           <h2 className="font-heading-md text-heading-md text-on-surface">Tracked Assets</h2>
-          <div className="flex gap-2">
-            <button className="px-3 py-1.5 rounded bg-surface-container-highest text-on-surface font-label-sm text-label-sm hover:bg-surface-bright transition-colors">All Categories</button>
-            <button className="px-3 py-1.5 rounded bg-surface-container-highest text-on-surface font-label-sm text-label-sm hover:bg-surface-bright transition-colors flex items-center gap-1">
-              <span className="material-symbols-outlined text-[16px]">filter_list</span> Filter
-            </button>
-          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">

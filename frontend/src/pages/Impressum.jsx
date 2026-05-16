@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
 import LegalLayout from '../components/layout/LegalLayout';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 const Section = ({ title, children }) => (
   <section className="mb-10">
@@ -14,7 +14,7 @@ const Section = ({ title, children }) => (
 );
 
 const Impressum = () => {
-  useEffect(() => { document.title = 'Impressum · WalletPulse'; }, []);
+  usePageTitle('Impressum');
   return (
     <LegalLayout>
       <div className="mb-12">

@@ -33,7 +33,9 @@ public class AuthController {
     @Operation(summary = "Register a new user account", description = "Public endpoint. Creates a new account and returns a JWT.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Registration successful, JWT returned"),
-            @ApiResponse(responseCode = "400", description = "Invalid request body or email already in use",
+            @ApiResponse(responseCode = "400", description = "Invalid request body",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Email already in use",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {

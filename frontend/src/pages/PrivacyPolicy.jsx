@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
 import LegalLayout from '../components/layout/LegalLayout';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 const Section = ({ title, children }) => (
   <section className="mb-10">
@@ -21,7 +21,7 @@ const DataRow = ({ label, value }) => (
 );
 
 const PrivacyPolicy = () => {
-  useEffect(() => { document.title = 'Privacy Policy · WalletPulse'; }, []);
+  usePageTitle('Privacy Policy');
   return (
     <LegalLayout>
       <div className="mb-12">
@@ -90,6 +90,7 @@ const PrivacyPolicy = () => {
               <DataRow label="Etherscan" value="Your Ethereum wallet address — to import on-chain transaction history" />
               <DataRow label="Blockstream" value="Your Bitcoin wallet address — to import on-chain transaction history" />
               <DataRow label="Helius" value="Your Solana wallet address — to import on-chain transaction history" />
+              <DataRow label="Frankfurter" value="No personal data — only a fixed EUR→USD rate query for currency display" />
             </div>
             <p className="mt-3">These services have their own privacy policies which we recommend reviewing.</p>
           </Section>

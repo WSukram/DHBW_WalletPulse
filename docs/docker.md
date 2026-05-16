@@ -7,7 +7,7 @@
 `backend/Dockerfile` — two-stage build:
 
 1. **Builder**: `maven:3-eclipse-temurin-21` — runs `./mvnw package -DskipTests` to produce the JAR.
-2. **Runtime**: `eclipse-temurin:21-jre-alpine` — copies the JAR and runs it. Minimal image size.
+2. **Runtime**: `eclipse-temurin:21-jre` (Ubuntu) — copies the JAR and runs it. `curl` is installed for the compose healthcheck.
 
 `backend/.dockerignore` excludes `application.properties` so the committed defaults never shadow environment variable secrets injected by Docker Compose.
 
@@ -44,11 +44,7 @@ Applied on the server as:
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 
-Changes over the base file:
-
-| Change | Reason |
-|---|---|
-| Removes `ports` for `db` and `backend` | Only the frontend container is reachable from the internet |
+Changes over the base file: none today. The base `docker-compose.yml` already binds `db` and `backend` to `127.0.0.1:` (loopback), so they are not reachable from the internet on the server. The overlay exists as a hook for environment-specific overrides if the deployment topology changes.
 
 ## Data Persistence
 
@@ -67,16 +63,18 @@ No Docker or Postgres required — backend tests use H2.
 
 ### CD (`cd.yml`)
 
-Runs on push to `main`:
+Triggered by a successful CI run on `main` (via `workflow_run`). If CI fails, CD does not run.
 
-1. Builds `walletpulse-backend` and `walletpulse-frontend` Docker images with appropriate build args.
-2. Pushes images to `ghcr.io/wsukram/`.
-3. Pulls the new images and restarts the containers with the production Compose overlay.
+1. Checks out the exact commit CI tested.
+2. Builds `walletpulse-backend` and `walletpulse-frontend` Docker images with appropriate build args.
+3. Pushes images to `ghcr.io/wsukram/` with two tags: `:latest` and `:<commit-sha>` (so rollback is `docker pull …:<previous-sha>`).
+4. Pulls the new images and restarts the containers with the production Compose overlay.
 
 ### GitHub Pages (`pages.yml`)
 
 Runs on push to `main`:
 
-1. Builds the frontend with `--base=/DHBW_WalletPulse/` and `VITE_API_URL=https://walletpulse.de`.
-2. Deploys to GitHub Pages at `https://wsukram.github.io/DHBW_WalletPulse/`.
-3. Adds `404.html = index.html` for React Router SPA routing support.
+1. Installs `mkdocs-material` and builds the documentation site from `docs/` + `mkdocs.yml`.
+2. Deploys the generated `site/` to GitHub Pages at `https://wsukram.github.io/DHBW_WalletPulse/`.
+
+The live React app itself ships via the CD pipeline (above), not GitHub Pages.

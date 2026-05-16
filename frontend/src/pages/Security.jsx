@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { useApp } from '../context/AppContext';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 const Security = () => {
-  useEffect(() => { document.title = 'Security · WalletPulse'; }, []);
+  usePageTitle('Security');
   const { currency, setCurrency, theme, setTheme, user } = useApp();
 
   const [currentPassword, setCurrentPassword] = useState('');
@@ -94,7 +95,11 @@ const Security = () => {
                     <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
                   </div>
                   <p className="text-xs text-on-surface-variant mt-1">
-                    {currency !== 'EUR' ? 'Values are converted from EUR using approximate rates.' : 'Prices sourced in EUR from CoinGecko.'}
+                    {currency === 'EUR'
+                      ? 'Prices sourced in EUR from CoinGecko.'
+                      : currency === 'USD'
+                      ? 'Converted from EUR using the live ECB rate (frankfurter.app), refreshed every 5 minutes.'
+                      : 'Converted from EUR using the live BTC/EUR price from CoinGecko, refreshed every 5 minutes.'}
                   </p>
                 </div>
 

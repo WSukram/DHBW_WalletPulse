@@ -1,34 +1,35 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { isTokenExpired } from '../context/AppContext';
 import { TICKER_COINS } from '../utils/coins';
 import { useLivePrices } from '../hooks/useLivePrices';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 const features = [
   {
     icon: 'sensors',
     iconColor: 'text-primary',
     title: 'Live CoinGecko Prices',
-    desc: 'Real-time BTC, ETH and SOL prices powered by CoinGecko. Your portfolio value is always calculated against current market data.',
+    desc: 'BTC, ETH and SOL prices from CoinGecko, refreshed every 60 seconds. Portfolio values use the latest fetch.',
   },
   {
     icon: 'timeline',
     iconColor: 'text-secondary',
-    title: 'Cost Basis & P&L Tracking',
-    desc: 'See exactly what you paid vs. what it\'s worth now. WalletPulse calculates your total invested, unrealized P&L and per-asset performance automatically.',
+    title: 'Cost Basis & P&L',
+    desc: 'See what you paid versus what each asset is worth now. Totals invested, unrealised P&L and per-asset performance update on every page load.',
   },
   {
     icon: 'account_balance_wallet',
     iconColor: 'text-tertiary',
     title: 'On-Chain Import',
-    desc: 'Import your transaction history directly from Ethereum, Bitcoin or Solana by wallet address — no manual entry required.',
+    desc: 'Pull transaction history straight from Ethereum, Bitcoin or Solana by wallet address. No CSV uploads, no manual entry.',
   },
 ];
 
 const Home = () => {
   const navigate = useNavigate();
   const prices = useLivePrices();
-  useEffect(() => { document.title = 'WalletPulse'; }, []);
+  usePageTitle('');
 
   const handleEnter = () => {
     const token = localStorage.getItem('wp_token');
@@ -80,10 +81,10 @@ const Home = () => {
         {/* Hero */}
         <section className="max-w-[1440px] mx-auto px-6 mb-24 text-center">
           <h1 className="font-display-xl text-display-xl text-inverse-surface mb-6 max-w-4xl mx-auto leading-tight">
-            Master Your <span className="text-primary">Crypto Portfolio</span>
+            Your <span className="text-primary">Crypto Portfolio</span>, in one place
           </h1>
           <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto mb-10">
-            High-fidelity analytics, historical cost tracking, and real-time insights for professional traders. Take control of your digital assets with unparalleled precision.
+            Track BTC, ETH and SOL across multiple wallets. Live prices, cost basis, P&L and historical performance — without handing your keys to anyone.
           </p>
           <div className="flex items-center justify-center gap-4">
             <button
@@ -320,7 +321,7 @@ const Home = () => {
       <footer className="w-full border-t border-white/5 bg-slate-950">
         <div className="relative w-full py-8 px-6 flex flex-col md:flex-row justify-between items-center max-w-[1440px] mx-auto gap-4">
           <div className="text-sm font-bold text-slate-300">WalletPulse</div>
-          <div className="md:absolute md:left-1/2 md:-translate-x-1/2 text-xs text-slate-500 font-light">© 2026 WalletPulse. High-fidelity crypto analytics.</div>
+          <div className="md:absolute md:left-1/2 md:-translate-x-1/2 text-xs text-slate-500 font-light">© 2026 WalletPulse. DHBW Web Engineering 2 project.</div>
           <div className="flex gap-6">
             <Link to="/terms" className="text-xs text-slate-500 font-light hover:text-slate-300 transition-colors">Terms of Service</Link>
             <Link to="/privacy" className="text-xs text-slate-500 font-light hover:text-slate-300 transition-colors">Privacy Policy</Link>

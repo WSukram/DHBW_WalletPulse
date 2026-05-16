@@ -6,11 +6,13 @@ import de.dhbwravensburg.webengineering2.walletpulse.backend.exception.ResourceN
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.AssetRepository;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
 
 @Service
+@Transactional
 public class TransactionService {
 
     private final TransactionRepository transactionRepository;
