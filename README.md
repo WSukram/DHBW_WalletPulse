@@ -169,7 +169,7 @@ The frontend is a React SPA. Axios is configured once in `utils/api.js` with a b
 │   │   │   ├── Assets.jsx          # All assets grouped by coin
 │   │   │   ├── History.jsx         # Full transaction history + CSV export
 │   │   │   ├── Analytics.jsx       # Charts and performance metrics
-│   │   │   ├── Security.jsx        # Password change
+│   │   │   ├── Security.jsx        # Password change, account deletion
 │   │   │   ├── Docs.jsx            # Scalar API reference (lazy-loaded)
 │   │   │   ├── Login.jsx / Register.jsx
 │   │   │   ├── TermsOfService.jsx / PrivacyPolicy.jsx / Impressum.jsx

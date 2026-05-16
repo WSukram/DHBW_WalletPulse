@@ -54,7 +54,8 @@ All protected endpoints require a `Bearer` token in the `Authorization` header. 
 |---|---|---|
 | `GET` | `/api/user/me` | Get the authenticated user's profile |
 | `PUT` | `/api/user/me/preferences` | Update display preferences (currency, theme) |
-| `PUT` | `/api/user/me/password` | Change password |
+| `PUT` | `/api/user/me/password` | Change password (minimum 12 characters) |
+| `DELETE` | `/api/user/me` | Delete account and all associated data (requires current password) |
 
 ### Market (public)
 
