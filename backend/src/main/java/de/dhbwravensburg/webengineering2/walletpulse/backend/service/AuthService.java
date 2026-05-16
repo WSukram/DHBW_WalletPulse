@@ -4,7 +4,7 @@ import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.Auth
 import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.LoginRequest;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.RegisterRequest;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.User;
-import de.dhbwravensburg.webengineering2.walletpulse.backend.exception.BusinessException;
+import de.dhbwravensburg.webengineering2.walletpulse.backend.exception.ConflictException;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.UserRepository;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.security.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ public class AuthService {
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
-            throw new BusinessException("Email already in use");
+            throw new ConflictException("Email already in use");
         }
         User user = User.builder()
                 .firstName(request.firstName())

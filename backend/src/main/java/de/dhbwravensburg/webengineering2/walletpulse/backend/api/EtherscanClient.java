@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
@@ -41,12 +42,19 @@ public class EtherscanClient {
     }
 
     private List<Map<String, String>> fetchResults(String url) {
-        Map<String, Object> response = restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<Map<String, Object>>() {}
-        ).getBody();
+        Map<String, Object> response;
+        try {
+            response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<Map<String, Object>>() {}
+            ).getBody();
+        } catch (RestClientException e) {
+            // RestTemplate echoes the URL in exception messages; scrub the API key before rethrowing.
+            String msg = e.getMessage() != null ? e.getMessage().replaceAll("apikey=[^&\\s]+", "apikey=***") : "unknown error";
+            throw new RuntimeException("Etherscan request failed: " + msg);
+        }
 
         if (response == null) return List.of();
 
