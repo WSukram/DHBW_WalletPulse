@@ -1,11 +1,10 @@
 # WalletPulse
 
-> Crypto portfolio tracker with live & historical EUR, USD and BTC pricing and on-chain import for Ethereum, Bitcoin, and Solana.
+> Crypto portfolio tracker with live & historical EUR pricing and on-chain import for Ethereum, Bitcoin, and Solana.
 
 ![Java](https://img.shields.io/badge/Java-21-007396?logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0-6DB33F?logo=springboot&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
-![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791?logo=postgresql&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-06B6D4?logo=tailwindcss&logoColor=white)
 ![CI](https://github.com/WSukram/DHBW_WalletPulse/actions/workflows/ci.yml/badge.svg)
@@ -13,9 +12,9 @@
 
 **Live**: [https://walletpulse.de](https://walletpulse.de)
 
-WalletPulse is a full-stack web application for managing a personal crypto portfolio. It tracks holdings across multiple wallets, calculates profit and loss against current market prices in EUR, USD, BTC and can import on-chain transactions directly from public blockchain APIs.
+WalletPulse is a full-stack web application for managing a personal crypto portfolio. It tracks holdings across multiple wallets, calculates profit and loss against current market prices, and can import on-chain transactions directly from Ethereum, Bitcoin, and Solana.
 
-This project was developed for the **Web Engineering 2** module at **DHBW Ravensburg**.
+Developed for the **Web Engineering 2** module at **DHBW Ravensburg** Campus Friedrichshafen.
 
 ---
 
@@ -25,30 +24,29 @@ This project was developed for the **Web Engineering 2** module at **DHBW Ravens
 2. [Architecture](#architecture)
 3. [Tech Stack](#tech-stack)
 4. [Project Structure](#project-structure)
-5. [Getting Started](#getting-started)
-6. [Configuration](#configuration)
-7. [Authentication](#authentication)
-8. [API Documentation](#api-documentation)
-9. [Third-Party APIs](#third-party-apis)
-10. [Triggering an On-Chain Import](#triggering-an-on-chain-import)
-11. [Testing](#testing)
-12. [CI/CD](#cicd)
-13. [Docker](#docker)
-14. [Production Deployment](#production-deployment)
-15. [License](#license)
+5. [Data Model](#data-model)
+6. [Running Locally](#running-locally)
+7. [Configuration](#configuration)
+8. [API Keys](#api-keys)
+9. [Authentication](#authentication)
+10. [API Documentation](#api-documentation)
+11. [On-Chain Import](#on-chain-import)
+12. [Testing](#testing)
+13. [CI/CD](#cicd)
+14. [License](#license)
 
 ---
 
 ## Features
 
-- **Portfolio dashboard** with live valuation, asset breakdown, and historical performance charts. Display currency switchable between **EUR**, **USD**, and **BTC** (per-user preference, persisted on the backend).
-- **Multiple wallets per user**, each scoped to a single chain (ETH / BTC / SOL) or used purely for manual tracking.
-- **Manual transaction entry** alongside **automated on-chain import** for Ethereum (ERC-20), Bitcoin, and Solana (SPL).
-- **Live and historical prices** fetched in EUR from CoinGecko (CryptoCompare fallback for prices older than 365 days) and converted to the user's display currency (EUR / USD / BTC) on the frontend. Live prices cached in memory; historical prices cached in the database.
-- **JWT authentication** (Spring Security). All wallet/asset/transaction data is user-scoped at the query level.
-- **Two API surfaces**: REST and GraphQL — both backed by the same services and security context.
-- **Interactive API reference** with Scalar (`/docs`) and a GraphiQL playground (`/graphiql`, local dev only).
-- **Material 3 dark/light theme** with a custom Tailwind palette.
+- **Portfolio dashboard** with live valuation, asset breakdown, and historical performance charts
+- **Multiple wallets per user**, each scoped to ETH / BTC / SOL or used for manual tracking
+- **Manual transaction entry** and **automated on-chain import** for Ethereum, Bitcoin, and Solana
+- **Live and historical prices** from CoinGecko (CryptoCompare fallback for dates > 365 days old)
+- **Display currency** switchable between EUR, USD, and BTC per user
+- **JWT authentication** — all data is user-scoped at the database query level
+- **REST and GraphQL** API surfaces backed by the same services and security context
+- **Interactive API reference** (Scalar at `/docs`) and GraphiQL playground (`/graphiql`, local only)
 
 ---
 
@@ -64,35 +62,26 @@ This project was developed for the **Web Engineering 2** module at **DHBW Ravens
            │  HTTP
            ▼
 ┌─────────────────────┐
-│  nginx in Docker    │  Serves React SPA, proxies /api/* /graphql to backend
-│  (frontend:3000)    │
+│  nginx in Docker    │  Serves React SPA
+│  (frontend:3000)    │  Proxies /api/* /graphql /v3/api-docs → backend
 └──────────┬──────────┘
            │  Docker internal network
            ▼
 ┌─────────────────────┐         ┌──────────────────────┐
 │  Spring Boot 4      │ ───────►│  CoinGecko           │
-│  REST + GraphQL     │         │  CryptoCompare       │
+│  REST + GraphQL     │ ───────►│  CryptoCompare       │
 │  Spring Security    │ ───────►│  Etherscan (ETH)     │
-│  Spring Data JPA    │         │  Blockstream (BTC)   │
+│  Spring Data JPA    │ ───────►│  Blockstream (BTC)   │
 └──────────┬──────────┘ ───────►│  Helius (SOL)        │
-           │                    └──────────────────────┘
-           ▼
+           ▼                    └──────────────────────┘
 ┌─────────────────────┐
-│  PostgreSQL 15      │  Not exposed to internet
+│  PostgreSQL 15      │
 └─────────────────────┘
 ```
 
-The **backend** follows a classical layered architecture: `controller → service → repository → entity`. Chain-specific import logic is split into a `ChainImporter` interface with one implementation per chain (`EthereumImporter`, `BitcoinImporter`, `SolanaImporter`) under `service/blockchain/`, dispatched by a Spring-assembled `Map<ChainType, ChainImporter>`.
+The backend follows a classical layered architecture: `controller → service → repository → entity`. Chain-specific import logic lives in `service/blockchain/` — a `ChainImporter` interface with one implementation per chain (`EthereumImporter`, `BitcoinImporter`, `SolanaImporter`), dispatched by `BlockchainImportService` via a Spring-assembled `Map<ChainType, ChainImporter>`.
 
-The **frontend** is a single-page React app organised into `pages/` (route components), `components/` (presentational and modal components), `hooks/` (data-fetching hooks), `utils/` (shared helpers and constants), and `context/` (auth and global state). Axios is configured once in `utils/api.js`; all calls use bare paths.
-
-The **data model**:
-
-```
-User ─┬─► Wallet ──► Asset ──► Transaction
-      │
-      └─ HistoricalPrice (standalone price cache: coinId + date → eurPrice)
-```
+The frontend is a React SPA. Axios is configured once in `utils/api.js` with a base URL baked at build time; all calls use bare paths (`/api/wallets`, not `http://localhost:8080/api/wallets`) so the same build works locally and in production without any code change.
 
 ---
 
@@ -100,28 +89,38 @@ User ─┬─► Wallet ──► Asset ──► Transaction
 
 ### Backend
 
-| | Version |
-|---|---|
-| Java | 21 |
-| Spring Boot | 4.0.5 |
-| Spring Web MVC, Security, Data JPA, GraphQL, Validation | (BOM) |
-| springdoc-openapi | 2.8.13 |
-| jjwt (JWT) | 0.12.6 |
-| PostgreSQL driver | runtime |
-| H2 (test) | runtime |
-| Lombok | provided |
+| Dependency | Version | Purpose |
+|---|---|---|
+| Java | 21 | Runtime |
+| Spring Boot | 4.0.5 | Framework (web, security, data JPA, graphql, validation) |
+| springdoc-openapi | 2.8.x | OpenAPI 3 spec + Swagger UI |
+| jjwt | 0.12.6 | HS256 JWT signing and validation |
+| PostgreSQL driver | 42.x | Production database |
+| H2 | 2.x | In-memory database for tests |
+| Lombok | 1.18.x | Boilerplate reduction |
 
 ### Frontend
 
-| | Version |
+| Dependency | Version | Purpose |
+|---|---|---|
+| React / React DOM | 19.2 | UI framework |
+| Vite | 8.0 | Build tool and dev server |
+| React Router | 7.x | Client-side routing |
+| axios | 1.x | HTTP client |
+| Tailwind CSS | 3.4 | Utility-first styling |
+| lucide-react | 1.x | Icon set |
+| @scalar/api-reference-react | 0.9.x | Interactive API docs (lazy-loaded) |
+
+### Infrastructure
+
+| Tool | Purpose |
 |---|---|
-| React / React DOM | 19.2 |
-| Vite | 8.0 |
-| React Router | 7.15 |
-| axios | 1.16 |
-| Tailwind CSS | 3.4 |
-| lucide-react | 1.14 |
-| @scalar/api-reference-react | 0.9 |
+| Docker + Docker Compose | Local development and production containers |
+| nginx (Alpine) | Frontend container — serves SPA, proxies API calls |
+| GitHub Actions | CI (test + build on every push) and CD (deploy on merge to main) |
+| GitHub Container Registry | Stores built Docker images (`ghcr.io/wsukram/`) |
+| GitHub Pages | Static frontend deployment connected to the live backend |
+| Let's Encrypt / certbot | HTTPS certificate with auto-renewal |
 
 ---
 
@@ -131,209 +130,240 @@ User ─┬─► Wallet ──► Asset ──► Transaction
 .
 ├── backend/
 │   ├── src/main/java/.../walletpulse/backend/
-│   │   ├── api/              # External API clients (CoinGecko, Etherscan, ...)
-│   │   ├── config/           # Security, CORS, OpenAPI, REST template
-│   │   ├── controller/       # REST + GraphQL controllers
-│   │   ├── entity/           # JPA entities
-│   │   ├── exception/        # Global exception handler
-│   │   ├── repository/       # Spring Data repositories
-│   │   ├── security/         # JWT filter & service
-│   │   └── service/          # Business logic (incl. service/blockchain/)
+│   │   ├── api/                    # External API clients
+│   │   │   ├── CoinGeckoClient     # Live + historical prices (primary)
+│   │   │   ├── CryptoCompareClient # Historical price fallback (> 365 days)
+│   │   │   ├── EtherscanClient     # ETH + ERC-20 import
+│   │   │   ├── BlockstreamClient   # BTC import (no key needed)
+│   │   │   └── HeliusClient        # SOL + SPL import
+│   │   ├── config/                 # SecurityConfig, OpenApiConfig, RestTemplateConfig
+│   │   ├── controller/             # REST controllers + GraphQLController
+│   │   │   └── dto/                # Request and response DTOs
+│   │   ├── entity/                 # JPA entities: User, Wallet, Asset, Transaction, HistoricalPrice
+│   │   ├── exception/              # GlobalExceptionHandler, BusinessException, ResourceNotFoundException
+│   │   ├── repository/             # Spring Data JPA repositories
+│   │   ├── security/               # JwtService, JwtAuthFilter, UserDetailsServiceImpl
+│   │   └── service/                # Business logic
+│   │       └── blockchain/         # ChainImporter interface + per-chain implementations
 │   ├── src/main/resources/
-│   │   ├── application.properties
-│   │   └── graphql/schema.graphqls
-│   ├── src/test/java/...     # JUnit + Spring Boot tests (H2)
-│   ├── Dockerfile
+│   │   ├── application.properties  # Minimal config for test suite only (excluded from Docker)
+│   │   └── graphql/schema.graphqls # GraphQL schema
+│   ├── src/test/java/.../          # 38 tests (service, controller, smoke tests)
+│   ├── Dockerfile                  # Multi-stage: Maven → JRE
 │   └── pom.xml
 ├── frontend/
 │   ├── src/
-│   │   ├── components/       # UI + modal components
-│   │   ├── context/          # AppContext (auth, theme, currency)
-│   │   ├── hooks/            # useLivePrices, usePortfolioData
-│   │   ├── pages/            # Route components
-│   │   └── utils/            # api, coins, chart, styles, ...
-│   ├── public/
-│   ├── nginx.conf
-│   ├── Dockerfile
+│   │   ├── components/
+│   │   │   ├── layout/             # MainLayout, Sidebar, TopNav
+│   │   │   ├── wallet/             # AddWalletModal, EditWalletModal, DeleteWalletModal, AddTransactionModal
+│   │   │   └── history/            # EditTransactionModal, DeleteTransactionModal
+│   │   ├── context/
+│   │   │   └── AppContext.jsx      # Auth state, JWT, axios defaults, currency, theme
+│   │   ├── hooks/
+│   │   │   ├── useLivePrices.js    # Fetches live BTC/ETH/SOL prices
+│   │   │   └── usePortfolioData.js # Wallets → portfolios → transactions cascade
+│   │   ├── pages/
+│   │   │   ├── Home.jsx            # Public landing page with live ticker
+│   │   │   ├── Dashboard.jsx       # Portfolio overview
+│   │   │   ├── Wallet.jsx          # Per-wallet detail + transactions
+│   │   │   ├── Assets.jsx          # All assets grouped by coin
+│   │   │   ├── History.jsx         # Full transaction history + CSV export
+│   │   │   ├── Analytics.jsx       # Charts and performance metrics
+│   │   │   ├── Security.jsx        # Password change
+│   │   │   ├── Docs.jsx            # Scalar API reference (lazy-loaded)
+│   │   │   ├── Login.jsx / Register.jsx
+│   │   │   ├── TermsOfService.jsx / PrivacyPolicy.jsx / Impressum.jsx
+│   │   └── utils/
+│   │       ├── api.js              # axios baseURL setup
+│   │       ├── coins.js            # COIN_META, formatPct, TICKER_COINS
+│   │       ├── chart.js            # Chart math (labels, data points, SVG path)
+│   │       ├── groupByCoin.js      # Merge same-coin assets across wallets
+│   │       ├── exportCsv.js        # CSV blob download
+│   │       └── styles.js           # Shared Tailwind class strings
+│   ├── public/wp-icon.svg          # App icon (favicon + logo)
+│   ├── nginx.conf                  # SPA routing + API proxy rules
+│   ├── Dockerfile                  # Multi-stage: Node → nginx:alpine
 │   └── package.json
 ├── .github/workflows/
-│   ├── ci.yml             # backend tests + frontend build on every push
-│   └── cd.yml             # build images, push to ghcr.io, deploy to server on main
-├── docker-compose.yml
-├── docker-compose.prod.yml
-├── .env.example
+│   ├── ci.yml                      # Tests + build on every push and PR
+│   ├── cd.yml                      # Build images, push to ghcr.io, SSH deploy on main
+│   └── pages.yml                   # Build and deploy to GitHub Pages on main
+├── docker-compose.yml              # Base stack: db + backend + frontend
+├── docker-compose.prod.yml         # Production overrides: no GraphiQL, validate DDL, prod CORS
+├── .env.example                    # Template — copy to .env and fill in values
 └── README.md
 ```
 
 ---
 
-## Getting Started
+## Data Model
 
-### Prerequisites
+```
+User
+ ├── email (unique), firstName, lastName
+ ├── passwordHash (BCrypt)
+ └── preferences (currency, theme)
+  │
+  └──► Wallet (OneToMany)
+        ├── name, chainType (ETH | BTC | SOL | null), chainAddress
+        └── lastImportTime
+         │
+         └──► Asset (OneToMany, cascadeAll)
+               ├── coinId (e.g. "bitcoin"), symbol, name
+               └── totalAmount (sum of transactions)
+                │
+                └──► Transaction (OneToMany, cascadeAll)
+                      ├── date, amount, pricePerCoin (EUR)
+                      └── source (MANUAL | IMPORTED), txHash
 
-- **Java 21** (Temurin recommended)
-- **Node.js 20+**
-- **Docker** and **Docker Compose**
-- Maven is **not** required — the Maven Wrapper (`./mvnw`) is bundled.
+HistoricalPrice (standalone cache)
+  └── coinId + date → eurPrice
+```
 
-### Clone and configure
+Key behaviours:
+- Deleting the last transaction on an asset automatically removes the asset (no orphaned zero-balance rows).
+- On-chain imports are idempotent — re-importing deduplicates by `txHash`.
+- Historical prices are looked up in the DB cache first, then CoinGecko (≤ 365 days), then CryptoCompare (> 365 days).
+
+---
+
+## Running Locally
+
+**The only prerequisite is [Docker](https://docs.docker.com/get-docker/) with Docker Compose.**
+
+### 1. Clone and configure
 
 ```bash
 git clone https://github.com/WSukram/DHBW_WalletPulse.git
 cd DHBW_WalletPulse
 cp .env.example .env
-# Edit .env and fill in JWT_SECRET and any API keys you have.
 ```
 
-### Option A — Full stack via Docker (one command)
+Open `.env` and fill in your values. At minimum you must replace `JWT_SECRET`. Set the API keys for any features you want to use — see [API Keys](#api-keys) for details.
 
-Bring up the database, backend, and frontend together:
+### 2. Start everything
 
 ```bash
-docker compose up
+docker-compose up --build -d
 ```
 
-| Service  | URL                       |
-|----------|---------------------------|
-| Frontend | http://localhost:3000     |
-| Backend  | http://localhost:8080     |
-| Postgres | localhost:5432            |
+This starts PostgreSQL, the Spring Boot backend, and the React frontend in the correct order using healthchecks. On first run the images are built locally — this takes a few minutes.
 
-The compose stack uses healthchecks so the backend waits for Postgres to be ready and the frontend waits for the backend.
+| Service | URL |
+|---|---|
+| App | http://localhost:3000 |
+| API Docs | http://localhost:3000/docs |
+| GraphiQL | http://localhost:3000/graphiql (local Docker only — disabled in production) |
 
-### Option B — DB in Docker, backend & frontend run locally (recommended for dev)
+After the initial build, subsequent runs are much faster. To stop the container without losing data, type `docker-compose down`. The PostgreSQL data is persisted in a Docker volume, so your wallets and transactions remain intact across restarts. To start the database, run `docker-compose up -d`. If you want to wipe all data and start fresh, run `docker-compose down -v` to remove the volume.
+
+### 3. Register an account
+
+Open http://localhost:3000 and click **Get Started**, or use the API directly:
 
 ```bash
-# 1. Start PostgreSQL only
-docker compose up -d db
-
-# 2. Backend on http://localhost:8080
-cd backend
-./mvnw spring-boot:run
-
-# 3. Frontend on http://localhost:5173 (in a new terminal)
-cd frontend
-npm install
-npm run dev
+curl -X POST http://localhost:3000/api/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"firstName":"Jane","lastName":"Doe","email":"jane@example.com","password":"my-strong-password"}'
 ```
 
-### Option C — Run the test suite (no database needed)
-
-```bash
-cd backend
-./mvnw test          # uses H2 in-memory, 38 tests
-```
+Passwords must be at least 12 characters.
 
 ---
 
 ## Configuration
 
-Non-sensitive defaults live in `backend/src/main/resources/application.properties`. All secrets and environment-specific values are read from environment variables — populate `.env` (gitignored) from `.env.example`. Docker Compose passes them through automatically; for local Spring Boot runs, you can either export them or replace the placeholders in `application.properties` directly.
+All configuration is done via `.env` at the repo root. Docker Compose reads this file and injects the values as environment variables — you never need to touch any source files.
 
-| Variable             | Purpose                                                 | Required          | Where to obtain                          |
-|----------------------|---------------------------------------------------------|-------------------|------------------------------------------|
-| `DB_PASSWORD`        | Postgres password                                       | Yes (Docker only) | Pick anything; default `postgres`        |
-| `JWT_SECRET`         | HMAC secret for signing JWT access tokens               | Yes               | Generate a long random string            |
-| `COINGECKO_API_KEY`  | Live & historical EUR prices (≤ 365 days)               | Recommended       | https://www.coingecko.com/en/api         |
-| `ETHERSCAN_API_KEY`  | Ethereum + ERC-20 transaction import                    | For ETH import    | https://etherscan.io (My Account → API)  |
-| `HELIUS_API_KEY`     | Solana + SPL token transaction import                   | For SOL import    | https://helius.dev                       |
+| Variable | Purpose | Required |
+|---|---|---|
+| `JWT_SECRET` | HMAC secret for signing JWT tokens | **Yes** — generate with `openssl rand -base64 48` |
+| `DB_PASSWORD` | PostgreSQL password | No — defaults to `postgres` |
+| `COINGECKO_API_KEY` | Live & historical EUR prices | **Yes** — without a key the free tier is severely rate-limited and price lookups will fail under normal use |
+| `ETHERSCAN_API_KEY` | Ethereum + ERC-20 on-chain import | **Yes** for ETH import |
+| `HELIUS_API_KEY` | Solana + SPL token on-chain import | **Yes** for SOL import |
 
-Bitcoin and the CryptoCompare fallback do not require keys.
+Bitcoin import uses Blockstream's public API — no key needed.
+
+> `application.properties` is **excluded from the Docker image** and is not a configuration file for normal usage. It only provides the two settings the test suite needs that have no code-level default.
+
+---
+
+## API Keys
+
+### CoinGecko — prices (required for reliable use)
+
+Used for live BTC/ETH/SOL prices (cached in memory) and historical EUR prices for transactions up to 365 days old (cached in the `HistoricalPrice` DB table). Without a key the public free tier is aggressively rate-limited — the dashboard will load slowly and historical price lookups during import will frequently fail.
+
+- Sign up at [coingecko.com/en/api](https://www.coingecko.com/en/api)
+- Go to **Developer Dashboard → API Keys** and create a free Demo Key
+- Add to `.env` as `COINGECKO_API_KEY=your_key`
+
+### CryptoCompare — historical fallback (no key needed)
+
+Automatically used as a fallback when a transaction date is older than 365 days (outside the CoinGecko Demo Key window). No account or key required.
+
+### Etherscan — Ethereum import (required for ETH)
+
+Used by `EtherscanClient` to fetch incoming native ETH transfers and ERC-20 token transfers (USDC, USDT, DAI, WBTC, LINK, UNI, and others) for a given wallet address.
+
+- Sign up at [etherscan.io](https://etherscan.io)
+- Go to **My Account → API Keys → Add**
+- Add to `.env` as `ETHERSCAN_API_KEY=your_key`
+- Free tier: 5 req/s, more than enough for personal use
+
+### Blockstream Esplora — Bitcoin import (no key needed)
+
+`BlockstreamClient` reads incoming BTC transactions for an address (`bc1...`, `1...`, `3...`). Uses the public Blockstream Esplora API — completely free, no account required.
+
+### Helius — Solana import (required for SOL)
+
+Used by `HeliusClient` to fetch incoming SOL transfers and SPL token transfers (USDC, WBTC, BONK, JUP, and others) for a given wallet address.
+
+- Sign up at [helius.dev](https://helius.dev)
+- Your API key is shown on the dashboard immediately after signup
+- Add to `.env` as `HELIUS_API_KEY=your_key`
+- Free tier: 100,000 requests/month — more than enough for personal use
 
 ---
 
 ## Authentication
 
-WalletPulse uses **stateless JWT** authentication. There is no seeded test user — register your own account through the UI or the API:
+WalletPulse uses stateless JWT (HS256). All wallet, asset, and transaction data is scoped to the authenticated user at the database query level — you can never access another user's data.
 
-Passwords must be **at least 12 characters**.
+Public endpoints (no token required): `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/market/prices`, `/v3/api-docs/**`, `/graphiql` (local only — disabled in production).
 
 ```bash
-# Register
-curl -X POST http://localhost:8080/api/auth/register \
+# Log in — returns { "token": "..." }
+curl -X POST http://localhost:3000/api/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"firstName":"John","lastName":"Doe","email":"you@example.com","password":"your-password-12"}'
+  -d '{"email":"jane@example.com","password":"my-strong-password"}'
 
-# Log in (returns { "token": "..." })
-curl -X POST http://localhost:8080/api/auth/login \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"you@example.com","password":"your-password-12"}'
-
-# Subsequent requests
-curl http://localhost:8080/api/wallets \
+# Authenticated request
+curl http://localhost:3000/api/wallets \
   -H 'Authorization: Bearer <token>'
 ```
-
-Public endpoints: `/api/auth/login`, `/api/auth/register`, `/api/market/prices`, `/v3/api-docs/**`, `/swagger-ui/**`. Everything else (including `POST /graphql`) requires a valid bearer token.
 
 ---
 
 ## API Documentation
 
-### REST
+| Interface | URL (local) |
+|---|---|
+| Scalar UI (interactive) | http://localhost:3000/docs |
+| Raw OpenAPI 3 spec | http://localhost:3000/v3/api-docs |
+| GraphQL endpoint | `POST http://localhost:3000/graphql` (use curl or Scalar — not a browser URL) |
+| GraphiQL playground | http://localhost:3000/graphiql (local Docker only — disabled in production) |
 
-- **Scalar UI** (interactive reference, embedded in the React app):
-  - Local dev: http://localhost:5173/docs
-  - Docker: http://localhost:3000/docs
-- **Raw OpenAPI 3 spec**: http://localhost:8080/v3/api-docs
-- **Legacy Swagger UI**: http://localhost:8080/swagger-ui/index.html
+Every REST endpoint has `@Operation` annotations with request/response schemas including 4xx error payloads. Protected endpoints show a padlock in Scalar. The GraphQL schema is at `backend/src/main/resources/graphql/schema.graphqls`.
 
-Every controller is annotated with `@Tag`, every endpoint with `@Operation` and explicit `@ApiResponse` entries (including 4xx error schemas). Protected endpoints display a padlock icon in Scalar.
-
-### GraphQL
-
-- **Endpoint**: `POST http://localhost:8080/graphql` (requires bearer token)
-- **GraphiQL playground**: http://localhost:8080/graphiql (public)
-
-Schema lives at `backend/src/main/resources/graphql/schema.graphqls`. Available queries: `wallets`, `wallet(id)`, `assets(walletId)`, `asset(id)`, `transactions(assetId)`. Resolvers reuse the same services as the REST controllers, so user-scoping rules apply identically.
+Available GraphQL queries: `wallets`, `wallet(id)`, `assets(walletId)`, `asset(id)`, `transactions(assetId)`.
 
 ---
 
-## Third-Party APIs
+## On-Chain Import
 
-| Service                     | Purpose                                          | Key required                  | Notes                          |
-|-----------------------------|--------------------------------------------------|-------------------------------|--------------------------------|
-| **CoinGecko**               | Live + historical EUR prices (≤ 365 days)        | Optional (Demo Key recommended) | 30 req/min with key          |
-| **CryptoCompare**           | Historical price fallback (> 365 days)           | No                            | Free, no signup                |
-| **Etherscan v2**            | ETH + ERC-20 import                              | Yes                           | Free tier sufficient           |
-| **Blockstream Esplora**     | BTC import                                       | No                            | Public endpoint                |
-| **Helius**                  | SOL + SPL token import                           | Yes                           | 100 000 req/month free         |
-
-### CoinGecko — prices
-
-Used by `CoinGeckoClient` for live prices (cached in-memory) and historical EUR prices for transactions in the last 365 days (cached in the `HistoricalPrice` table). Without a key the API is heavily rate-limited; the free Demo Key raises the limit to 30 req/min.
-- Docs: https://www.coingecko.com/en/api
-- Env var: `COINGECKO_API_KEY`
-
-### CryptoCompare — historical fallback
-
-`CryptoCompareClient` is queried automatically when a requested historical date is older than CoinGecko's 365-day Demo Key window. No key required.
-- Docs: https://min-api.cryptocompare.com
-
-### Etherscan v2 — Ethereum import
-
-`EtherscanClient` fetches incoming native ETH transfers and ERC-20 token transfers (USDC, USDT, DAI, WBTC, LINK, UNI, …) for a given address.
-- Docs: https://docs.etherscan.io/v2-migration
-- Env var: `ETHERSCAN_API_KEY`
-
-### Blockstream Esplora — Bitcoin import
-
-`BlockstreamClient` reads incoming BTC transactions for an address (`bc1...`, `1...`, `3...`). Public, no key.
-- Docs: https://github.com/Blockstream/esplora/blob/master/API.md
-
-### Helius — Solana import
-
-`HeliusClient` fetches incoming SOL transfers and SPL token transfers (WBTC, USDC, USDT, BONK, JUP, …).
-- Docs: https://helius.dev
-- Env var: `HELIUS_API_KEY`
-
-All imports are **idempotent**: re-running an import never inserts duplicates. Transactions for which a historical price could not be resolved on the first run (e.g. due to rate limiting) are back-filled automatically on subsequent imports.
-
----
-
-## Triggering an On-Chain Import
-
-A wallet must be configured with `chainType` (`ETH`, `BTC`, or `SOL`) and a valid `chainAddress`. The import can be triggered from the UI or directly via the API:
+A wallet must have `chainType` (`ETH`, `BTC`, or `SOL`) and a valid `chainAddress` set. Trigger an import from the UI or via the API:
 
 ```http
 POST /api/wallets/{id}/import
@@ -346,77 +376,57 @@ Example response:
 { "imported": 12, "skipped": 3, "failed": 0 }
 ```
 
+Imports are idempotent — re-running never creates duplicates. Historical prices for imported transactions are resolved automatically; any that fail due to rate limiting are retried on the next import.
+
+| Chain | Provider | Key required |
+|---|---|---|
+| ETH | Etherscan | `ETHERSCAN_API_KEY` |
+| BTC | Blockstream Esplora | none |
+| SOL | Helius | `HELIUS_API_KEY` |
+
 ---
 
 ## Testing
+
+The test suite runs against H2 in-memory — no Docker or database needed:
 
 ```bash
 cd backend
 ./mvnw test
 ```
 
-38 tests run against an H2 in-memory database (PostgreSQL compatibility mode), so no Postgres instance is required. Notable test classes:
+38 tests across:
 
-- `WalletServiceTest`, `AssetServiceTest`, `TransactionServiceTest` — service-layer logic
-- `AuthControllerTest`, `WalletControllerTest` — controller + security
-- `CoinGeckoClientTest` — external API client
-- `OpenApiSmokeTest` — OpenAPI spec sanity
-- `GraphQlSmokeTest` — GraphQL endpoint sanity
+| Class | What it tests |
+|---|---|
+| `WalletServiceTest` | Wallet CRUD, portfolio aggregation |
+| `AssetServiceTest` | Asset mapping, live price integration |
+| `TransactionServiceTest` | Transaction CRUD, orphan asset cleanup |
+| `AuthControllerTest` | Register, login, duplicate email |
+| `WalletControllerTest` | REST endpoints, auth, address validation |
+| `CoinGeckoClientTest` | External API client |
+| `OpenApiSmokeTest` | OpenAPI spec loads and is valid |
+| `GraphQlSmokeTest` | GraphiQL returns 200, unauthenticated POST /graphql is rejected |
 
 ---
 
 ## CI/CD
 
-### Continuous Integration
+On every push and PR to `main`, GitHub Actions runs backend tests and a frontend production build in parallel (`.github/workflows/ci.yml`).
 
-GitHub Actions runs on every push and pull request (`.github/workflows/ci.yml`):
+On every merge to `main`:
 
-| Job             | Runtime              | Command                    |
-|-----------------|----------------------|----------------------------|
-| `backend-test`  | Java 21 (Temurin)    | `./mvnw test -B`           |
-| `frontend-build`| Node 20              | `npm ci && npm run build`  |
-
-### Continuous Deployment
-
-On every push to `main` (`.github/workflows/cd.yml`):
-
+**CD** (`.github/workflows/cd.yml`) — deploys to the production server:
 1. Builds backend and frontend Docker images
 2. Pushes them to GitHub Container Registry (`ghcr.io/wsukram/`)
 3. SSHes into the production server as a dedicated `deploy` user
-4. Pulls the new images and restarts containers with zero-downtime (`docker compose up -d`)
+4. Pulls the new images and restarts containers
 
-Secrets required in GitHub repository settings: `SERVER_HOST`, `SERVER_USER`, `SERVER_SSH_KEY`.
+**Pages** (`.github/workflows/pages.yml`) — deploys to GitHub Pages:
+1. Builds the frontend with `VITE_API_URL=https://walletpulse.de` and `--base=/DHBW_WalletPulse/`
+2. Deploys to GitHub Pages at `https://wsukram.github.io/DHBW_WalletPulse/`
 
----
-
-## Docker
-
-`docker-compose.yml` orchestrates three services:
-
-- **db** — `postgres:15`, healthcheck via `pg_isready`.
-- **backend** — built from `backend/Dockerfile` (multi-stage Maven → JRE), waits on `db: service_healthy`, healthcheck via `/api/market/prices`.
-- **frontend** — built from `frontend/Dockerfile` (multi-stage Node → nginx:alpine), serves the SPA via `nginx.conf`.
-
-`backend/.dockerignore` excludes `application.properties` so the placeholder values are never baked into the image — secrets always come from environment variables. Make sure `.env` exists at the repo root before running `docker compose up`.
-
-`docker-compose.prod.yml` is an override file used in production that disables GraphiQL, switches `ddl-auto` to `validate`, restricts CORS to the production domain, and closes the DB and backend host ports. Run with:
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-```
-
----
-
-## Production Deployment
-
-The app runs on an Ionos VPS (Ubuntu 24.04). The deployment stack:
-
-- **UFW firewall** — only ports 22, 80, and 443 are open
-- **Host nginx** — terminates HTTPS (Let's Encrypt / certbot), rate-limits `/api/auth/` to 10 req/min per IP, forwards to the frontend container
-- **Docker Compose** — runs db, backend, and frontend containers; DB and backend ports are bound to `127.0.0.1` (not reachable from internet)
-- **Let's Encrypt** — TLS certificate with auto-renewal via certbot
-- **fail2ban** — auto-bans IPs after repeated failed SSH attempts
-- **deploy user** — dedicated SSH user with Docker group permissions only (no sudo)
+Required GitHub Secrets: `SERVER_HOST`, `SERVER_USER`, `SERVER_SSH_KEY`.
 
 ---
 
