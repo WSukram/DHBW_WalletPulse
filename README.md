@@ -362,7 +362,7 @@ curl http://localhost:3000/api/wallets \
 | Swagger UI | http://localhost:3000/swagger-ui/index.html |
 | Raw OpenAPI 3 spec | http://localhost:3000/v3/api-docs |
 | GraphQL endpoint | `POST http://localhost:3000/graphql` (use curl or Scalar — not a browser URL) |
-| GraphiQL playground | http://localhost:3000/graphiql (local Docker only — disabled in production) |
+| GraphiQL playground | http://localhost:3000/graphiql |
 
 Every REST endpoint has `@Operation` annotations with request/response schemas including 4xx error payloads. Protected endpoints show a padlock in Scalar. The GraphQL schema is at `backend/src/main/resources/graphql/schema.graphqls`.
 
