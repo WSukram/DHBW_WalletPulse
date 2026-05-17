@@ -10,7 +10,7 @@ import lombok.*;
 import java.time.LocalDate;
 
 @Entity
-@Table(uniqueConstraints = @UniqueConstraint(columnNames = "txHash"))
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"tx_hash", "asset_id"}))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -39,7 +39,7 @@ public class Transaction {
     @Column(nullable = false)
     private LocalDate date;
 
-    @Column(nullable = true, unique = true)
+    @Column(nullable = true)
     private String txHash;
 
     @Enumerated(EnumType.STRING)

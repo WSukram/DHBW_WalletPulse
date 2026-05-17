@@ -77,7 +77,7 @@ public class ImportSupport {
                                         double amount, LocalDate date) {
         BigDecimal eurPrice = getPriceOrZero(coinId, date);
 
-        var existing = transactionRepository.findByTxHash(txHash);
+        var existing = transactionRepository.findByTxHashAndAsset_Wallet_Id(txHash, wallet.getId());
         if (existing.isPresent()) {
             Transaction tx = existing.get();
             if (tx.getBuyPrice() == 0.0 && eurPrice.compareTo(BigDecimal.ZERO) > 0) {

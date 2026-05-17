@@ -9,5 +9,5 @@ import java.util.Optional;
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
     List<Transaction> findByAssetId(Long assetId);
     long countByAssetId(Long assetId);
-    Optional<Transaction> findByTxHash(String txHash);
+    Optional<Transaction> findByTxHashAndAsset_Wallet_Id(String txHash, Long walletId);
 }
