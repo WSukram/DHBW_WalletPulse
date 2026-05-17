@@ -2,7 +2,7 @@ services:
   backend:
     image: ghcr.io/wsukram/walletpulse-backend:latest
     environment:
-      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
       CORS_ALLOWED_ORIGINS: "https://walletpulse.de,https://www.walletpulse.de,https://wsukram.github.io"
 
   frontend:
