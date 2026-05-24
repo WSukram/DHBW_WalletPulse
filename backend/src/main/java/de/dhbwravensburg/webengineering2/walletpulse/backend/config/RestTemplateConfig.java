@@ -21,9 +21,9 @@ public class RestTemplateConfig {
 
     @Bean
     public CacheManager cacheManager() {
-        // Public price ticker on the landing page — short TTL so the homepage refreshes within a minute.
+        // Public price ticker on the landing page — 5 min TTL keeps CoinGecko calls at 12/hour regardless of how often the frontend polls.
         CaffeineCache marketPrices = new CaffeineCache("marketPrices",
-                Caffeine.newBuilder().expireAfterWrite(Duration.ofSeconds(60)).maximumSize(64).build());
+                Caffeine.newBuilder().expireAfterWrite(Duration.ofMinutes(5)).maximumSize(64).build());
 
         // Per-coin live prices used by portfolio calculations — longer TTL to stay under CoinGecko's free-tier limits.
         CaffeineCache coinPrices = new CaffeineCache("coinPrices",

@@ -61,7 +61,7 @@ All protected endpoints require a `Bearer` token in the `Authorization` header. 
 
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/api/market/prices` | Live BTC, ETH, SOL prices in EUR. Cached in Caffeine for 60 s. |
+| `GET` | `/api/market/prices` | Live BTC, ETH, SOL prices in EUR. Cached in Caffeine for 5 min. |
 
 ## GraphQL
 
