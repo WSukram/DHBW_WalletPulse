@@ -6,6 +6,56 @@ import { useLivePrices } from '../hooks/useLivePrices';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { LIGHT, DARK, headlineStyle, monoStyle, usePrefersDark } from '../theme/softStack';
 
+const CoinLogo = ({ id, size = 40 }) => {
+  if (id === 'bitcoin') {
+    return (
+      <svg viewBox="0 0 32 32" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
+        <circle cx="16" cy="16" r="16" fill="#F7931A" />
+        <path
+          fill="#FFFFFF"
+          d="M21.66 14.13c.28-1.86-1.14-2.86-3.07-3.53l.63-2.5-1.53-.38-.61 2.44c-.4-.1-.81-.19-1.22-.28l.61-2.46-1.53-.38-.63 2.5c-.33-.08-.66-.15-.98-.23v-.01l-2.1-.52-.41 1.63s1.13.26 1.11.27c.62.15.73.56.71.88l-.72 2.85c.04.01.1.03.16.05l-.16-.04-1.01 4.01c-.08.19-.27.47-.71.36.02.02-1.11-.28-1.11-.28l-.76 1.75 1.98.49c.37.09.73.19 1.09.28l-.64 2.53 1.53.38.63-2.5c.42.11.83.22 1.23.32l-.62 2.49 1.53.38.64-2.53c2.6.49 4.56.29 5.39-2.07.67-1.9-.03-2.99-1.4-3.71 1-.23 1.75-.88 1.95-2.23zm-3.49 4.9c-.47 1.9-3.67.87-4.71.61l.84-3.36c1.03.26 4.36.77 3.87 2.75zm.48-4.93c-.43 1.73-3.09.85-3.96.63l.76-3.04c.87.22 3.66.62 3.2 2.41z"
+        />
+      </svg>
+    );
+  }
+  if (id === 'ethereum') {
+    return (
+      <svg viewBox="0 0 256 417" width={size} height={size} xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid">
+        <path fill="#343434" d="M127.961 0l-2.795 9.5v275.668l2.795 2.79 127.962-75.638z" />
+        <path fill="#8C8C8C" d="M127.962 0L0 212.32l127.962 75.639V154.158z" />
+        <path fill="#3C3C3B" d="M127.961 312.187l-1.575 1.92v98.199l1.575 4.6L256 236.587z" />
+        <path fill="#8C8C8C" d="M127.962 416.905v-104.72L0 236.585z" />
+        <path fill="#141414" d="M127.961 287.958l127.96-75.637-127.96-58.162z" />
+        <path fill="#393939" d="M0 212.32l127.96 75.638v-133.8z" />
+      </svg>
+    );
+  }
+  if (id === 'solana') {
+    return (
+      <svg viewBox="0 0 397.7 311.7" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="sol-a" x1="360.879" y1="351.455" x2="141.213" y2="-69.295" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1 0 0 -1 0 314)">
+            <stop offset="0" stopColor="#00FFA3" />
+            <stop offset="1" stopColor="#DC1FFF" />
+          </linearGradient>
+          <linearGradient id="sol-b" x1="264.829" y1="401.601" x2="45.163" y2="-19.149" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1 0 0 -1 0 314)">
+            <stop offset="0" stopColor="#00FFA3" />
+            <stop offset="1" stopColor="#DC1FFF" />
+          </linearGradient>
+          <linearGradient id="sol-c" x1="312.548" y1="376.688" x2="92.882" y2="-44.062" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1 0 0 -1 0 314)">
+            <stop offset="0" stopColor="#00FFA3" />
+            <stop offset="1" stopColor="#DC1FFF" />
+          </linearGradient>
+        </defs>
+        <path fill="url(#sol-a)" d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1l62.7-62.7z" />
+        <path fill="url(#sol-b)" d="M64.6 3.8C67.1 1.4 70.4 0 73.8 0h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8z" />
+        <path fill="url(#sol-c)" d="M333.1 120.1c-2.4-2.4-5.7-3.8-9.2-3.8H6.5c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h317.4c5.8 0 8.7-7 4.6-11.1l-62.7-62.6z" />
+      </svg>
+    );
+  }
+  return null;
+};
+
 /**
  * Three overlapping tilted cards — the hero "card stack".
  * All colors come from the theme `t` so the visual flips with prefers-color-scheme.
@@ -193,9 +243,9 @@ const CardStack = ({ t }) => (
 
     {/* Floating BTC coin chip — top right, tilted */}
     <div
-      className="absolute right-12 top-[268px] hidden sm:flex w-14 h-14 rounded-2xl items-center justify-center"
+      className="absolute right-0 top-[260px] hidden sm:flex w-14 h-14 rounded-2xl items-center justify-center"
       style={{
-        transform: 'rotate(12deg)',
+        transform: 'rotate(12deg) translateX(8px)',
         background: t.CREAM_CHIP,
         border: `1px solid ${t.CREAM_CHIP_BORDER}`,
         boxShadow: t.SH_CHIP_BTC,
@@ -243,19 +293,19 @@ const Home = () => {
 
   const features = useMemo(() => [
     {
-      emoji: '⚡',
+      icon: 'sensors',
       tint: t.TINT_MINT,
       title: 'Live prices, every minute',
       desc: 'BTC, ETH and SOL valued in EUR straight from CoinGecko. Your portfolio breathes with the market — no refresh needed.',
     },
     {
-      emoji: '✦',
+      icon: 'timeline',
       tint: t.TINT_LAV,
       title: 'Cost basis & real P&L',
       desc: 'Know exactly what you paid, what it is worth, and what changed. Per-asset and per-wallet profit, calculated for you.',
     },
     {
-      emoji: '⌁',
+      icon: 'account_balance_wallet',
       tint: t.TINT_CREAM,
       title: 'On-chain in one click',
       desc: 'Pull your full history from Ethereum, Bitcoin or Solana with a single wallet address. No CSV juggling, no manual entry.',
@@ -385,12 +435,11 @@ const Home = () => {
             </span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {TICKER_COINS.map((coin, i) => {
+            {TICKER_COINS.map((coin) => {
               const data = prices[coin.id];
               const price = data?.eur;
               const change = data?.eurChange24h;
               const positive = change >= 0;
-              const tints = [t.CREAM_CHIP, t.LAVENDER, t.MINT_BG];
               return (
                 <div key={coin.id} className="rounded-3xl p-6 transition-transform" style={{ background: t.CARD, boxShadow: t.SH_CARD, border: `1px solid ${t.HAIR_LIGHT}` }}
                      onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-2px)')}
@@ -398,8 +447,11 @@ const Home = () => {
                 >
                   <div className="flex items-center justify-between mb-5">
                     <div className="flex items-center gap-3">
-                      <span className="w-10 h-10 rounded-2xl flex items-center justify-center text-[14px] font-bold" style={{ background: tints[i % 3], color: t.INK }}>
-                        {coin.symbol.slice(0, 1)}
+                      <span
+                        className="w-10 h-10 inline-flex items-center justify-center"
+                        style={{ filter: `drop-shadow(0 6px 12px ${coin.color}55)` }}
+                      >
+                        <CoinLogo id={coin.id} size={40} />
                       </span>
                       <div>
                         <div className="text-[15px] font-semibold" style={headlineStyle}>{coin.name}</div>
@@ -448,7 +500,7 @@ const Home = () => {
           <div className="mb-10 max-w-2xl">
             <div className="text-[12px] font-semibold uppercase tracking-[0.18em] mb-2" style={{ color: t.LAVENDER_DEEP }}>What it does</div>
             <h2 className="text-[34px] md:text-[44px] font-semibold leading-[1.05]" style={headlineStyle}>
-              The friendliest way to know
+              The most efficient way to know
               <br />what you actually own.
             </h2>
           </div>
@@ -459,8 +511,10 @@ const Home = () => {
                    onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-3px)')}
                    onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
               >
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-[22px] mb-5" style={{ background: f.tint, color: t.INK }}>
-                  {f.emoji}
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-5" style={{ background: f.tint, color: t.INK }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: 26, fontVariationSettings: "'FILL' 1" }}>
+                    {f.icon}
+                  </span>
                 </div>
                 <h3 className="text-[20px] font-semibold mb-2" style={headlineStyle}>{f.title}</h3>
                 <p className="text-[14.5px] leading-[1.6]" style={{ color: t.SUBINK }}>{f.desc}</p>
@@ -548,8 +602,9 @@ const Home = () => {
                   name: 'CoinGecko',
                   badge: 'Prices',
                   tint: t.MINT_BG,
+                  logo: '/logos/coingecko.png',
                   desc: 'Live and historical EUR prices for BTC, ETH and SOL. Free demo key allows 30 requests/min.',
-                  steps: ['Sign up at coingecko.com', 'Developer Dashboard → API Keys', 'Set coingecko.api.key in application.properties'],
+                  steps: ['Sign up at coingecko.com', 'Developer Dashboard → API Keys', 'Add COINGECKO_API_KEY to your .env file'],
                   url: 'https://www.coingecko.com/en/api',
                   required: false,
                 },
@@ -557,8 +612,9 @@ const Home = () => {
                   name: 'Etherscan',
                   badge: 'ETH import',
                   tint: t.LAVENDER,
+                  logo: '/logos/etherscan.png',
                   desc: 'Imports your full Ethereum transaction history by wallet address. Native ETH and ERC-20 tokens.',
-                  steps: ['Sign up at etherscan.io', 'My Account → API Keys → Add', 'Set etherscan.api.key in application.properties'],
+                  steps: ['Sign up at etherscan.io', 'My Account → API Keys → Add', 'Add ETHERSCAN_API_KEY to your .env file'],
                   url: 'https://etherscan.io/apis',
                   required: true,
                 },
@@ -566,8 +622,9 @@ const Home = () => {
                   name: 'Helius',
                   badge: 'SOL import',
                   tint: t.TINT_CREAM,
+                  logo: '/logos/helius.png',
                   desc: 'Imports your Solana transaction history. Free plan includes 100,000 requests per month.',
-                  steps: ['Sign up at helius.dev', 'Your API key is shown on the dashboard', 'Set helius.api.key in application.properties'],
+                  steps: ['Sign up at helius.dev', 'Your API key is shown on the dashboard', 'Add HELIUS_API_KEY to your .env file'],
                   url: 'https://helius.dev',
                   required: true,
                 },
@@ -575,6 +632,7 @@ const Home = () => {
                   name: 'Blockstream',
                   badge: 'BTC import',
                   tint: t.RED_BG_2,
+                  logo: '/logos/blockstream.png',
                   desc: 'Imports your Bitcoin transaction history using the open Blockstream Esplora API. No account required.',
                   steps: ['No setup needed — works out of the box', 'Set wallet chainType to BTC', 'Add your Bitcoin address and trigger import'],
                   url: null,
@@ -584,10 +642,22 @@ const Home = () => {
                 <div key={api.name} className="rounded-3xl p-6 md:p-7" style={{ background: t.CARD, boxShadow: t.SH_API, border: `1px solid ${t.HAIR_LIGHT}` }}>
                   <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
                     <div className="flex items-center gap-3">
-                      <span className="px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ background: api.tint, color: t.INK }}>
-                        {api.badge}
+                      <span
+                        className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
+                        style={{ background: '#FFFFFF', border: `1px solid ${t.HAIR}`, boxShadow: t.SH_PILL }}
+                      >
+                        {api.logo ? (
+                          <img src={api.logo} alt={api.name} className="w-7 h-7" loading="lazy" />
+                        ) : (
+                          <span className="material-symbols-outlined" style={{ fontSize: 26, color: '#FF6B35', fontVariationSettings: "'FILL' 1" }}>flare</span>
+                        )}
                       </span>
-                      <h3 className="text-[22px] font-semibold" style={headlineStyle}>{api.name}</h3>
+                      <div>
+                        <h3 className="text-[22px] font-semibold" style={headlineStyle}>{api.name}</h3>
+                        <span style={{ ...monoStyle, fontSize: 10, letterSpacing: '0.2em', color: t.SUBINK, textTransform: 'uppercase' }}>
+                          {api.badge}
+                        </span>
+                      </div>
                     </div>
                     <span className="text-[11px] font-semibold uppercase tracking-[0.14em] px-2.5 py-1 rounded-full" style={{ background: api.required ? t.RED_BG : t.MINT_BG, color: api.required ? t.RED_DEEP : t.MINT_DEEP }}>
                       {api.required ? 'Required' : 'Optional'}

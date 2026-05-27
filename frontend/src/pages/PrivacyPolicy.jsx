@@ -190,7 +190,7 @@ const PrivacyPolicy = () => {
                   <span
                     className="material-symbols-outlined text-[20px]"
                     style={{
-                      color: t.ON_TINT,
+                      color: item.ink,
                       fontVariationSettings: "'FILL' 1",
                     }}
                   >

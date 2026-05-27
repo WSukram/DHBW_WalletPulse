@@ -130,17 +130,34 @@ export const monoStyle = {
 
 export const bodyFontFamily = "'Geist', ui-sans-serif, system-ui, sans-serif";
 
+// Follows the `.dark` class on <html>, which AppContext drives from the
+// user's Light/Dark/System preference. Falls back to prefers-color-scheme
+// only on public pages mounted before AppContext applies the class.
 export const usePrefersDark = () => {
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return false;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
+  const read = () => {
+    if (typeof document === 'undefined') return false;
+    if (document.documentElement.classList.contains('dark')) return true;
+    if (document.documentElement.classList.contains('light')) return false;
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  };
+  const [isDark, setIsDark] = useState(read);
   useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return undefined;
-    const mql = window.matchMedia('(prefers-color-scheme: dark)');
-    const onChange = (e) => setIsDark(e.matches);
-    mql.addEventListener('change', onChange);
-    return () => mql.removeEventListener('change', onChange);
+    if (typeof document === 'undefined') return undefined;
+    const update = () => setIsDark(read());
+    const mo = new MutationObserver(update);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    let mql;
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      mql = window.matchMedia('(prefers-color-scheme: dark)');
+      mql.addEventListener('change', update);
+    }
+    return () => {
+      mo.disconnect();
+      if (mql) mql.removeEventListener('change', update);
+    };
   }, []);
   return isDark;
 };

@@ -3,17 +3,25 @@ import axios from 'axios';
 import { useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { downloadCsv } from '../utils/exportCsv';
-import { COIN_META, KNOWN_COINS, coinMeta, formatPct } from '../utils/coins';
+import { KNOWN_COINS, coinMeta, formatPct } from '../utils/coins';
 import { timeRanges, getChartLabels, computePortfolioChartPoints, pointsToPath } from '../utils/chart';
 import WalletFormModal from '../components/wallet/WalletFormModal';
 import DeleteWalletModal from '../components/wallet/DeleteWalletModal';
 import { usePageTitle } from '../hooks/usePageTitle';
 import AddTransactionModal from '../components/wallet/AddTransactionModal';
+import {
+  LIGHT,
+  DARK,
+  headlineStyle,
+  monoStyle,
+  bodyFontFamily,
+  usePrefersDark,
+} from '../theme/softStack';
 
 const CHAIN_META = {
-  ETH: { label: 'Ethereum', color: '#627EEA', bg: '#627EEA22' },
-  BTC: { label: 'Bitcoin',  color: '#F7931A', bg: '#F7931A22' },
-  SOL: { label: 'Solana',   color: '#14F195', bg: '#14F19522' },
+  ETH: { label: 'Ethereum' },
+  BTC: { label: 'Bitcoin' },
+  SOL: { label: 'Solana' },
 };
 
 const addressExplorerUrl = (chainType, address) => {
@@ -37,10 +45,31 @@ const formatRelative = (dateStr) => {
   return `${Math.floor(hrs / 24)}d ago`;
 };
 
+// Map chain to soft-stack accent tokens (filled at render with t.*)
+const chainTint = (t, chain) => {
+  switch (chain) {
+    case 'ETH': return { bg: t.LAVENDER, fg: t.LAVENDER_TEXT, border: t.HAIR_HEAVY };
+    case 'BTC': return { bg: t.CREAM_CHIP, fg: t.CREAM_DEEP, border: t.CREAM_CHIP_BORDER };
+    case 'SOL': return { bg: t.MINT_BG, fg: t.MINT_DEEP, border: t.MINT_CIRCLE_BORDER };
+    default:    return { bg: t.CARD_3, fg: t.SUBINK, border: t.HAIR_HEAVY };
+  }
+};
+
+const eyebrowStyle = (t) => ({
+  ...monoStyle,
+  fontSize: 10,
+  letterSpacing: '0.22em',
+  textTransform: 'uppercase',
+  color: t.SUBINK,
+});
+
 const Wallet = () => {
   usePageTitle('Wallets');
   const location = useLocation();
   const { formatCurrency: formatEur } = useApp();
+  const isDark = usePrefersDark();
+  const t = isDark ? DARK : LIGHT;
+
   const [portfolios, setPortfolios] = useState([]);
   const [selectedWalletId, setSelectedWalletId] = useState(null);
   const [transactions, setTransactions] = useState([]);
@@ -101,7 +130,6 @@ const Wallet = () => {
       )
     ).then((arrays) => arrays.flat());
 
-  // Initial load — also pick up walletId passed from Dashboard
   useEffect(() => {
     loadPortfolios()
       .then((data) => {
@@ -115,7 +143,6 @@ const Wallet = () => {
       .catch(() => { setError('Failed to load wallets.'); setIsLoadingList(false); });
   }, []);
 
-  // Load transactions whenever a wallet is selected
   useEffect(() => {
     if (!selectedWalletId) return;
     const p = portfolios.find((p) => p.id === selectedWalletId);
@@ -176,7 +203,6 @@ const Wallet = () => {
       .then((res) => {
         setImportResult(res.data);
         setImporting(false);
-        // Reload portfolio + wallet metadata (to pick up updated lastImportTime)
         return Promise.all([
           axios.get(`/api/wallets/${selectedWalletId}/portfolio`),
           axios.get(`/api/wallets/${selectedWalletId}`),
@@ -239,7 +265,6 @@ const Wallet = () => {
         date,
       });
 
-      // Reload portfolio and transactions
       const updatedPortfolio = await axios.get(`/api/wallets/${selectedWalletId}/portfolio`).then((r) => r.data);
       setPortfolios((prev) => prev.map((p) => (p.id === selectedWalletId ? updatedPortfolio : p)));
       const txs = await loadTransactions(updatedPortfolio);
@@ -274,20 +299,72 @@ const Wallet = () => {
     [transactions, portfolio, activeRange]
   );
 
-  // ── Derived coin options for the transaction modal ────────────────────────
   const existingCoinIds = (portfolio?.assets ?? []).map((a) => a.coinId);
   const coinOptions = [
     ...(portfolio?.assets ?? []).map((a) => ({ id: a.coinId, label: `${coinMeta(a.coinId).name} (${coinMeta(a.coinId).symbol}) — in wallet` })),
     ...KNOWN_COINS.filter((c) => !existingCoinIds.includes(c.id)).map((c) => ({ id: c.id, label: `${c.name} (${c.symbol})` })),
   ];
 
+  // ── Shared little components ──────────────────────────────────────────────
+
+  const CoinChip = ({ coinId, size = 36 }) => {
+    const meta = coinMeta(coinId);
+    const tint = coinId === 'bitcoin'
+      ? { bg: t.CREAM_CHIP, fg: t.CREAM_DEEP, border: t.CREAM_CHIP_BORDER }
+      : coinId === 'ethereum'
+        ? { bg: t.LAVENDER, fg: t.LAVENDER_TEXT, border: t.HAIR_HEAVY }
+        : coinId === 'solana'
+          ? { bg: t.MINT_BG, fg: t.MINT_DEEP, border: t.MINT_CIRCLE_BORDER }
+          : { bg: t.CARD_3, fg: t.SUBINK, border: t.HAIR_HEAVY };
+    return (
+      <span
+        className="inline-flex items-center justify-center shrink-0"
+        style={{
+          width: size,
+          height: size,
+          borderRadius: 999,
+          background: tint.bg,
+          color: tint.fg,
+          border: `1px solid ${tint.border}`,
+          ...headlineStyle,
+          fontWeight: 600,
+          fontSize: size * 0.5,
+          lineHeight: 1,
+        }}
+      >
+        {meta.icon}
+      </span>
+    );
+  };
+
   // ── WALLET LIST VIEW ──────────────────────────────────────────────────────
   if (!selectedWalletId) {
-    if (isLoadingList) return <div className="p-6 text-on-surface text-center">Loading Live-Data from Backend...</div>;
-    if (error) return <div className="p-6 text-error text-center">{error}</div>;
+    if (isLoadingList) {
+      return (
+        <div
+          className="flex-1 flex items-center justify-center"
+          style={{ background: t.PAPER, color: t.SUBINK, fontFamily: bodyFontFamily }}
+        >
+          Loading live data from backend…
+        </div>
+      );
+    }
+    if (error) {
+      return (
+        <div
+          className="flex-1 flex items-center justify-center"
+          style={{ background: t.PAPER, color: t.RED_DEEP, fontFamily: bodyFontFamily }}
+        >
+          {error}
+        </div>
+      );
+    }
 
     return (
-      <div className="flex-1 overflow-y-auto p-6 lg:p-layout-margin space-y-8">
+      <div
+        className="flex-1 overflow-y-auto"
+        style={{ background: t.PAPER, color: t.INK, fontFamily: bodyFontFamily }}
+      >
         <WalletFormModal
           mode="create"
           open={showAddWallet}
@@ -298,7 +375,6 @@ const Wallet = () => {
           onClose={() => { setShowAddWallet(false); setNewWalletChainType(''); setNewWalletChainAddress(''); }}
           onSubmit={handleCreateWallet}
         />
-
         <WalletFormModal
           mode="edit"
           wallet={editWallet}
@@ -309,7 +385,6 @@ const Wallet = () => {
           onClose={() => setEditWallet(null)}
           onSubmit={handleEditWallet}
         />
-
         <DeleteWalletModal
           wallet={deleteWallet}
           deleting={deletingWallet}
@@ -317,109 +392,253 @@ const Wallet = () => {
           onConfirm={handleDeleteWallet}
         />
 
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div>
-            <h1 className="font-heading-lg text-heading-lg text-on-surface">My Wallets</h1>
-            <p className="font-body-md text-body-md text-on-surface-variant mt-1">Select a wallet to view its portfolio details.</p>
-          </div>
-          <button
-            onClick={() => setShowAddWallet(true)}
-            className="px-4 py-2 rounded-lg bg-primary-container text-on-primary-container font-label-sm text-label-sm hover:bg-inverse-primary transition-colors flex items-center gap-2 self-start shadow-[0_0_15px_rgba(79,70,229,0.3)]"
-          >
-            <span className="material-symbols-outlined text-[18px]">add</span>
-            New Wallet
-          </button>
-        </div>
-
-        {portfolios.length === 0 ? (
-          <div className="bg-surface-container rounded-xl p-12 text-center border border-white/5">
-            <span className="material-symbols-outlined text-[48px] text-on-surface-variant mb-4 block">account_balance_wallet</span>
-            <p className="text-on-surface-variant font-body-md text-body-md mb-4">No wallets found. Create one to get started.</p>
-            <button onClick={() => setShowAddWallet(true)} className="px-4 py-2 rounded-lg bg-primary text-on-primary font-label-sm text-label-sm hover:bg-primary/90 transition-colors">
-              Create Wallet
+        <div className="p-6 lg:p-10 space-y-8 max-w-[1400px] mx-auto">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div>
+              <div style={eyebrowStyle(t)} className="mb-3">PORTFOLIO · WALLETS</div>
+              <h1 style={{ ...headlineStyle, fontWeight: 600, fontSize: 44, lineHeight: 1.05, letterSpacing: '-0.02em', color: t.INK }}>
+                My wallets
+              </h1>
+              <p style={{ color: t.SUBINK, fontSize: 15, marginTop: 10 }}>
+                Select a wallet to view its portfolio details.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowAddWallet(true)}
+              style={{
+                padding: '12px 22px',
+                borderRadius: 999,
+                background: t.CTA_INK_BG,
+                color: t.CTA_INK_FG,
+                fontSize: 14,
+                fontWeight: 600,
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: t.SH_CTA_INK,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                transition: 'box-shadow 160ms ease',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.boxShadow = t.SH_CTA_INK_H; }}
+              onMouseLeave={(e) => { e.currentTarget.style.boxShadow = t.SH_CTA_INK; }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 18 }}>add</span>
+              New wallet
             </button>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {portfolios.map((p) => {
-              const isProfit = (p.totalProfit ?? 0) >= 0;
-              return (
-                <button
-                  key={p.id}
-                  onClick={() => { setSearch(''); setActiveRange('1Y'); setTransactions([]); setSelectedWalletId(p.id); }}
-                  className="bg-surface-container rounded-xl p-6 border border-white/5 text-left hover:border-primary/30 hover:bg-surface-container-high transition-all group relative overflow-hidden"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary-container/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary">
-                        <span className="material-symbols-outlined">account_balance_wallet</span>
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <div className="font-heading-md text-heading-md text-on-surface">{p.name}</div>
-                          {p.chainType && (
-                            <span
-                              className="text-[10px] font-label-sm px-1.5 py-0.5 rounded font-bold tracking-wider"
-                              style={{ color: CHAIN_META[p.chainType]?.color, backgroundColor: CHAIN_META[p.chainType]?.bg }}
-                            >
-                              {p.chainType}
-                            </span>
-                          )}
+
+          {portfolios.length === 0 ? (
+            <div
+              style={{
+                background: t.CARD,
+                border: `1px solid ${t.HAIR_HEAVY}`,
+                borderRadius: 24,
+                boxShadow: t.SH_CARD,
+                padding: '56px 32px',
+                textAlign: 'center',
+              }}
+            >
+              <span
+                className="inline-flex w-16 h-16 rounded-full items-center justify-center mb-4"
+                style={{
+                  background: t.CREAM_CHIP,
+                  border: `1px solid ${t.CREAM_CHIP_BORDER}`,
+                  color: t.CREAM_DEEP,
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 28 }}>account_balance_wallet</span>
+              </span>
+              <h3 style={{ ...headlineStyle, fontWeight: 600, fontSize: 22, color: t.INK, marginTop: 4 }}>
+                No wallets yet
+              </h3>
+              <p style={{ color: t.SUBINK, fontSize: 14, marginTop: 8, marginBottom: 20 }}>
+                Create your first wallet to start tracking your portfolio.
+              </p>
+              <button
+                onClick={() => setShowAddWallet(true)}
+                style={{
+                  padding: '12px 22px',
+                  borderRadius: 999,
+                  background: t.CTA_INK_BG,
+                  color: t.CTA_INK_FG,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: t.SH_CTA_INK,
+                }}
+              >
+                Create wallet
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {portfolios.map((p) => {
+                const isProfit = (p.totalProfit ?? 0) >= 0;
+                const tint = chainTint(t, p.chainType);
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => { setSearch(''); setActiveRange('1Y'); setTransactions([]); setSelectedWalletId(p.id); }}
+                    className="text-left group"
+                    style={{
+                      background: t.CARD,
+                      border: `1px solid ${t.HAIR_HEAVY}`,
+                      borderRadius: 24,
+                      boxShadow: t.SH_CARD,
+                      padding: 24,
+                      transition: 'transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-3px)';
+                      e.currentTarget.style.boxShadow = t.SH_HERO;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = t.SH_CARD;
+                    }}
+                  >
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex items-center gap-3">
+                        <span
+                          className="inline-flex w-11 h-11 rounded-2xl items-center justify-center shrink-0"
+                          style={{
+                            background: tint.bg,
+                            border: `1px solid ${tint.border}`,
+                            color: tint.fg,
+                          }}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: 22 }}>account_balance_wallet</span>
+                        </span>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <div style={{ ...headlineStyle, fontWeight: 600, fontSize: 18, color: t.INK }}>{p.name}</div>
+                            {p.chainType && (
+                              <span
+                                style={{
+                                  ...monoStyle,
+                                  fontSize: 10,
+                                  letterSpacing: '0.18em',
+                                  padding: '3px 8px',
+                                  borderRadius: 999,
+                                  background: tint.bg,
+                                  color: tint.fg,
+                                  border: `1px solid ${tint.border}`,
+                                }}
+                              >
+                                {p.chainType}
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ ...monoStyle, fontSize: 11, letterSpacing: '0.16em', color: t.SUBINK, marginTop: 4 }}>
+                            {p.assets?.length ?? 0} {p.assets?.length === 1 ? 'ASSET' : 'ASSETS'}
+                          </div>
                         </div>
-                        <div className="text-xs text-on-surface-variant font-data-mono">
-                          {p.assets?.length ?? 0} {p.assets?.length === 1 ? 'Asset' : 'Assets'}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setEditWalletName(p.name); setEditWalletChainType(p.chainType ?? ''); setEditWalletChainAddress(p.chainAddress ?? ''); setEditWallet(p); }}
+                          aria-label="Rename wallet"
+                          className="material-symbols-outlined"
+                          style={{
+                            color: t.SUBINK, fontSize: 18, width: 32, height: 32, borderRadius: 10,
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                            background: 'transparent', border: 'none', cursor: 'pointer',
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = t.CARD_3; e.currentTarget.style.color = t.INK; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = t.SUBINK; }}
+                        >
+                          edit
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setDeleteWallet(p); }}
+                          aria-label="Delete wallet"
+                          className="material-symbols-outlined"
+                          style={{
+                            color: t.SUBINK, fontSize: 18, width: 32, height: 32, borderRadius: 10,
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                            background: 'transparent', border: 'none', cursor: 'pointer',
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = t.RED_BG; e.currentTarget.style.color = t.RED_DEEP; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = t.SUBINK; }}
+                        >
+                          delete
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div>
+                        <div style={eyebrowStyle(t)} className="mb-1">CURRENT VALUE</div>
+                        <div style={{ ...headlineStyle, fontWeight: 600, fontSize: 28, color: t.INK, letterSpacing: '-0.01em' }}>
+                          {formatEur(p.totalCurrentValue)}
+                        </div>
+                      </div>
+                      <div
+                        className="flex items-center justify-between pt-3"
+                        style={{ borderTop: `1px solid ${t.HAIR_DIV}` }}
+                      >
+                        <div>
+                          <div style={eyebrowStyle(t)}>INVESTED</div>
+                          <div style={{ ...monoStyle, fontSize: 13, color: t.SUBINK, marginTop: 4 }}>
+                            {formatEur(p.totalInvested)}
+                          </div>
+                        </div>
+                        <div
+                          className="flex items-center gap-1"
+                          style={{
+                            padding: '4px 10px',
+                            borderRadius: 999,
+                            background: isProfit ? t.MINT_BG : t.RED_BG,
+                            color: isProfit ? t.MINT_DEEP : t.RED_DEEP,
+                            border: `1px solid ${isProfit ? t.MINT_CIRCLE_BORDER : t.RED_BG_2}`,
+                            ...monoStyle,
+                            fontSize: 12,
+                          }}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
+                            {isProfit ? 'trending_up' : 'trending_down'}
+                          </span>
+                          {formatPct(p.totalProfit, p.totalInvested)}
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setEditWalletName(p.name); setEditWalletChainType(p.chainType ?? ''); setEditWalletChainAddress(p.chainAddress ?? ''); setEditWallet(p); }}
-                        className="p-1.5 rounded-lg text-on-surface-variant opacity-0 group-hover:opacity-100 hover:text-primary hover:bg-primary/10 transition-all"
-                        title="Rename wallet"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">edit</span>
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setDeleteWallet(p); }}
-                        className="p-1.5 rounded-lg text-on-surface-variant opacity-0 group-hover:opacity-100 hover:text-error hover:bg-error/10 transition-all"
-                        title="Delete wallet"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">delete</span>
-                      </button>
-                      <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors text-[20px]">chevron_right</span>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <div>
-                      <div className="text-xs text-on-surface-variant uppercase tracking-wider font-label-sm mb-1">Current Value</div>
-                      <div className="font-heading-lg text-heading-lg text-on-surface">{formatEur(p.totalCurrentValue)}</div>
-                    </div>
-                    <div className="flex items-center justify-between pt-3 border-t border-white/5">
-                      <div>
-                        <div className="text-xs text-on-surface-variant font-label-sm">Invested</div>
-                        <div className="font-data-mono text-data-mono text-on-surface-variant">{formatEur(p.totalInvested)}</div>
-                      </div>
-                      <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full font-data-mono text-sm border ${isProfit ? 'bg-secondary/10 text-secondary border-secondary/20' : 'bg-error/10 text-error border-error/20'}`}>
-                        <span className="material-symbols-outlined text-[14px]">{isProfit ? 'trending_up' : 'trending_down'}</span>
-                        {formatPct(p.totalProfit, p.totalInvested)}
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     );
   }
 
   // ── WALLET DETAIL VIEW ────────────────────────────────────────────────────
   if (isLoadingDetail || !portfolio) {
-    return <div className="p-6 text-on-surface text-center">Loading Live-Data from Backend...</div>;
+    return (
+      <div
+        className="flex-1 flex items-center justify-center"
+        style={{ background: t.PAPER, color: t.SUBINK, fontFamily: bodyFontFamily }}
+      >
+        Loading live data from backend…
+      </div>
+    );
   }
-  if (error) return <div className="p-6 text-error text-center">{error}</div>;
+  if (error) {
+    return (
+      <div
+        className="flex-1 flex items-center justify-center"
+        style={{ background: t.PAPER, color: t.RED_DEEP, fontFamily: bodyFontFamily }}
+      >
+        {error}
+      </div>
+    );
+  }
 
   const totalProfit = portfolio.totalProfit ?? 0;
   const totalInvested = portfolio.totalInvested ?? 0;
@@ -440,8 +659,13 @@ const Wallet = () => {
   const costPath = pointsToPath(chartPoints, 'cost', minV, maxV);
   const valueAreaPath = pointsToPath(chartPoints, 'value', minV, maxV, true);
 
+  const tintChain = chainTint(t, portfolio.chainType);
+
   return (
-    <div className="flex-1 overflow-y-auto p-6 lg:p-layout-margin space-y-8">
+    <div
+      className="flex-1 overflow-y-auto"
+      style={{ background: t.PAPER, color: t.INK, fontFamily: bodyFontFamily }}
+    >
       <AddTransactionModal
         open={showAddTx}
         form={txForm} setForm={setTxForm}
@@ -453,286 +677,685 @@ const Wallet = () => {
         formatEur={formatEur}
       />
 
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <button
-            onClick={() => setSelectedWalletId(null)}
-            className="flex items-center gap-1 text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm mb-3 transition-colors"
-          >
-            <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-            All Wallets
-          </button>
-          <div className="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm mb-2 uppercase tracking-widest">
-            <span className="material-symbols-outlined text-[16px]">account_balance_wallet</span>
-            Wallet
-          </div>
-          <h1 className="font-display-xl text-display-xl text-on-surface">{portfolio.name}</h1>
-          {(portfolio.chainAddress || portfolio.lastImportTime) && (
-            <div className="flex flex-wrap items-center gap-4 mt-3">
-              {portfolio.chainAddress && (
-                <a
-                  href={addressExplorerUrl(portfolio.chainType, portfolio.chainAddress) ?? undefined}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 font-mono text-xs text-on-surface-variant hover:text-primary transition-colors"
-                  title={portfolio.chainAddress}
-                >
-                  <span className="material-symbols-outlined text-[14px]">link</span>
-                  {portfolio.chainAddress.slice(0, 8)}…{portfolio.chainAddress.slice(-6)}
-                </a>
-              )}
-              {portfolio.lastImportTime && (
-                <span className="flex items-center gap-1.5 text-xs text-on-surface-variant">
-                  <span className="material-symbols-outlined text-[14px]">schedule</span>
-                  Last synced {formatRelative(portfolio.lastImportTime)}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-        <div className="flex gap-3 flex-wrap">
-          <button onClick={handleExportCsv} className="px-4 py-2 rounded-lg bg-surface-container-high border border-outline-variant text-on-surface font-label-sm text-label-sm hover:bg-surface-bright transition-colors flex items-center gap-2">
-            <span className="material-symbols-outlined text-[18px]">download</span>
-            Export
-          </button>
-          {portfolio.chainType && (
+      <div className="p-6 lg:p-10 space-y-8 max-w-[1400px] mx-auto">
+
+        {/* Page Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
             <button
-              onClick={handleImport}
-              disabled={importing}
-              className="px-4 py-2 rounded-lg border font-label-sm text-label-sm transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ borderColor: CHAIN_META[portfolio.chainType]?.color + '55', color: CHAIN_META[portfolio.chainType]?.color, backgroundColor: CHAIN_META[portfolio.chainType]?.bg }}
+              onClick={() => setSelectedWalletId(null)}
+              className="flex items-center gap-1 mb-4"
+              style={{
+                color: t.SUBINK,
+                fontSize: 13,
+                fontWeight: 500,
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                transition: 'color 160ms ease',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = t.INK; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = t.SUBINK; }}
             >
-              <span className="material-symbols-outlined text-[18px]">{importing ? 'sync' : 'travel_explore'}</span>
-              {importing ? 'Scanning…' : `Scan ${portfolio.chainType} Wallet`}
+              <span className="material-symbols-outlined" style={{ fontSize: 16 }}>arrow_back</span>
+              All wallets
             </button>
-          )}
-          <button
-            onClick={openAddTx}
-            className="px-4 py-2 rounded-lg bg-primary-container text-on-primary-container font-label-sm text-label-sm hover:bg-inverse-primary transition-colors flex items-center gap-2 shadow-[0_0_15px_rgba(79,70,229,0.3)]"
-          >
-            <span className="material-symbols-outlined text-[18px]">add</span>
-            Add Transaction
-          </button>
-        </div>
-      </div>
-
-      {/* Import result banner */}
-      {importResult && !importResult.error && (
-        <div className="flex items-center gap-4 bg-surface-container rounded-xl px-5 py-3 border border-outline-variant/30">
-          <span className="material-symbols-outlined text-secondary">check_circle</span>
-          <span className="font-label-sm text-label-sm text-on-surface">
-            Import complete — <span className="text-secondary font-medium">{importResult.imported} new</span>, {importResult.skipped} skipped, {importResult.failed} failed
-          </span>
-          <button onClick={() => setImportResult(null)} className="ml-auto text-on-surface-variant hover:text-on-surface">
-            <span className="material-symbols-outlined text-[18px]">close</span>
-          </button>
-        </div>
-      )}
-      {importResult?.error && (
-        <div className="flex items-center gap-4 bg-error/10 rounded-xl px-5 py-3 border border-error/30">
-          <span className="material-symbols-outlined text-error">error</span>
-          <span className="font-label-sm text-label-sm text-error">{importResult.message ?? 'Import failed. Check that your API key and wallet address are configured correctly.'}</span>
-          <button onClick={() => setImportResult(null)} className="ml-auto text-error/70 hover:text-error">
-            <span className="material-symbols-outlined text-[18px]">close</span>
-          </button>
-        </div>
-      )}
-
-      {/* Bento Grid */}
-      <div className="grid grid-cols-12 gap-layout-gutter">
-
-        {/* Summary Cards */}
-        <div className="col-span-12 lg:col-span-4 flex flex-col gap-layout-gutter">
-          <div className="bg-surface-container rounded-xl p-lg border-t border-white/[0.08] border-x border-b border-surface-container-lowest relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary-container/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <h2 className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-4">Current Market Value</h2>
-            <div className="font-display-xl text-display-xl text-on-surface mb-2 tracking-tight">{formatEur(totalCurrentValue)}</div>
-            <div className="flex items-center gap-2">
-              <span className={`px-2 py-1 rounded-full font-label-sm text-label-sm flex items-center ${isPortfolioProfit ? 'bg-secondary-container/10 text-secondary' : 'bg-error-container/20 text-error'}`}>
-                <span className="material-symbols-outlined text-[14px] mr-1">{isPortfolioProfit ? 'trending_up' : 'trending_down'}</span>
-                {profitPct}
-              </span>
-              <span className="text-on-surface-variant font-label-sm text-label-sm">{formatEur(totalProfit)}</span>
+            <div style={eyebrowStyle(t)} className="mb-3">
+              BALANCE · WALLET
+              {portfolio.chainAddress && (
+                <> · {portfolio.chainAddress.slice(0, 6)}…{portfolio.chainAddress.slice(-4)}</>
+              )}
             </div>
-          </div>
-
-          <div className="bg-surface-container rounded-xl p-lg border-t border-white/[0.08] border-x border-b border-surface-container-lowest">
-            <h2 className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-4">Total Cost Basis</h2>
-            <div className="font-heading-lg text-heading-lg text-on-surface mb-2">{formatEur(totalInvested)}</div>
-            <div className="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm">
-              <span>All-time ROI</span>
-              <span className={`font-data-mono text-data-mono ${isPortfolioProfit ? 'text-secondary' : 'text-error'}`}>{profitPct}</span>
-            </div>
-          </div>
-
-          <div className="bg-surface-container rounded-xl p-lg border-t border-white/[0.08] border-x border-b border-surface-container-lowest">
-            <h2 className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-4">Unrealized P&amp;L</h2>
-            <div className={`font-heading-lg text-heading-lg mb-2 ${isPortfolioProfit ? 'text-secondary' : 'text-error'}`}>{formatEur(totalProfit)}</div>
-            <div className="w-full bg-surface-container-highest rounded-full h-1.5 mt-4">
-              <div
-                className={`h-1.5 rounded-full ${isPortfolioProfit ? 'bg-secondary' : 'bg-error'}`}
-                style={{ width: `${Math.min(Math.abs((totalProfit / (totalInvested || 1)) * 100), 100)}%` }}
-              ></div>
-            </div>
-          </div>
-        </div>
-
-        {/* Chart Area */}
-        <div className="col-span-12 lg:col-span-8 bg-surface-container rounded-xl p-lg border-t border-white/[0.08] border-x border-b border-surface-container-lowest flex flex-col">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h2 className="font-heading-md text-heading-md text-on-surface">Cost vs Market Value</h2>
-              <div className="flex items-center gap-4 mt-2">
-                <div className="flex items-center gap-1.5 font-label-sm text-label-sm text-on-surface-variant">
-                  <span className="w-3 h-0.5 bg-[#c3c0ff] inline-block rounded"></span>
-                  Market Value
-                </div>
-                <div className="flex items-center gap-1.5 font-label-sm text-label-sm text-on-surface-variant">
-                  <span className="w-3 border-t-2 border-dashed border-[#4edea3] inline-block opacity-70"></span>
-                  Cost Basis
-                </div>
+            <h1 style={{ ...headlineStyle, fontWeight: 600, fontSize: 56, lineHeight: 0.95, letterSpacing: '-0.025em', color: t.INK }}>
+              {portfolio.name}
+            </h1>
+            {(portfolio.chainAddress || portfolio.lastImportTime) && (
+              <div className="flex flex-wrap items-center gap-4 mt-4">
+                {portfolio.chainType && (
+                  <span
+                    style={{
+                      ...monoStyle,
+                      fontSize: 10,
+                      letterSpacing: '0.22em',
+                      padding: '4px 10px',
+                      borderRadius: 999,
+                      background: tintChain.bg,
+                      color: tintChain.fg,
+                      border: `1px solid ${tintChain.border}`,
+                    }}
+                  >
+                    {CHAIN_META[portfolio.chainType]?.label?.toUpperCase() ?? portfolio.chainType}
+                  </span>
+                )}
+                {portfolio.chainAddress && (
+                  <a
+                    href={addressExplorerUrl(portfolio.chainType, portfolio.chainAddress) ?? undefined}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5"
+                    style={{ ...monoStyle, fontSize: 12, color: t.SUBINK, textDecoration: 'none', transition: 'color 160ms ease' }}
+                    title={portfolio.chainAddress}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = t.INK; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = t.SUBINK; }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: 14 }}>open_in_new</span>
+                    {portfolio.chainAddress.slice(0, 8)}…{portfolio.chainAddress.slice(-6)}
+                  </a>
+                )}
+                {portfolio.lastImportTime && (
+                  <span className="flex items-center gap-1.5" style={{ fontSize: 12, color: t.SUBINK }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: 14 }}>schedule</span>
+                    Last synced {formatRelative(portfolio.lastImportTime)}
+                  </span>
+                )}
               </div>
-            </div>
-            <div className="flex bg-surface-container-highest rounded-lg p-1">
-              {timeRanges.map((range) => (
-                <button
-                  key={range}
-                  onClick={() => setActiveRange(range)}
-                  className={`px-3 py-1 rounded font-label-sm text-label-sm transition-colors ${
-                    activeRange === range
-                      ? 'bg-surface-bright text-on-surface shadow-sm border border-outline-variant/30'
-                      : 'text-on-surface-variant hover:text-on-surface'
-                  }`}
-                >
-                  {range}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex-1 relative min-h-[280px] w-full">
-            {chartPoints.length < 2 ? (
-              <div className="absolute inset-0 flex items-center justify-center text-on-surface-variant font-label-sm text-label-sm">
-                No transaction data for this period.
-              </div>
-            ) : (
-              <>
-                <div className="absolute left-0 top-0 bottom-8 w-20 flex flex-col justify-between text-[10px] text-outline font-data-mono pr-2 pointer-events-none">
-                  <span>{formatEur(maxV)}</span>
-                  <span>{formatEur((maxV + minV) / 2)}</span>
-                  <span>{formatEur(minV)}</span>
-                </div>
-                <div className="absolute left-20 right-0 top-0 bottom-8 flex flex-col justify-between pointer-events-none">
-                  {[0, 1, 2].map((i) => (
-                    <div key={i} className="w-full border-t border-outline-variant/10 border-dashed"></div>
-                  ))}
-                </div>
-                <svg
-                  className="absolute left-20 top-0 bottom-8 w-[calc(100%-80px)] h-[calc(100%-32px)]"
-                  viewBox="0 0 100 100"
-                  preserveAspectRatio="none"
-                >
-                  <defs>
-                    <linearGradient id="chartGrad" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0%" stopColor="#c3c0ff" stopOpacity="0.3" />
-                      <stop offset="100%" stopColor="#c3c0ff" stopOpacity="0" />
-                    </linearGradient>
-                  </defs>
-                  {valueAreaPath && <path d={valueAreaPath} fill="url(#chartGrad)" />}
-                  {valuePath && <path d={valuePath} fill="none" stroke="#c3c0ff" strokeWidth="2" vectorEffect="non-scaling-stroke" />}
-                  {costPath && (
-                    <path d={costPath} fill="none" stroke="#4edea3" strokeWidth="1.5" strokeDasharray="4 3" vectorEffect="non-scaling-stroke" opacity="0.7" />
-                  )}
-                </svg>
-                <div className="absolute bottom-0 left-20 right-0 flex justify-between text-[10px] text-outline font-data-mono">
-                  {getChartLabels(activeRange).map((l) => <span key={l}>{l}</span>)}
-                </div>
-              </>
             )}
           </div>
+          <div className="flex gap-2 flex-wrap items-center">
+            <button
+              onClick={handleExportCsv}
+              style={{
+                padding: '10px 18px',
+                borderRadius: 999,
+                background: t.CARD,
+                color: t.INK,
+                fontSize: 13,
+                fontWeight: 500,
+                border: `1px solid ${t.HAIR_HEAVY}`,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                transition: 'background-color 160ms ease',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = t.CARD_3; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = t.CARD; }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 18 }}>download</span>
+              Export
+            </button>
+            <button
+              onClick={() => { setEditWalletName(portfolio.name); setEditWalletChainType(portfolio.chainType ?? ''); setEditWalletChainAddress(portfolio.chainAddress ?? ''); setEditWallet(portfolio); }}
+              style={{
+                padding: '10px 18px',
+                borderRadius: 999,
+                background: t.CARD,
+                color: t.INK,
+                fontSize: 13,
+                fontWeight: 500,
+                border: `1px solid ${t.HAIR_HEAVY}`,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                transition: 'background-color 160ms ease',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = t.CARD_3; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = t.CARD; }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 18 }}>edit</span>
+              Edit
+            </button>
+            {portfolio.chainType && (
+              <button
+                onClick={handleImport}
+                disabled={importing}
+                style={{
+                  padding: '10px 18px',
+                  borderRadius: 999,
+                  background: t.LAVENDER_DEEP,
+                  color: t.ON_TINT,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  border: 'none',
+                  cursor: importing ? 'not-allowed' : 'pointer',
+                  opacity: importing ? 0.7 : 1,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  boxShadow: t.SH_BADGE_LAV,
+                  transition: 'box-shadow 160ms ease',
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
+                  {importing ? 'sync' : 'travel_explore'}
+                </span>
+                {importing ? 'Scanning…' : `Scan ${portfolio.chainType}`}
+              </button>
+            )}
+            <button
+              onClick={openAddTx}
+              style={{
+                padding: '11px 20px',
+                borderRadius: 999,
+                background: t.CTA_INK_BG,
+                color: t.CTA_INK_FG,
+                fontSize: 13,
+                fontWeight: 600,
+                border: 'none',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: t.SH_CTA_INK,
+                transition: 'box-shadow 160ms ease',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.boxShadow = t.SH_CTA_INK_H; }}
+              onMouseLeave={(e) => { e.currentTarget.style.boxShadow = t.SH_CTA_INK; }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 18 }}>add</span>
+              Add transaction
+            </button>
+            <button
+              onClick={() => setDeleteWallet(portfolio)}
+              style={{
+                padding: '10px 14px',
+                borderRadius: 999,
+                background: 'transparent',
+                color: t.SUBINK,
+                fontSize: 13,
+                fontWeight: 500,
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'color 160ms ease, background-color 160ms ease',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = t.RED_DEEP; e.currentTarget.style.background = t.RED_BG; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = t.SUBINK; e.currentTarget.style.background = 'transparent'; }}
+            >
+              Delete
+            </button>
+          </div>
         </div>
 
-        {/* Holdings Table */}
-        <div className="col-span-12 bg-surface-container rounded-xl border-t border-white/[0.08] border-x border-b border-surface-container-lowest overflow-hidden">
-          <div className="p-lg border-b border-surface-container-highest flex justify-between items-center">
-            <h2 className="font-heading-md text-heading-md text-on-surface">Holdings</h2>
+        {/* Edit + Delete modals when triggered from detail */}
+        <WalletFormModal
+          mode="edit"
+          wallet={editWallet}
+          name={editWalletName} setName={setEditWalletName}
+          chainType={editWalletChainType} setChainType={setEditWalletChainType}
+          chainAddress={editWalletChainAddress} setChainAddress={setEditWalletChainAddress}
+          saving={savingEditWallet}
+          onClose={() => setEditWallet(null)}
+          onSubmit={handleEditWallet}
+        />
+        <DeleteWalletModal
+          wallet={deleteWallet}
+          deleting={deletingWallet}
+          onClose={() => setDeleteWallet(null)}
+          onConfirm={() => {
+            const wasSelected = deleteWallet?.id === selectedWalletId;
+            handleDeleteWallet();
+            if (wasSelected) setSelectedWalletId(null);
+          }}
+        />
+
+        {/* Import result banner */}
+        {importResult && !importResult.error && (
+          <div
+            className="flex items-center gap-3"
+            style={{
+              background: t.MINT_BG,
+              border: `1px solid ${t.MINT_CIRCLE_BORDER}`,
+              borderRadius: 16,
+              padding: '12px 18px',
+              color: t.INK,
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ color: t.MINT_DEEP }}>check_circle</span>
+            <span style={{ fontSize: 14 }}>
+              Import complete —{' '}
+              <span style={{ color: t.MINT_DEEP, fontWeight: 600 }}>{importResult.imported} new</span>
+              , {importResult.skipped} skipped, {importResult.failed} failed
+            </span>
+            <button
+              onClick={() => setImportResult(null)}
+              className="ml-auto material-symbols-outlined"
+              style={{ color: t.SUBINK, background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 18 }}
+              aria-label="Dismiss"
+            >
+              close
+            </button>
+          </div>
+        )}
+        {importResult?.error && (
+          <div
+            className="flex items-center gap-3"
+            style={{
+              background: t.RED_BG,
+              border: `1px solid ${t.RED_BG_2}`,
+              borderRadius: 16,
+              padding: '12px 18px',
+              color: t.RED_DEEP,
+            }}
+          >
+            <span className="material-symbols-outlined">error</span>
+            <span style={{ fontSize: 14 }}>
+              {importResult.message ?? 'Import failed. Check that your API key and wallet address are configured correctly.'}
+            </span>
+            <button
+              onClick={() => setImportResult(null)}
+              className="ml-auto material-symbols-outlined"
+              style={{ color: t.RED_DEEP, background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 18, opacity: 0.7 }}
+              aria-label="Dismiss"
+            >
+              close
+            </button>
+          </div>
+        )}
+
+        {/* Hero balance card + summary */}
+        <div className="grid grid-cols-12 gap-6">
+          <div
+            className="col-span-12 lg:col-span-5"
+            style={{
+              background: `linear-gradient(180deg, ${t.CARD} 0%, ${t.CARD_2} 60%, ${t.CARD_3} 100%)`,
+              border: `1px solid ${t.HAIR_HEAVY}`,
+              borderRadius: 28,
+              boxShadow: t.SH_HERO,
+              padding: 32,
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              aria-hidden
+              style={{
+                position: 'absolute',
+                top: -40, right: -60,
+                width: 220, height: 220,
+                borderRadius: 999,
+                background: t.BLOB_MINT,
+                filter: 'blur(40px)',
+                pointerEvents: 'none',
+              }}
+            />
+            <div style={eyebrowStyle(t)}>BALANCE · CURRENT VALUE</div>
+            <div
+              style={{
+                ...headlineStyle,
+                fontWeight: 600,
+                fontSize: 60,
+                lineHeight: 1,
+                letterSpacing: '-0.03em',
+                color: t.INK,
+                marginTop: 18,
+                marginBottom: 18,
+              }}
+            >
+              {formatEur(totalCurrentValue)}
+            </div>
+            <div className="flex items-center gap-3 flex-wrap">
+              <span
+                className="inline-flex items-center gap-1"
+                style={{
+                  padding: '5px 12px',
+                  borderRadius: 999,
+                  background: isPortfolioProfit ? t.MINT_BG : t.RED_BG,
+                  color: isPortfolioProfit ? t.MINT_DEEP : t.RED_DEEP,
+                  border: `1px solid ${isPortfolioProfit ? t.MINT_CIRCLE_BORDER : t.RED_BG_2}`,
+                  ...monoStyle,
+                  fontSize: 12,
+                  fontWeight: 600,
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
+                  {isPortfolioProfit ? 'trending_up' : 'trending_down'}
+                </span>
+                {profitPct}
+              </span>
+              <span style={{ ...monoStyle, fontSize: 13, color: t.SUBINK }}>
+                {isPortfolioProfit ? '+' : ''}{formatEur(totalProfit)} all-time
+              </span>
+            </div>
+
+            <div
+              className="grid grid-cols-2 gap-4 mt-8 pt-6"
+              style={{ borderTop: `1px solid ${t.HAIR_DIV}` }}
+            >
+              <div>
+                <div style={eyebrowStyle(t)}>INVESTED</div>
+                <div style={{ ...headlineStyle, fontWeight: 600, fontSize: 22, color: t.INK, marginTop: 6 }}>
+                  {formatEur(totalInvested)}
+                </div>
+              </div>
+              <div>
+                <div style={eyebrowStyle(t)}>P&amp;L</div>
+                <div
+                  style={{
+                    ...headlineStyle,
+                    fontWeight: 600,
+                    fontSize: 22,
+                    color: isPortfolioProfit ? t.MINT_DEEP : t.RED_DEEP,
+                    marginTop: 6,
+                  }}
+                >
+                  {isPortfolioProfit ? '+' : ''}{formatEur(totalProfit)}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Chart card */}
+          <div
+            className="col-span-12 lg:col-span-7 flex flex-col"
+            style={{
+              background: t.CARD,
+              border: `1px solid ${t.HAIR_HEAVY}`,
+              borderRadius: 28,
+              boxShadow: t.SH_CARD,
+              padding: 28,
+            }}
+          >
+            <div className="flex justify-between items-start gap-4 mb-6 flex-wrap">
+              <div>
+                <div style={eyebrowStyle(t)}>VALUE · OVER TIME</div>
+                <h2 style={{ ...headlineStyle, fontWeight: 600, fontSize: 20, color: t.INK, marginTop: 6 }}>
+                  Cost vs market value
+                </h2>
+                <div className="flex items-center gap-4 mt-3 flex-wrap">
+                  <div className="flex items-center gap-1.5" style={{ fontSize: 12, color: t.SUBINK }}>
+                    <span style={{ width: 14, height: 2, background: t.LAVENDER_DEEP, display: 'inline-block', borderRadius: 2 }} />
+                    Market value
+                  </div>
+                  <div className="flex items-center gap-1.5" style={{ fontSize: 12, color: t.SUBINK }}>
+                    <span style={{ width: 14, borderTop: `2px dashed ${t.MINT_DEEP}`, display: 'inline-block', opacity: 0.8 }} />
+                    Cost basis
+                  </div>
+                </div>
+              </div>
+              <div
+                className="flex p-1"
+                style={{
+                  background: t.CARD_3,
+                  border: `1px solid ${t.HAIR_HEAVY}`,
+                  borderRadius: 999,
+                }}
+              >
+                {timeRanges.map((range) => (
+                  <button
+                    key={range}
+                    onClick={() => setActiveRange(range)}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: 999,
+                      fontSize: 12,
+                      fontWeight: 500,
+                      border: 'none',
+                      cursor: 'pointer',
+                      background: activeRange === range ? t.CARD : 'transparent',
+                      color: activeRange === range ? t.INK : t.SUBINK,
+                      boxShadow: activeRange === range ? t.SH_PILL : 'none',
+                      transition: 'all 160ms ease',
+                    }}
+                  >
+                    {range}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex-1 relative min-h-[280px] w-full">
+              {chartPoints.length < 2 ? (
+                <div
+                  className="absolute inset-0 flex items-center justify-center"
+                  style={{ color: t.SUBINK, fontSize: 13 }}
+                >
+                  No transaction data for this period.
+                </div>
+              ) : (
+                <>
+                  <div
+                    className="absolute left-0 top-0 bottom-8 w-20 flex flex-col justify-between pr-2 pointer-events-none"
+                    style={{ ...monoStyle, fontSize: 10, color: t.SUBINK }}
+                  >
+                    <span>{formatEur(maxV)}</span>
+                    <span>{formatEur((maxV + minV) / 2)}</span>
+                    <span>{formatEur(minV)}</span>
+                  </div>
+                  <div className="absolute left-20 right-0 top-0 bottom-8 flex flex-col justify-between pointer-events-none">
+                    {[0, 1, 2].map((i) => (
+                      <div key={i} style={{ borderTop: `1px dashed ${t.HAIR}` }} className="w-full"></div>
+                    ))}
+                  </div>
+                  <svg
+                    className="absolute left-20 top-0 bottom-8 w-[calc(100%-80px)] h-[calc(100%-32px)]"
+                    viewBox="0 0 100 100"
+                    preserveAspectRatio="none"
+                  >
+                    <defs>
+                      <linearGradient id="walletSparkFill" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stopColor={t.MINT} stopOpacity="0.45" />
+                        <stop offset="100%" stopColor={t.MINT} stopOpacity="0" />
+                      </linearGradient>
+                      <linearGradient id="walletSparkStroke" x1="0" x2="1" y1="0" y2="0">
+                        <stop offset="0%" stopColor={t.LAVENDER_DEEP} />
+                        <stop offset="100%" stopColor={t.MINT_DEEP} />
+                      </linearGradient>
+                    </defs>
+                    {valueAreaPath && <path d={valueAreaPath} fill="url(#walletSparkFill)" />}
+                    {valuePath && (
+                      <path
+                        d={valuePath}
+                        fill="none"
+                        stroke="url(#walletSparkStroke)"
+                        strokeWidth="2"
+                        vectorEffect="non-scaling-stroke"
+                      />
+                    )}
+                    {costPath && (
+                      <path
+                        d={costPath}
+                        fill="none"
+                        stroke={t.MINT_DEEP}
+                        strokeWidth="1.5"
+                        strokeDasharray="4 3"
+                        vectorEffect="non-scaling-stroke"
+                        opacity="0.7"
+                      />
+                    )}
+                  </svg>
+                  <div
+                    className="absolute bottom-0 left-20 right-0 flex justify-between"
+                    style={{ ...monoStyle, fontSize: 10, color: t.SUBINK }}
+                  >
+                    {getChartLabels(activeRange).map((l) => <span key={l}>{l}</span>)}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Holdings */}
+        <div
+          style={{
+            background: t.CARD,
+            border: `1px solid ${t.HAIR_HEAVY}`,
+            borderRadius: 28,
+            boxShadow: t.SH_CARD,
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            className="flex justify-between items-center gap-4 flex-wrap"
+            style={{
+              padding: '24px 28px',
+              borderBottom: `1px solid ${t.HAIR_DIV}`,
+            }}
+          >
+            <div>
+              <div style={eyebrowStyle(t)}>WALLET · HOLDINGS</div>
+              <h2 style={{ ...headlineStyle, fontWeight: 600, fontSize: 22, color: t.INK, marginTop: 6 }}>
+                Holdings
+              </h2>
+            </div>
             <div className="relative">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+              <span
+                className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2"
+                style={{ color: t.SUBINK, fontSize: 18 }}
+              >
+                search
+              </span>
               <input
-                className="bg-surface-container-lowest border border-outline-variant/30 rounded-lg pl-10 pr-4 py-2 text-on-surface font-label-sm text-label-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all w-64 placeholder:text-on-surface-variant/50"
-                placeholder="Search assets..."
+                placeholder="Search assets…"
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                style={{
+                  background: t.PAPER,
+                  border: `1px solid ${t.HAIR_HEAVY}`,
+                  borderRadius: 999,
+                  padding: '9px 14px 9px 38px',
+                  color: t.INK,
+                  fontSize: 13,
+                  width: 260,
+                  outline: 'none',
+                  transition: 'border-color 160ms ease, box-shadow 160ms ease',
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = t.MINT_DEEP;
+                  e.currentTarget.style.boxShadow = `0 0 0 3px ${t.MINT_BG}`;
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = t.HAIR_HEAVY;
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
               />
             </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-surface-container-highest bg-surface-container-low/50">
-                  {['Asset', 'Amount', 'Avg. Buy Price', 'Current Price', 'Profit / Loss', 'Total Value'].map((col, i) => (
-                    <th
-                      key={col}
-                      className={`py-4 px-lg font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest${i > 0 ? ' text-right' : ''}`}
-                    >
-                      {col}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="font-data-mono text-data-mono text-on-surface">
-                {filteredAssets.map((asset, idx) => {
-                  const meta = coinMeta(asset.coinId);
-                  const avgBuyPrice = asset.totalAmount > 0 ? asset.totalInvested / asset.totalAmount : 0;
-                  const isProfit = asset.profit >= 0;
-                  const profitPctAsset = formatPct(asset.profit, asset.totalInvested);
-                  return (
-                    <tr
-                      key={asset.id}
-                      className={`hover:bg-surface-container-highest/50 transition-colors${idx < filteredAssets.length - 1 ? ' border-b border-surface-container-highest' : ''}`}
-                    >
-                      <td className="py-4 px-lg">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center"
-                            style={{ backgroundColor: `${meta.color}33`, color: meta.color }}
-                          >
-                            <span className="material-symbols-outlined text-[18px]">{meta.mui}</span>
-                          </div>
-                          <div>
-                            <div className="font-body-md text-body-md font-medium">{meta.name}</div>
-                            <div className="font-label-sm text-label-sm text-on-surface-variant">{meta.symbol}</div>
-                          </div>
+
+          {filteredAssets.length === 0 ? (
+            <div className="px-7 py-14 text-center">
+              <span
+                className="inline-flex w-14 h-14 rounded-full items-center justify-center mb-4"
+                style={{
+                  background: t.CREAM_CHIP,
+                  border: `1px solid ${t.CREAM_CHIP_BORDER}`,
+                  color: t.CREAM_DEEP,
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 26 }}>account_balance_wallet</span>
+              </span>
+              <h3 style={{ ...headlineStyle, fontWeight: 600, fontSize: 20, color: t.INK }}>
+                No assets yet
+              </h3>
+              <p style={{ color: t.SUBINK, fontSize: 14, marginTop: 8, marginBottom: 20 }}>
+                Add a transaction to get started tracking this wallet.
+              </p>
+              <button
+                onClick={openAddTx}
+                style={{
+                  padding: '11px 20px',
+                  borderRadius: 999,
+                  background: t.CTA_INK_BG,
+                  color: t.CTA_INK_FG,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: t.SH_CTA_INK,
+                }}
+              >
+                Add transaction
+              </button>
+            </div>
+          ) : (
+            <div>
+              {/* Header row */}
+              <div
+                className="hidden md:grid"
+                style={{
+                  gridTemplateColumns: '2fr 1fr 1fr 1fr 1.2fr 1fr',
+                  padding: '12px 28px',
+                  borderBottom: `1px solid ${t.HAIR_DIV}`,
+                  background: t.CARD_2,
+                  ...monoStyle,
+                  fontSize: 10,
+                  letterSpacing: '0.22em',
+                  textTransform: 'uppercase',
+                  color: t.SUBINK,
+                }}
+              >
+                <div>Asset</div>
+                <div className="text-right">Amount</div>
+                <div className="text-right">Avg. buy</div>
+                <div className="text-right">Current price</div>
+                <div className="text-right">Profit / Loss</div>
+                <div className="text-right">Total value</div>
+              </div>
+
+              {filteredAssets.map((asset, idx) => {
+                const meta = coinMeta(asset.coinId);
+                const avgBuyPrice = asset.totalAmount > 0 ? asset.totalInvested / asset.totalAmount : 0;
+                const isProfit = asset.profit >= 0;
+                const profitPctAsset = formatPct(asset.profit, asset.totalInvested);
+                const isLast = idx === filteredAssets.length - 1;
+                return (
+                  <div
+                    key={asset.id}
+                    className="md:grid flex flex-col md:flex-row"
+                    style={{
+                      gridTemplateColumns: '2fr 1fr 1fr 1fr 1.2fr 1fr',
+                      padding: '18px 28px',
+                      borderBottom: isLast ? 'none' : `1px solid ${t.HAIR_DIV}`,
+                      transition: 'background-color 160ms ease',
+                      alignItems: 'center',
+                      gap: 12,
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = t.CARD_2; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <CoinChip coinId={asset.coinId} size={40} />
+                      <div>
+                        <div style={{ ...headlineStyle, fontWeight: 600, fontSize: 15, color: t.INK }}>{meta.name}</div>
+                        <div style={{ ...monoStyle, fontSize: 11, letterSpacing: '0.16em', color: t.SUBINK, marginTop: 2 }}>
+                          {meta.symbol}
                         </div>
-                      </td>
-                      <td className="py-4 px-lg text-right">{asset.totalAmount?.toFixed(8)}</td>
-                      <td className="py-4 px-lg text-right text-on-surface-variant">{formatEur(avgBuyPrice)}</td>
-                      <td className="py-4 px-lg text-right">{formatEur(asset.currentPrice)}</td>
-                      <td className="py-4 px-lg text-right">
-                        <div className={`mb-1 ${isProfit ? 'text-secondary' : 'text-error'}`}>
-                          {(isProfit ? '+' : '') + formatEur(asset.profit)}
-                        </div>
-                        <div className={`font-label-sm text-label-sm px-2 py-0.5 rounded inline-block ${isProfit ? 'bg-secondary-container/10 text-secondary' : 'bg-error-container/20 text-error'}`}>
-                          {profitPctAsset}
-                        </div>
-                      </td>
-                      <td className="py-4 px-lg text-right font-medium">{formatEur(asset.currentValue)}</td>
-                    </tr>
-                  );
-                })}
-                {filteredAssets.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-on-surface-variant font-label-sm text-label-sm">
-                      No assets found.{' '}
-                      <button onClick={openAddTx} className="text-primary underline">Add a transaction</button> to get started.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                      </div>
+                    </div>
+                    <div className="md:text-right" style={{ ...monoStyle, fontSize: 13, color: t.INK }}>
+                      <span className="md:hidden" style={{ ...monoStyle, fontSize: 10, color: t.SUBINK, letterSpacing: '0.22em', marginRight: 8 }}>AMOUNT</span>
+                      {asset.totalAmount?.toFixed(8)}
+                    </div>
+                    <div className="md:text-right" style={{ ...monoStyle, fontSize: 13, color: t.SUBINK }}>
+                      <span className="md:hidden" style={{ fontSize: 10, letterSpacing: '0.22em', marginRight: 8 }}>AVG BUY</span>
+                      {formatEur(avgBuyPrice)}
+                    </div>
+                    <div className="md:text-right" style={{ ...monoStyle, fontSize: 13, color: t.INK }}>
+                      <span className="md:hidden" style={{ ...monoStyle, fontSize: 10, color: t.SUBINK, letterSpacing: '0.22em', marginRight: 8 }}>PRICE</span>
+                      {formatEur(asset.currentPrice)}
+                    </div>
+                    <div className="md:text-right">
+                      <div style={{ ...monoStyle, fontSize: 13, color: isProfit ? t.MINT_DEEP : t.RED_DEEP }}>
+                        {(isProfit ? '+' : '') + formatEur(asset.profit)}
+                      </div>
+                      <span
+                        className="inline-block mt-1"
+                        style={{
+                          padding: '2px 8px',
+                          borderRadius: 999,
+                          background: isProfit ? t.MINT_BG : t.RED_BG,
+                          color: isProfit ? t.MINT_DEEP : t.RED_DEEP,
+                          border: `1px solid ${isProfit ? t.MINT_CIRCLE_BORDER : t.RED_BG_2}`,
+                          ...monoStyle,
+                          fontSize: 11,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {profitPctAsset}
+                      </span>
+                    </div>
+                    <div className="md:text-right" style={{ ...monoStyle, fontSize: 14, color: t.INK, fontWeight: 600 }}>
+                      <span className="md:hidden" style={{ ...monoStyle, fontSize: 10, color: t.SUBINK, letterSpacing: '0.22em', marginRight: 8, fontWeight: 400 }}>TOTAL</span>
+                      {formatEur(asset.currentValue)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
       </div>
