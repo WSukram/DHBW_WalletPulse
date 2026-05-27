@@ -16,6 +16,7 @@ import Home from "./pages/Home.jsx";
 import TermsOfService from "./pages/TermsOfService.jsx";
 import PrivacyPolicy from "./pages/PrivacyPolicy.jsx";
 import Impressum from "./pages/Impressum.jsx";
+import NotFound from './pages/NotFound.jsx';
 const Docs = lazy(() => import('./pages/Docs.jsx'))
 
 
@@ -44,6 +45,9 @@ function App() {
             <Route path="/security" element={<Security />} />
           </Route>
         </Route>
+
+        {/* 404 catch-all */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </AppProvider>
   )

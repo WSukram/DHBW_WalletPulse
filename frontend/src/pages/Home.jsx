@@ -268,9 +268,7 @@ const Home = () => {
       <header className="fixed top-0 w-full z-50" style={{ backgroundColor: t.HEADER_BG, backdropFilter: 'saturate(140%) blur(14px)', WebkitBackdropFilter: 'saturate(140%) blur(14px)' }}>
         <div className="relative flex justify-between items-center w-full px-6 lg:px-10 h-[68px] max-w-[1240px] mx-auto">
           <div className="flex items-center gap-2.5">
-            <span className="w-8 h-8 rounded-2xl flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${t.MINT} 0%, ${t.LAVENDER_DEEP} 100%)`, boxShadow: t.SH_NAV_LOGO }}>
-              <img src="/wp-icon.svg" alt="" className="w-5 h-5" style={{ filter: 'brightness(0) invert(1)' }} />
-            </span>
+            <img src="/wp-icon.svg" alt="" className="w-9 h-9" style={{ boxShadow: t.SH_NAV_LOGO, borderRadius: 11 }} />
             <span className="text-[19px] font-semibold" style={headlineStyle}>WalletPulse</span>
           </div>
           <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-1">
@@ -628,9 +626,7 @@ const Home = () => {
       <footer className="w-full" style={{ borderTop: `1px solid ${t.HAIR_HEAVY}` }}>
         <div className="max-w-[1240px] mx-auto px-6 lg:px-10 py-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div className="flex items-center gap-2.5">
-            <span className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${t.MINT} 0%, ${t.LAVENDER_DEEP} 100%)` }}>
-              <img src="/wp-icon.svg" alt="" className="w-4 h-4" style={{ filter: 'brightness(0) invert(1)' }} />
-            </span>
+            <img src="/wp-icon.svg" alt="" className="w-7 h-7" style={{ borderRadius: 8 }} />
             <span className="text-[16px] font-semibold" style={headlineStyle}>WalletPulse</span>
           </div>
           <p className="text-[12px]" style={{ color: t.SUBINK }}>
