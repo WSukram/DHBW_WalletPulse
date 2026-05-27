@@ -151,8 +151,9 @@ const EditTransactionModal = ({ tx, form, setForm, saving, errorMsg, onClose, on
         <div className="space-y-4 mb-5">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label style={labelStyle}>Amount</label>
+              <label htmlFor="edit-tx-amount" style={labelStyle}>Amount</label>
               <input
+                id="edit-tx-amount"
                 type="number"
                 min="0"
                 step="any"
@@ -164,8 +165,9 @@ const EditTransactionModal = ({ tx, form, setForm, saving, errorMsg, onClose, on
               />
             </div>
             <div>
-              <label style={labelStyle}>Buy price (EUR)</label>
+              <label htmlFor="edit-tx-price" style={labelStyle}>Buy price (EUR)</label>
               <input
+                id="edit-tx-price"
                 type="number"
                 min="0"
                 step="any"
@@ -178,8 +180,9 @@ const EditTransactionModal = ({ tx, form, setForm, saving, errorMsg, onClose, on
             </div>
           </div>
           <div>
-            <label style={labelStyle}>Purchase date</label>
+            <label htmlFor="edit-tx-date" style={labelStyle}>Purchase date</label>
             <input
+              id="edit-tx-date"
               type="date"
               style={{ ...inputStyle, ...monoStyle, fontSize: 13 }}
               value={form.date}

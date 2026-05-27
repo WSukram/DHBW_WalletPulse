@@ -62,6 +62,9 @@ const AddTransactionModal = ({
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-tx-title"
         className="w-full max-w-[480px]"
         style={{
           background: t.CARD,
@@ -81,7 +84,7 @@ const AddTransactionModal = ({
             <div style={{ ...monoStyle, fontSize: 10, letterSpacing: '0.22em', color: t.SUBINK, marginBottom: 6 }}>
               NEW · TRANSACTION
             </div>
-            <h3 style={{ ...headlineStyle, fontWeight: 600, fontSize: 24, color: t.INK, lineHeight: 1.15 }}>
+            <h3 id="add-tx-title" style={{ ...headlineStyle, fontWeight: 600, fontSize: 24, color: t.INK, lineHeight: 1.15 }}>
               Add transaction
             </h3>
           </div>
@@ -115,8 +118,9 @@ const AddTransactionModal = ({
 
         <div className="space-y-4">
           <div>
-            <label style={labelStyle}>Coin</label>
+            <label htmlFor="add-tx-coin" style={labelStyle}>Coin</label>
             <select
+              id="add-tx-coin"
               style={inputStyle}
               value={form.coinId}
               onChange={(e) => setForm((f) => ({ ...f, coinId: e.target.value }))}
@@ -129,8 +133,9 @@ const AddTransactionModal = ({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label style={labelStyle}>Amount</label>
+              <label htmlFor="add-tx-amount" style={labelStyle}>Amount</label>
               <input
+                id="add-tx-amount"
                 type="number" min="0" step="any"
                 style={{ ...inputStyle, ...monoStyle, fontSize: 14 }}
                 placeholder="0.00"
@@ -141,8 +146,9 @@ const AddTransactionModal = ({
               />
             </div>
             <div>
-              <label style={labelStyle}>Buy price (EUR)</label>
+              <label htmlFor="add-tx-price" style={labelStyle}>Buy price (EUR)</label>
               <input
+                id="add-tx-price"
                 type="number" min="0" step="any"
                 style={{ ...inputStyle, ...monoStyle, fontSize: 14 }}
                 placeholder="0.00"
@@ -154,8 +160,9 @@ const AddTransactionModal = ({
             </div>
           </div>
           <div>
-            <label style={labelStyle}>Purchase date</label>
+            <label htmlFor="add-tx-date" style={labelStyle}>Purchase date</label>
             <input
+              id="add-tx-date"
               type="date"
               style={inputStyle}
               value={form.date}

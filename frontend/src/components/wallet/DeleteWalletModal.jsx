@@ -25,6 +25,9 @@ const DeleteWalletModal = ({ wallet, deleting, onClose, onConfirm }) => {
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-wallet-title"
         className="w-full max-w-[480px]"
         style={{
           background: t.CARD,
@@ -55,7 +58,7 @@ const DeleteWalletModal = ({ wallet, deleting, onClose, onConfirm }) => {
               <div style={{ ...monoStyle, fontSize: 10, letterSpacing: '0.22em', color: t.SUBINK, marginBottom: 6 }}>
                 DANGER · DELETE
               </div>
-              <h3 style={{ ...headlineStyle, fontWeight: 600, fontSize: 24, color: t.INK, lineHeight: 1.15 }}>
+              <h3 id="delete-wallet-title" style={{ ...headlineStyle, fontWeight: 600, fontSize: 24, color: t.INK, lineHeight: 1.15 }}>
                 Delete wallet
               </h3>
             </div>

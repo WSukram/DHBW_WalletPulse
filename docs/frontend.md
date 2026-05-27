@@ -6,7 +6,8 @@
 |---|---|
 | Framework | React 19 |
 | Build tool | Vite |
-| Styling | Tailwind CSS v3 with Material 3 color tokens |
+| Styling | Tailwind utilities + inline theme tokens (soft-stack design system) |
+| Typography | General Sans (display), Geist Sans (body), JetBrains Mono (tabular data) |
 | HTTP client | axios |
 | Icons | Material Symbols Outlined (Google Fonts) |
 | API docs UI | Scalar (`@scalar/api-reference-react`) |
@@ -24,6 +25,7 @@
 | `/privacy` | Privacy Policy |
 | `/impressum` | Legal Notice |
 | `/docs` | Scalar API reference (lazy-loaded) |
+| `*` | NotFound — 404 catch-all |
 
 ### Protected Routes
 
@@ -52,7 +54,6 @@ Protected routes are wrapped by `PrivateRoute` (redirects to `/login` if unauthe
 | `utils/coins.js` | Single source of truth for the 3 supported coins: `COIN_META`, `coinMeta()` fallback, `formatPct()`, `TICKER_COINS`, `KNOWN_COINS`. |
 | `utils/chart.js` | Shared SVG chart math: `timeRanges`, `getChartLabels`, `computePortfolioChartPoints`, `computeAssetChartPoints`, `pointsToPath`. |
 | `utils/groupByCoin.js` | Merges same-coin assets across wallets for display on Assets and Analytics pages. |
-| `utils/styles.js` | Shared `inputCls` / `labelCls` Tailwind strings for modal forms. |
 | `utils/exportCsv.js` | CSV blob download helper used by History and Wallet pages. |
 
 ### Hooks
@@ -63,9 +64,17 @@ Protected routes are wrapped by `PrivateRoute` (redirects to `/login` if unauthe
 | `hooks/usePortfolioData.js` | Cascades `GET /api/wallets → GET /api/wallets/{id}/portfolio → GET /api/assets/{id}/transactions`. Returns `{ wallets, portfolios, transactions, isLoading, error, reload }`. Used by Analytics, Assets, and History. |
 | `hooks/usePageTitle.js` | One-liner that sets `document.title = '${title} · WalletPulse'`. |
 
+### Theme
+
+`theme/softStack.js` is the design system. It exports `LIGHT` and `DARK` palette objects (~50 tokens each — paper surfaces, ink/sub-ink text, mint/lavender/cream brand tints, hairlines, shadows, and CTA pairs), plus shared text styles (`headlineStyle`, `monoStyle`, `bodyFontFamily`) and a `usePrefersDark()` hook. The hook observes the `.dark` class on `<html>` (which `AppContext` toggles based on the user's Light/Dark/System preference) and falls back to `matchMedia('(prefers-color-scheme: dark)')` for prerender. Every page resolves its theme at the top with `const t = usePrefersDark() ? DARK : LIGHT;` and reads `t.*` inline.
+
 ## Styling
 
-Tailwind CSS v3 with a custom Material 3 palette defined in `tailwind.config.js` (primary, secondary, tertiary, error, surface tokens). Dark mode is the default, toggled by the `dark` class on `<html>` and controlled via `AppContext`.
+The codebase uses **inline theme tokens** rather than utility class names for colors. Layout primitives (`flex`, `grid`, `gap-*`, `rounded-*`, responsive `md:` / `lg:` prefixes) still come from Tailwind. Surfaces, text, hairlines, shadows, and brand tints come from the `LIGHT`/`DARK` objects in `theme/softStack.js`.
+
+Dark mode is driven by the `.dark` class on `<html>`, which `AppContext` toggles in response to the user's preference (`Light` / `Dark` / `System`). When set to `System`, AppContext also listens to `matchMedia('(prefers-color-scheme: dark)')` so the app follows live OS theme changes.
+
+Provider logos (CoinGecko, Etherscan, Helius, Blockstream) shown on the Home page live in `public/logos/` as PNGs.
 
 ## API Communication
 

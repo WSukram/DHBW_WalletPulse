@@ -80,6 +80,9 @@ const WalletFormModal = ({
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="wallet-form-title"
         className="w-full max-w-[480px]"
         style={{
           background: t.CARD,
@@ -99,7 +102,7 @@ const WalletFormModal = ({
             <div style={{ ...monoStyle, fontSize: 10, letterSpacing: '0.22em', color: t.SUBINK, marginBottom: 6 }}>
               {isEdit ? 'EDIT · WALLET' : 'CREATE · WALLET'}
             </div>
-            <h3 style={{ ...headlineStyle, fontWeight: 600, fontSize: 24, color: t.INK, lineHeight: 1.15 }}>
+            <h3 id="wallet-form-title" style={{ ...headlineStyle, fontWeight: 600, fontSize: 24, color: t.INK, lineHeight: 1.15 }}>
               {heading}
             </h3>
           </div>
@@ -131,8 +134,9 @@ const WalletFormModal = ({
 
         <div className="space-y-4 mb-6">
           <div>
-            <label style={labelStyle}>Wallet name</label>
+            <label htmlFor="wallet-name" style={labelStyle}>Wallet name</label>
             <input
+              id="wallet-name"
               autoFocus
               style={inputStyle}
               placeholder="e.g. Main Portfolio"
@@ -144,8 +148,9 @@ const WalletFormModal = ({
             />
           </div>
           <div>
-            <label style={labelStyle}>Blockchain (optional)</label>
+            <label htmlFor="wallet-chain" style={labelStyle}>Blockchain (optional)</label>
             <select
+              id="wallet-chain"
               style={inputStyle}
               value={chainType}
               onChange={(e) => setChainType(e.target.value)}
@@ -160,8 +165,9 @@ const WalletFormModal = ({
           </div>
           {chainType && (
             <div>
-              <label style={labelStyle}>Wallet address</label>
+              <label htmlFor="wallet-address" style={labelStyle}>Wallet address</label>
               <input
+                id="wallet-address"
                 style={{ ...inputStyle, ...monoStyle, fontSize: 13 }}
                 placeholder={chainType === 'ETH' ? '0x…' : chainType === 'BTC' ? 'bc1q… or 1A…' : 'Solana address…'}
                 value={chainAddress}
