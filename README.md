@@ -171,16 +171,20 @@ The frontend is a React SPA. Axios is configured once in `utils/api.js` with a b
 │   │   │   ├── Analytics.jsx       # Charts and performance metrics
 │   │   │   ├── Security.jsx        # Password change, account deletion
 │   │   │   ├── Docs.jsx            # Scalar API reference (lazy-loaded)
+│   │   │   ├── NotFound.jsx        # 404 catch-all
 │   │   │   ├── Login.jsx / Register.jsx
 │   │   │   ├── TermsOfService.jsx / PrivacyPolicy.jsx / Impressum.jsx
+│   │   ├── theme/
+│   │   │   └── softStack.js        # LIGHT/DARK palette tokens + usePrefersDark hook
 │   │   └── utils/
 │   │       ├── api.js              # axios baseURL setup
 │   │       ├── coins.js            # COIN_META, formatPct, TICKER_COINS
 │   │       ├── chart.js            # Chart math (labels, data points, SVG path)
 │   │       ├── groupByCoin.js      # Merge same-coin assets across wallets
-│   │       ├── exportCsv.js        # CSV blob download
-│   │       └── styles.js           # Shared Tailwind class strings
-│   ├── public/wp-icon.svg          # App icon (favicon + logo)
+│   │       └── exportCsv.js        # CSV blob download
+│   ├── public/
+│   │   ├── wp-icon.svg             # App icon (favicon + logo)
+│   │   └── logos/                  # Provider logos shown on Home (CoinGecko, Etherscan, Helius, Blockstream)
 │   ├── nginx.conf                  # SPA routing + API proxy rules
 │   ├── Dockerfile                  # Multi-stage: Node → nginx:alpine
 │   └── package.json

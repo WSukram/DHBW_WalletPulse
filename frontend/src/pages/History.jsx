@@ -7,6 +7,7 @@ import { usePortfolioData } from '../hooks/usePortfolioData';
 import { usePageTitle } from '../hooks/usePageTitle';
 import EditTransactionModal from '../components/history/EditTransactionModal';
 import DeleteTransactionModal from '../components/history/DeleteTransactionModal';
+import { LIGHT, DARK, headlineStyle, monoStyle, usePrefersDark } from '../theme/softStack';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '—';
@@ -26,21 +27,31 @@ const explorerUrl = (chainType, txHash) => {
 
 const PAGE_SIZE = 10;
 
+const coinTint = (coinId, t) => {
+  switch (coinId) {
+    case 'bitcoin':  return { bg: t.CREAM_CHIP,    border: t.CREAM_CHIP_BORDER };
+    case 'ethereum': return { bg: t.LAVENDER,      border: t.HAIR_HEAVY };
+    case 'solana':   return { bg: t.MINT_BG,       border: t.MINT_CIRCLE_BORDER };
+    default:         return { bg: t.CARD_3,        border: t.HAIR_HEAVY };
+  }
+};
+
 const History = () => {
   usePageTitle('History');
+  const isDark = usePrefersDark();
+  const t = isDark ? DARK : LIGHT;
   const { formatCurrency: formatEur } = useApp();
   const { wallets, transactions: allTransactions, isLoading, error, reload } = usePortfolioData();
   const [activeWallet, setActiveWallet] = useState('all');
   const [assetFilter, setAssetFilter] = useState('All Assets');
+  const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
 
-  // Edit modal state
   const [editTx, setEditTx] = useState(null);
   const [editForm, setEditForm] = useState({ amount: '', buyPrice: '', date: '' });
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState('');
 
-  // Delete confirmation state
   const [deleteTx, setDeleteTx] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -71,17 +82,53 @@ const History = () => {
       .catch(() => setDeleting(false));
   };
 
-  if (isLoading) return <div className="p-6 text-on-surface text-center">Loading Live-Data from Backend...</div>;
-  if (error) return <div className="p-6 text-error text-center">{error}</div>;
+  const eyebrow = { ...monoStyle, fontSize: 10, letterSpacing: '0.22em', color: t.SUBINK, textTransform: 'uppercase' };
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 overflow-y-auto p-6 lg:p-10">
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="flex items-center gap-3" role="status" aria-live="polite">
+            <span className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ background: t.MINT_DEEP, boxShadow: `0 0 16px ${t.MINT}` }} />
+            <span style={{ ...monoStyle, fontSize: 12, letterSpacing: '0.2em', color: t.SUBINK }}>LOADING · LIVE DATA</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex-1 overflow-y-auto p-6 lg:p-10">
+        <div
+          className="max-w-md mx-auto rounded-3xl p-8 text-center"
+          style={{ background: t.RED_BG, border: `1px solid ${t.HAIR_HEAVY}`, boxShadow: t.SH_CARD, color: t.RED_DEEP }}
+          role="alert"
+        >
+          <div style={{ ...monoStyle, fontSize: 10, letterSpacing: '0.22em', color: t.RED_DEEP, marginBottom: 8 }}>ERROR</div>
+          <div style={{ ...headlineStyle, fontSize: 18, fontWeight: 600 }}>{error}</div>
+        </div>
+      </div>
+    );
+  }
 
   const walletOptions = [{ id: 'all', name: 'All Wallets' }, ...wallets.map((w) => ({ id: w.id, name: w.name }))];
   const uniqueCoins = [...new Set(allTransactions.map((tx) => tx.coinId))];
   const assetOptions = ['All Assets', ...uniqueCoins];
 
+  const q = search.trim().toLowerCase();
   const filtered = allTransactions.filter((tx) => {
     const walletMatch = activeWallet === 'all' || tx.walletId === activeWallet;
     const assetMatch = assetFilter === 'All Assets' || tx.coinId === assetFilter;
-    return walletMatch && assetMatch;
+    if (!walletMatch || !assetMatch) return false;
+    if (!q) return true;
+    const meta = coinMeta(tx.coinId);
+    return (
+      meta.name.toLowerCase().includes(q) ||
+      meta.symbol.toLowerCase().includes(q) ||
+      (tx.walletName || '').toLowerCase().includes(q) ||
+      (tx.txHash || '').toLowerCase().includes(q)
+    );
   });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -89,7 +136,8 @@ const History = () => {
   const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const handleWalletChange = (id) => { setActiveWallet(id); setPage(1); };
-  const handleAssetChange = (e) => { setAssetFilter(e.target.value); setPage(1); };
+  const handleAssetChange = (id) => { setAssetFilter(id); setPage(1); };
+  const handleSearchChange = (e) => { setSearch(e.target.value); setPage(1); };
 
   const handleExportCsv = () => {
     const headers = ['Date', 'Asset', 'Symbol', 'Amount', 'Buy Price (EUR)', 'Total Value (EUR)', 'Wallet', 'Source', 'Tx Hash'];
@@ -102,9 +150,27 @@ const History = () => {
     downloadCsv(`transactions_${walletSlug}.csv`, headers, rows);
   };
 
-  return (
-    <div className="flex-1 overflow-y-auto p-6 md:p-layout-margin flex flex-col gap-6">
+  const chipBase = {
+    padding: '8px 14px',
+    borderRadius: 999,
+    fontSize: 12,
+    fontWeight: 500,
+    cursor: 'pointer',
+    transition: 'background-color 160ms ease, color 160ms ease, border-color 160ms ease',
+    border: `1px solid ${t.HAIR_HEAVY}`,
+    background: t.CARD,
+    color: t.SUBINK,
+  };
+  const chipActive = {
+    ...chipBase,
+    background: t.MINT_BG,
+    color: t.MINT_DEEP,
+    border: `1px solid ${t.MINT_CIRCLE_BORDER}`,
+    fontWeight: 600,
+  };
 
+  return (
+    <div className="flex-1 overflow-y-auto p-6 lg:p-10 space-y-8 max-w-[1240px] mx-auto w-full">
       <EditTransactionModal
         tx={editTx}
         form={editForm}
@@ -126,211 +192,425 @@ const History = () => {
       />
 
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5">
         <div>
-          <h2 className="font-heading-lg text-heading-lg text-on-surface mb-1">Transaction History</h2>
-          <p className="font-body-md text-body-md text-on-surface-variant">A comprehensive log of all actions across connected wallets.</p>
+          <div style={eyebrow}>ACTIVITY · TRANSACTION HISTORY</div>
+          <h1
+            className="mt-2"
+            style={{ ...headlineStyle, fontSize: 'clamp(34px, 4.4vw, 48px)', fontWeight: 600, letterSpacing: '-0.025em', lineHeight: 1, color: t.INK }}
+          >
+            History
+          </h1>
+          <p className="mt-3 text-[15px]" style={{ color: t.SUBINK }}>
+            A comprehensive log of every action across your connected wallets.
+          </p>
         </div>
-        <button onClick={handleExportCsv} className="flex items-center gap-2 px-4 py-2 bg-surface-container-high border border-outline-variant rounded-lg hover:bg-surface-bright transition-colors font-label-sm text-label-sm text-on-surface">
-          <span className="material-symbols-outlined text-[16px]">download</span>
+        <button
+          onClick={handleExportCsv}
+          className="inline-flex items-center gap-2 self-start sm:self-auto"
+          style={{
+            padding: '11px 18px',
+            borderRadius: 999,
+            background: t.CARD,
+            color: t.INK,
+            border: `1px solid ${t.HAIR_HEAVY}`,
+            fontSize: 13,
+            fontWeight: 600,
+            boxShadow: t.SH_PILL,
+            cursor: 'pointer',
+            transition: 'background-color 160ms ease, transform 160ms ease',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = t.CARD_2; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = t.CARD; }}
+        >
+          <span className="material-symbols-outlined text-[18px]">download</span>
           Export CSV
         </button>
       </div>
 
-      {/* Filters Bar */}
-      <div className="glass-panel rounded-xl p-4 flex flex-wrap gap-4 items-center justify-between">
-        <div className="flex flex-wrap gap-3">
+      {/* Filters */}
+      <div
+        className="rounded-[24px] p-5"
+        style={{ background: t.CARD, border: `1px solid ${t.HAIR_HEAVY}`, boxShadow: t.SH_CARD }}
+      >
+        <div className="flex flex-col gap-4">
           <div className="relative">
-            <select
-              className="appearance-none pl-4 pr-10 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg font-label-sm text-label-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all cursor-pointer hover:border-outline"
-              value={assetFilter}
-              onChange={handleAssetChange}
+            <span
+              className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[18px]"
+              style={{ color: t.SUBINK }}
             >
-              {assetOptions.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt === 'All Assets' ? 'All Assets' : `${coinMeta(opt).name} (${coinMeta(opt).symbol})`}
-                </option>
-              ))}
-            </select>
-            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-[18px]">token</span>
+              search
+            </span>
+            <input
+              type="text"
+              value={search}
+              onChange={handleSearchChange}
+              placeholder="Search by asset, wallet or tx hash…"
+              style={{
+                width: '100%',
+                padding: '11px 14px 11px 44px',
+                borderRadius: 999,
+                background: t.PAPER,
+                border: `1px solid ${t.HAIR_HEAVY}`,
+                color: t.INK,
+                fontSize: 14,
+                outline: 'none',
+                transition: 'border-color 160ms ease, box-shadow 160ms ease',
+              }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = t.MINT_DEEP; e.currentTarget.style.boxShadow = `0 0 0 3px ${t.MINT_BG}`; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = t.HAIR_HEAVY; e.currentTarget.style.boxShadow = 'none'; }}
+            />
           </div>
-        </div>
-        <div className="flex items-center gap-1 bg-surface-container-lowest border border-outline-variant rounded-lg p-1">
-          {walletOptions.map((w) => (
-            <button
-              key={w.id}
-              onClick={() => handleWalletChange(w.id)}
-              className={`px-3 py-1.5 rounded font-label-sm text-label-sm transition-colors ${
-                activeWallet === w.id
-                  ? 'bg-surface-bright text-on-surface shadow-sm'
-                  : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
-              }`}
-            >
-              {w.name}
-            </button>
-          ))}
+
+          <div className="flex flex-col gap-3">
+            <div>
+              <div style={{ ...eyebrow, marginBottom: 8 }}>WALLET</div>
+              <div className="flex flex-wrap gap-2">
+                {walletOptions.map((w) => (
+                  <button
+                    key={w.id}
+                    onClick={() => handleWalletChange(w.id)}
+                    style={activeWallet === w.id ? chipActive : chipBase}
+                  >
+                    {w.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div style={{ ...eyebrow, marginBottom: 8 }}>ASSET</div>
+              <div className="flex flex-wrap gap-2">
+                {assetOptions.map((opt) => {
+                  const label = opt === 'All Assets' ? 'All Assets' : `${coinMeta(opt).name} (${coinMeta(opt).symbol})`;
+                  return (
+                    <button
+                      key={opt}
+                      onClick={() => handleAssetChange(opt)}
+                      style={assetFilter === opt ? chipActive : chipBase}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="glass-panel rounded-xl overflow-hidden flex flex-col flex-1">
-        <div className="overflow-x-auto flex-1">
-          <table className="w-full text-left border-collapse whitespace-nowrap">
-            <thead>
-              <tr className="border-b border-outline-variant/30 bg-surface-container/30">
-                {['Date', 'Asset', 'Amount', 'Buy Price', 'Total Value', 'Wallet', 'Source', 'Actions'].map((col, i) => (
-                  <th
-                    key={col}
-                    className={`px-6 py-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider${
-                      i >= 2 && i <= 4 ? ' text-right' : i === 7 ? ' text-center' : ''
-                    }`}
-                  >
-                    {col}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-outline-variant/20">
-              {paginated.map((tx) => {
-                const meta = coinMeta(tx.coinId);
-                const total = tx.amount * tx.buyPrice;
-                return (
-                  <tr key={tx.id} className="hover:bg-surface-container-highest/20 transition-colors group">
-                    <td className="px-6 py-4">
-                      <div className="font-data-mono text-data-mono text-on-surface">{formatDate(tx.date)}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center border font-bold text-xs"
-                          style={{ backgroundColor: `${meta.color}1a`, borderColor: `${meta.color}33`, color: meta.color }}
-                        >
-                          {meta.icon}
-                        </div>
-                        <div>
-                          <div className="font-label-sm text-label-sm text-on-surface">{meta.name}</div>
-                          <div className="text-xs text-on-surface-variant font-mono">{meta.symbol}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className={`px-6 py-4 text-right font-data-mono text-data-mono ${tx.amount >= 0 ? 'text-secondary' : 'text-error'}`}>
-                      {tx.amount >= 0 ? '+' : ''}{tx.amount.toFixed(8)}
-                    </td>
-                    <td className="px-6 py-4 text-right font-data-mono text-data-mono text-on-surface-variant">
-                      {formatEur(tx.buyPrice)}
-                    </td>
-                    <td className="px-6 py-4 text-right font-data-mono text-data-mono text-on-surface">
-                      {formatEur(total)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[16px] text-outline">account_balance_wallet</span>
-                        {tx.walletName}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col gap-1">
-                        {tx.source === 'IMPORTED' ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-tertiary/15 text-tertiary w-fit">
-                            <span className="material-symbols-outlined text-[12px]">link</span>
-                            Imported
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-surface-container-high text-on-surface-variant w-fit">
-                            <span className="material-symbols-outlined text-[12px]">edit_note</span>
-                            Manual
-                          </span>
-                        )}
-                        {explorerUrl(tx.chainType, tx.txHash) && (
-                          <a
-                            href={explorerUrl(tx.chainType, tx.txHash)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="font-mono text-[10px] text-primary/70 hover:text-primary transition-colors truncate max-w-[120px]"
-                            title={tx.txHash}
-                          >
-                            {tx.txHash.slice(0, 8)}…{tx.txHash.slice(-6)}
-                          </a>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-1">
-                        <button
-                          onClick={() => openEdit(tx)}
-                          title="Edit transaction"
-                          className="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors"
-                        >
-                          <span className="material-symbols-outlined text-[18px]">edit</span>
-                        </button>
-                        <button
-                          onClick={() => setDeleteTx(tx)}
-                          title="Delete transaction"
-                          className="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-error hover:bg-error/10 transition-colors"
-                        >
-                          <span className="material-symbols-outlined text-[18px]">delete</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-              {paginated.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="px-6 py-8 text-center text-on-surface-variant font-label-sm text-label-sm">
-                    No transactions found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+      {/* Transaction list */}
+      <div
+        className="rounded-[24px] overflow-hidden"
+        style={{ background: t.CARD, border: `1px solid ${t.HAIR_HEAVY}`, boxShadow: t.SH_CARD }}
+      >
+        {/* Column headers (desktop only) */}
+        <div
+          className="hidden md:grid items-center gap-4 px-6 py-3"
+          style={{
+            gridTemplateColumns: '110px 1.4fr 120px 1fr 1fr 1fr 130px 88px',
+            borderBottom: `1px solid ${t.HAIR_DIV}`,
+            background: t.CARD_2,
+          }}
+        >
+          {['Date', 'Asset', 'Type', 'Amount', 'Buy price', 'Total', 'Wallet', ''].map((c, i) => (
+            <div
+              key={i}
+              style={{ ...monoStyle, fontSize: 10, letterSpacing: '0.22em', textTransform: 'uppercase', color: t.SUBINK }}
+              className={i >= 3 && i <= 5 ? 'text-right' : i === 7 ? 'text-right' : ''}
+            >
+              {c}
+            </div>
+          ))}
         </div>
 
-        {/* Pagination */}
-        <div className="px-6 py-4 border-t border-outline-variant/20 bg-surface-container/30 flex items-center justify-between">
-          <div className="font-label-sm text-label-sm text-on-surface-variant">
-            Showing {filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1} to {Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length} transactions
-          </div>
-          <div className="flex gap-1">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="w-8 h-8 flex items-center justify-center rounded bg-surface-container-high text-on-surface-variant disabled:opacity-50 disabled:cursor-not-allowed hover:text-on-surface transition-colors"
+        {paginated.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+            <div
+              className="w-14 h-14 rounded-full flex items-center justify-center mb-4"
+              style={{ background: t.CREAM_CHIP, border: `1px solid ${t.CREAM_CHIP_BORDER}`, color: t.CREAM_DEEP }}
             >
-              <span className="material-symbols-outlined text-[18px]">chevron_left</span>
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter((n) => n === 1 || n === totalPages || Math.abs(n - currentPage) <= 1)
-              .reduce((acc, n, i, arr) => {
-                if (i > 0 && n - arr[i - 1] > 1) acc.push('...');
-                acc.push(n);
-                return acc;
-              }, [])
-              .map((item, i) =>
-                item === '...'
-                  ? <span key={`e-${i}`} className="w-8 h-8 flex items-center justify-center text-on-surface-variant font-label-sm text-label-sm">...</span>
-                  : <button
+              <span className="material-symbols-outlined text-[24px]">history</span>
+            </div>
+            <div style={{ ...headlineStyle, fontWeight: 600, fontSize: 18, color: t.INK }}>No transactions found</div>
+            <div className="mt-1 text-[14px]" style={{ color: t.SUBINK }}>
+              Try a different wallet, asset or search query.
+            </div>
+          </div>
+        ) : (
+          paginated.map((tx, idx) => {
+            const meta = coinMeta(tx.coinId);
+            const total = tx.amount * tx.buyPrice;
+            const isImported = tx.source === 'IMPORTED';
+            const tint = coinTint(tx.coinId, t);
+            const explorer = explorerUrl(tx.chainType, tx.txHash);
+            const isSell = tx.amount < 0;
+            const typeLabel = isImported ? 'Imported' : isSell ? 'Sell' : 'Buy';
+            const typeStyle = isImported
+              ? { bg: t.LAVENDER_TINT, fg: t.LAVENDER_TEXT, border: t.HAIR_HEAVY }
+              : isSell
+                ? { bg: t.RED_BG, fg: t.RED_DEEP, border: t.HAIR_HEAVY }
+                : { bg: t.MINT_BG, fg: t.MINT_DEEP, border: t.MINT_CIRCLE_BORDER };
+
+            return (
+              <div
+                key={tx.id}
+                className="px-6 py-4 md:grid md:items-center md:gap-4 flex flex-col gap-3"
+                style={{
+                  gridTemplateColumns: '110px 1.4fr 120px 1fr 1fr 1fr 130px 88px',
+                  borderTop: idx === 0 ? 'none' : `1px solid ${t.HAIR_DIV}`,
+                }}
+              >
+                {/* Date */}
+                <div
+                  className="tabular-nums"
+                  style={{ ...monoStyle, fontSize: 12, color: t.INK }}
+                >
+                  {formatDate(tx.date)}
+                </div>
+
+                {/* Asset */}
+                <div className="flex items-center gap-3">
+                  <span
+                    className="inline-flex w-9 h-9 rounded-full items-center justify-center text-[14px] font-bold"
+                    style={{ background: tint.bg, border: `1px solid ${tint.border}`, color: t.INK }}
+                  >
+                    {meta.icon}
+                  </span>
+                  <div className="flex flex-col">
+                    <span style={{ ...headlineStyle, fontWeight: 600, fontSize: 14, color: t.INK }}>{meta.name}</span>
+                    <span style={{ ...monoStyle, fontSize: 10, color: t.SUBINK, letterSpacing: '0.08em' }}>{meta.symbol}</span>
+                  </div>
+                </div>
+
+                {/* Type */}
+                <div>
+                  <span
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full"
+                    style={{
+                      background: typeStyle.bg,
+                      color: typeStyle.fg,
+                      border: `1px solid ${typeStyle.border}`,
+                      ...monoStyle,
+                      fontSize: 10,
+                      fontWeight: 600,
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {isImported ? '◇' : isSell ? '▼' : '▲'} {typeLabel}
+                  </span>
+                </div>
+
+                {/* Amount */}
+                <div
+                  className="md:text-right tabular-nums"
+                  style={{ ...monoStyle, fontSize: 13, color: isSell ? t.RED_DEEP : t.INK }}
+                >
+                  <span className="md:hidden mr-2" style={{ ...monoStyle, fontSize: 10, letterSpacing: '0.18em', color: t.SUBINK, textTransform: 'uppercase' }}>Amount</span>
+                  {tx.amount >= 0 ? '+' : ''}{tx.amount.toFixed(8)}
+                </div>
+
+                {/* Buy price */}
+                <div
+                  className="md:text-right tabular-nums"
+                  style={{ ...monoStyle, fontSize: 13, color: t.SUBINK }}
+                >
+                  <span className="md:hidden mr-2" style={{ ...monoStyle, fontSize: 10, letterSpacing: '0.18em', color: t.SUBINK, textTransform: 'uppercase' }}>Buy price</span>
+                  {formatEur(tx.buyPrice)}
+                </div>
+
+                {/* Total */}
+                <div
+                  className="md:text-right tabular-nums"
+                  style={{ ...monoStyle, fontSize: 13, color: t.INK, fontWeight: 600 }}
+                >
+                  <span className="md:hidden mr-2" style={{ ...monoStyle, fontSize: 10, letterSpacing: '0.18em', color: t.SUBINK, textTransform: 'uppercase' }}>Total</span>
+                  {formatEur(total)}
+                </div>
+
+                {/* Wallet */}
+                <div className="flex items-center gap-2 min-w-0">
+                  <span
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full max-w-full"
+                    style={{
+                      background: t.CARD_2,
+                      border: `1px solid ${t.HAIR_HEAVY}`,
+                      ...monoStyle,
+                      fontSize: 11,
+                      color: t.INK,
+                    }}
+                    title={tx.walletName}
+                  >
+                    <span className="material-symbols-outlined text-[14px]" style={{ color: t.SUBINK }}>account_balance_wallet</span>
+                    <span className="truncate max-w-[140px]">{tx.walletName}</span>
+                  </span>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center md:justify-end gap-1">
+                  {isImported ? (
+                    explorer ? (
+                      <a
+                        href={explorer}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={tx.txHash}
+                        className="inline-flex items-center justify-center"
+                        style={{
+                          width: 34,
+                          height: 34,
+                          borderRadius: 10,
+                          color: t.SUBINK,
+                          background: 'transparent',
+                          transition: 'background-color 160ms ease, color 160ms ease',
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = t.CARD_3; e.currentTarget.style.color = t.LAVENDER_DEEP; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = t.SUBINK; }}
+                      >
+                        <span className="material-symbols-outlined text-[18px]">open_in_new</span>
+                      </a>
+                    ) : (
+                      <span style={{ ...monoStyle, fontSize: 10, color: t.SUBINK }}>—</span>
+                    )
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => openEdit(tx)}
+                        title="Edit transaction"
+                        className="inline-flex items-center justify-center"
+                        style={{
+                          width: 34,
+                          height: 34,
+                          borderRadius: 10,
+                          color: t.SUBINK,
+                          background: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          transition: 'background-color 160ms ease, color 160ms ease',
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = t.CARD_3; e.currentTarget.style.color = t.INK; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = t.SUBINK; }}
+                      >
+                        <span className="material-symbols-outlined text-[18px]">edit</span>
+                      </button>
+                      <button
+                        onClick={() => setDeleteTx(tx)}
+                        title="Delete transaction"
+                        className="inline-flex items-center justify-center"
+                        style={{
+                          width: 34,
+                          height: 34,
+                          borderRadius: 10,
+                          color: t.SUBINK,
+                          background: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          transition: 'background-color 160ms ease, color 160ms ease',
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = t.RED_BG; e.currentTarget.style.color = t.RED_DEEP; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = t.SUBINK; }}
+                      >
+                        <span className="material-symbols-outlined text-[18px]">delete</span>
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
+
+        {/* Pagination */}
+        {paginated.length > 0 && (
+          <div
+            className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-6 py-4"
+            style={{ borderTop: `1px solid ${t.HAIR_DIV}`, background: t.CARD_2 }}
+          >
+            <div style={{ ...monoStyle, fontSize: 11, color: t.SUBINK, letterSpacing: '0.06em' }}>
+              {filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}
+              {'–'}
+              {Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length}
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="inline-flex items-center justify-center"
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 999,
+                  background: t.CARD,
+                  border: `1px solid ${t.HAIR_HEAVY}`,
+                  color: currentPage === 1 ? t.SUBINK : t.INK,
+                  opacity: currentPage === 1 ? 0.5 : 1,
+                  cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                  transition: 'background-color 160ms ease',
+                }}
+              >
+                <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter((n) => n === 1 || n === totalPages || Math.abs(n - currentPage) <= 1)
+                .reduce((acc, n, i, arr) => {
+                  if (i > 0 && n - arr[i - 1] > 1) acc.push('...');
+                  acc.push(n);
+                  return acc;
+                }, [])
+                .map((item, i) =>
+                  item === '...' ? (
+                    <span
+                      key={`e-${i}`}
+                      className="inline-flex items-center justify-center"
+                      style={{ width: 34, height: 34, ...monoStyle, fontSize: 12, color: t.SUBINK }}
+                    >
+                      …
+                    </span>
+                  ) : (
+                    <button
                       key={item}
                       onClick={() => setPage(item)}
-                      className={`w-8 h-8 flex items-center justify-center rounded font-label-sm text-label-sm transition-colors ${
-                        currentPage === item
-                          ? 'bg-primary/20 text-primary border border-primary/30'
-                          : 'bg-surface-container-high text-on-surface-variant hover:text-on-surface hover:bg-surface-bright'
-                      }`}
+                      className="inline-flex items-center justify-center"
+                      style={{
+                        minWidth: 34,
+                        height: 34,
+                        padding: '0 10px',
+                        borderRadius: 999,
+                        background: currentPage === item ? t.MINT_BG : t.CARD,
+                        border: `1px solid ${currentPage === item ? t.MINT_CIRCLE_BORDER : t.HAIR_HEAVY}`,
+                        color: currentPage === item ? t.MINT_DEEP : t.INK,
+                        ...monoStyle,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'background-color 160ms ease',
+                      }}
                     >
                       {item}
                     </button>
-              )
-            }
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="w-8 h-8 flex items-center justify-center rounded bg-surface-container-high text-on-surface-variant disabled:opacity-50 disabled:cursor-not-allowed hover:text-on-surface transition-colors"
-            >
-              <span className="material-symbols-outlined text-[18px]">chevron_right</span>
-            </button>
+                  )
+                )}
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="inline-flex items-center justify-center"
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 999,
+                  background: t.CARD,
+                  border: `1px solid ${t.HAIR_HEAVY}`,
+                  color: currentPage === totalPages ? t.SUBINK : t.INK,
+                  opacity: currentPage === totalPages ? 0.5 : 1,
+                  cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                  transition: 'background-color 160ms ease',
+                }}
+              >
+                <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

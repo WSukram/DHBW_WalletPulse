@@ -4,11 +4,14 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { usePageTitle } from '../hooks/usePageTitle';
 import WalletFormModal from '../components/wallet/WalletFormModal';
+import { LIGHT, DARK, headlineStyle, monoStyle, usePrefersDark } from '../theme/softStack';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   usePageTitle('Dashboard');
+  const isDark = usePrefersDark();
+  const t = isDark ? DARK : LIGHT;
   const [wallets, setWallets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -77,12 +80,48 @@ const Dashboard = () => {
   const totalInvested = wallets.reduce((sum, w) => sum + (w.totalInvested || 0), 0);
   const totalCurrentValue = wallets.reduce((sum, w) => sum + (w.totalCurrentValue || 0), 0);
   const totalProfit = wallets.reduce((sum, w) => sum + (w.totalProfit || 0), 0);
+  const totalPct = calcPercent(totalProfit, totalInvested);
+  const isUp = totalProfit >= 0;
 
-  if (isLoading) return <div className="p-6 text-on-surface text-center">Loading Live-Data from Backend...</div>;
-  if (error) return <div className="p-6 text-error text-center">{error}</div>;
+  const eyebrow = { ...monoStyle, fontSize: 10, letterSpacing: '0.22em', color: t.SUBINK, textTransform: 'uppercase' };
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 overflow-y-auto p-6 lg:p-10">
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="flex items-center gap-3" role="status" aria-live="polite">
+            <span
+              className="w-2.5 h-2.5 rounded-full animate-pulse"
+              style={{ background: t.MINT_DEEP, boxShadow: `0 0 16px ${t.MINT}` }}
+            />
+            <span style={{ ...monoStyle, fontSize: 12, letterSpacing: '0.2em', color: t.SUBINK }}>
+              LOADING · LIVE DATA
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex-1 overflow-y-auto p-6 lg:p-10">
+        <div
+          className="max-w-md mx-auto rounded-3xl p-8 text-center"
+          style={{ background: t.RED_BG, border: `1px solid ${t.HAIR_HEAVY}`, boxShadow: t.SH_CARD, color: t.RED_DEEP }}
+          role="alert"
+        >
+          <div style={{ ...monoStyle, fontSize: 10, letterSpacing: '0.22em', color: t.RED_DEEP, marginBottom: 8 }}>
+            ERROR
+          </div>
+          <div style={{ ...headlineStyle, fontSize: 18, fontWeight: 600 }}>{error}</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 lg:p-layout-margin space-y-8">
+    <div className="flex-1 overflow-y-auto p-6 lg:p-10 space-y-8 max-w-[1240px] mx-auto w-full">
       <WalletFormModal
         mode="create"
         open={showAddWallet}
@@ -99,107 +138,257 @@ const Dashboard = () => {
 
       {/* Header */}
       <div>
-        <h2 className="font-heading-lg text-heading-lg text-on-surface">Overview</h2>
-        <p className="font-body-md text-body-md text-on-surface-variant mt-1">Performance vs. Purchase Price</p>
+        <div style={eyebrow}>OVERVIEW · PORTFOLIO</div>
+        <h1
+          className="mt-2"
+          style={{ ...headlineStyle, fontSize: 'clamp(34px, 4.4vw, 48px)', fontWeight: 600, letterSpacing: '-0.025em', lineHeight: 1, color: t.INK }}
+        >
+          Your portfolio, at a glance.
+        </h1>
+        <p className="mt-3 text-[15px]" style={{ color: t.SUBINK }}>
+          Performance vs. your purchase price, across every connected wallet.
+        </p>
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-surface-container-low rounded-xl p-lg border-t border-t-white/10 border-x border-x-transparent border-b border-b-transparent relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          <p className="font-label-sm text-label-sm text-on-surface-variant uppercase mb-2">Total Portfolio Value</p>
-          <h3 className="font-display-xl text-display-xl text-on-surface">{formatCurrency(totalCurrentValue)}</h3>
-          <div className="mt-4 flex items-center gap-2">
-            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full font-label-sm text-label-sm ${totalProfit >= 0 ? 'bg-secondary/10 text-secondary' : 'bg-error/10 text-error'}`}>
-              <span className="material-symbols-outlined text-[14px]">{totalProfit >= 0 ? 'trending_up' : 'trending_down'}</span>
-              P&amp;L: {totalProfit >= 0 ? '+' : ''}{calcPercent(totalProfit, totalInvested)}%
-            </span>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {/* Hero — Total portfolio value */}
+        <div
+          className="md:col-span-3 relative overflow-hidden rounded-[28px] p-7 md:p-10"
+          style={{
+            background: `linear-gradient(150deg, ${t.CARD} 0%, ${t.CARD_2} 55%, ${t.CARD_3} 100%)`,
+            border: `1px solid ${t.HAIR_HEAVY}`,
+            boxShadow: t.SH_HERO,
+          }}
+        >
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -top-24 -right-16 w-[420px] h-[320px] rounded-full"
+            style={{ background: `radial-gradient(closest-side, ${t.BLOB_MINT}, transparent 70%)`, filter: 'blur(10px)' }}
+          />
+          <div className="relative flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+            <div>
+              <div style={eyebrow}>PORTFOLIO · TOTAL VALUE</div>
+              <div className="mt-3 flex items-baseline gap-2">
+                <span style={{ color: t.SUBINK, fontSize: 18 }}>€</span>
+                <span
+                  className="tabular-nums"
+                  style={{ ...headlineStyle, fontSize: 'clamp(44px, 7vw, 64px)', fontWeight: 600, color: t.INK, letterSpacing: '-0.02em', lineHeight: 1 }}
+                >
+                  {formatCurrency(totalCurrentValue).replace(/^[^\d-]*/, '')}
+                </span>
+              </div>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <span
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full"
+                  style={{
+                    background: isUp ? t.MINT_BG : t.RED_BG,
+                    color: isUp ? t.MINT_DEEP : t.RED_DEEP,
+                    ...monoStyle,
+                    fontSize: 11,
+                    fontWeight: 600,
+                  }}
+                >
+                  {isUp ? '▲' : '▼'} {isUp ? '+' : ''}{totalPct}%
+                </span>
+                <span style={{ ...monoStyle, fontSize: 11, color: t.SUBINK }}>
+                  vs. cost basis
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowAddWallet(true)}
+              className="inline-flex items-center gap-2 text-[14px] font-semibold px-5 py-3 rounded-full transition-all self-start md:self-auto"
+              style={{ background: t.CTA_INK_BG, color: t.CTA_INK_FG, boxShadow: t.SH_CTA_INK }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = t.SH_CTA_INK_H; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = t.SH_CTA_INK; }}
+            >
+              <span className="material-symbols-outlined text-[18px]">add</span>
+              Add wallet
+            </button>
           </div>
-        </div>
 
-        <div className="bg-surface-container-low rounded-xl p-lg border-t border-t-white/10 border-x border-x-transparent border-b border-b-transparent">
-          <p className="font-label-sm text-label-sm text-on-surface-variant uppercase mb-2">Total Investment</p>
-          <h3 className="font-heading-lg text-heading-lg text-on-surface mt-2">{formatCurrency(totalInvested)}</h3>
-          <p className="font-body-md text-body-md text-outline mt-2">Initial cost basis across all connected sources.</p>
-        </div>
-
-        <div className="bg-surface-container-low rounded-xl p-lg border-t border-t-white/10 border-x border-x-transparent border-b border-b-transparent">
-          <p className="font-label-sm text-label-sm text-on-surface-variant uppercase mb-2">Unrealized P&amp;L</p>
-          <h3 className={`font-heading-lg text-heading-lg mt-2 ${totalProfit >= 0 ? 'text-secondary' : 'text-error'}`}>
-            {totalProfit >= 0 ? '+' : ''}{formatCurrency(totalProfit)}
-          </h3>
-          <div className="mt-4 flex items-center gap-2">
-            <span className={`font-data-mono text-data-mono ${totalProfit >= 0 ? 'text-secondary' : 'text-error'}`}>
-              {totalProfit >= 0 ? '+' : ''}{calcPercent(totalProfit, totalInvested)}%
-            </span>
-            <span className="text-outline text-sm">vs. initial investment</span>
+          <div
+            className="relative mt-7 pt-6 grid grid-cols-2 md:grid-cols-3 gap-4"
+            style={{ borderTop: `1px solid ${t.HAIR_HEAVY}` }}
+          >
+            <div>
+              <div style={eyebrow}>COST · INVESTED</div>
+              <div className="mt-2 tabular-nums" style={{ ...headlineStyle, fontSize: 22, fontWeight: 600, color: t.INK }}>
+                {formatCurrency(totalInvested)}
+              </div>
+            </div>
+            <div>
+              <div style={eyebrow}>UNREALIZED · P&amp;L</div>
+              <div
+                className="mt-2 tabular-nums"
+                style={{ ...headlineStyle, fontSize: 22, fontWeight: 600, color: isUp ? t.MINT_DEEP : t.RED_DEEP }}
+              >
+                {isUp ? '+' : ''}{formatCurrency(totalProfit)}
+              </div>
+            </div>
+            <div>
+              <div style={eyebrow}>WALLETS · COUNT</div>
+              <div className="mt-2 tabular-nums" style={{ ...headlineStyle, fontSize: 22, fontWeight: 600, color: t.INK }}>
+                {wallets.length}
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Connected Wallets Table */}
-      <div className="bg-surface-container-low rounded-xl border border-white/5 overflow-hidden">
-        <div className="p-6 border-b border-white/5 flex justify-between items-center">
-          <h3 className="font-heading-md text-heading-md text-on-surface">Connected Wallets</h3>
+      {/* Connected Wallets */}
+      <div
+        className="rounded-[28px] overflow-hidden"
+        style={{ background: t.CARD, border: `1px solid ${t.HAIR_HEAVY}`, boxShadow: t.SH_CARD }}
+      >
+        <div
+          className="px-6 py-5 md:px-8 md:py-6 flex items-center justify-between gap-4"
+          style={{ borderBottom: `1px solid ${t.HAIR_DIV}` }}
+        >
+          <div>
+            <div style={eyebrow}>HOLDINGS · WALLETS</div>
+            <h2 className="mt-1.5" style={{ ...headlineStyle, fontSize: 22, fontWeight: 600, color: t.INK }}>
+              Connected wallets
+            </h2>
+          </div>
           <button
             onClick={() => setShowAddWallet(true)}
-            className="text-sm font-medium text-primary hover:text-primary-fixed transition-colors flex items-center gap-1"
+            className="inline-flex items-center gap-1.5 text-[13px] font-medium px-4 py-2 rounded-full transition-colors"
+            style={{ background: 'transparent', color: t.INK, border: `1px solid ${t.HAIR_STRONG}` }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = t.CARD_2; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
           >
-            <span className="material-symbols-outlined text-[18px]">add</span> Add Wallet
+            <span className="material-symbols-outlined text-[16px]">add</span>
+            Add wallet
           </button>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-surface-container border-b border-white/5 font-label-sm text-label-sm text-on-surface-variant uppercase">
-                <th className="px-6 py-4">Wallet Name</th>
-                <th className="px-6 py-4 text-right">Initial Cost</th>
-                <th className="px-6 py-4 text-right">Current Value</th>
-                <th className="px-6 py-4 text-right">Net P&amp;L</th>
-              </tr>
-            </thead>
-            <tbody className="font-body-md text-body-md text-on-surface divide-y divide-white/5">
-              {wallets.length > 0 ? (
-                wallets.map((wallet) => (
-                  <tr
-                    key={wallet.id}
-                    onClick={() => navigate('/wallet', { state: { walletId: wallet.id } })}
-                    className="hover:bg-surface-bright/30 transition-colors group cursor-pointer"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded bg-surface-container flex items-center justify-center text-outline group-hover:text-primary transition-colors">
-                          <span className="material-symbols-outlined">account_balance_wallet</span>
-                        </div>
-                        <div>
-                          <div className="font-medium text-on-surface group-hover:text-primary transition-colors">{wallet.name}</div>
-                          <div className="text-xs text-outline font-data-mono">{wallet.assets?.length ?? 0} {wallet.assets?.length === 1 ? 'Asset' : 'Assets'}</div>
-                        </div>
+
+        {wallets.length > 0 ? (
+          <ul className="divide-y" style={{ borderColor: t.HAIR_DIV }}>
+            {wallets.map((wallet) => {
+              const wUp = (wallet.totalProfit || 0) >= 0;
+              const wPct = calcPercent(wallet.totalProfit, wallet.totalInvested);
+              const assetCount = wallet.assets?.length ?? 0;
+              return (
+                <li
+                  key={wallet.id}
+                  onClick={() => navigate('/wallet', { state: { walletId: wallet.id } })}
+                  className="px-6 py-5 md:px-8 md:py-5 cursor-pointer transition-colors"
+                  style={{ borderColor: t.HAIR_DIV }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = t.CARD_2)}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      navigate('/wallet', { state: { walletId: wallet.id } });
+                    }
+                  }}
+                >
+                  <div className="flex items-center gap-4">
+                    {/* Coin chip */}
+                    <span
+                      className="inline-flex w-11 h-11 rounded-2xl items-center justify-center"
+                      style={{ background: t.LAVENDER, border: `1px solid ${t.HAIR}` }}
+                      aria-hidden="true"
+                    >
+                      <span className="material-symbols-outlined text-[20px]" style={{ color: t.LAVENDER_TEXT }}>
+                        account_balance_wallet
+                      </span>
+                    </span>
+
+                    {/* Name + assets */}
+                    <div className="flex-1 min-w-0">
+                      <div className="truncate" style={{ ...headlineStyle, fontSize: 16, fontWeight: 600, color: t.INK }}>
+                        {wallet.name}
                       </div>
-                    </td>
-                    <td className="px-6 py-4 text-right font-data-mono text-data-mono">{formatCurrency(wallet.totalInvested)}</td>
-                    <td className="px-6 py-4 text-right font-data-mono text-data-mono">{formatCurrency(wallet.totalCurrentValue)}</td>
-                    <td className="px-6 py-4 text-right">
-                      <div className={`font-data-mono text-data-mono ${wallet.totalProfit >= 0 ? 'text-secondary' : 'text-error'}`}>
-                        {wallet.totalProfit >= 0 ? '+' : ''}{formatCurrency(wallet.totalProfit)}
+                      <div className="mt-0.5" style={{ ...monoStyle, fontSize: 11, color: t.SUBINK }}>
+                        {assetCount} {assetCount === 1 ? 'asset' : 'assets'}
                       </div>
-                      <div className={`text-xs mt-1 ${wallet.totalProfit >= 0 ? 'text-secondary' : 'text-error'}`}>
-                        {wallet.totalProfit >= 0 ? '+' : ''}{calcPercent(wallet.totalProfit, wallet.totalInvested)}%
+                    </div>
+
+                    {/* Cost (hidden on small) */}
+                    <div className="hidden md:block text-right min-w-[120px]">
+                      <div style={{ ...monoStyle, fontSize: 10, letterSpacing: '0.18em', color: t.SUBINK }}>COST</div>
+                      <div className="mt-1 tabular-nums" style={{ ...monoStyle, fontSize: 13, color: t.INK }}>
+                        {formatCurrency(wallet.totalInvested)}
                       </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="4" className="px-6 py-8 text-center text-outline">
-                    No wallets found.{' '}
-                    <button onClick={() => setShowAddWallet(true)} className="text-primary underline">Add a wallet</button> to get started.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                    </div>
+
+                    {/* Current value */}
+                    <div className="hidden sm:block text-right min-w-[120px]">
+                      <div style={{ ...monoStyle, fontSize: 10, letterSpacing: '0.18em', color: t.SUBINK }}>VALUE</div>
+                      <div className="mt-1 tabular-nums" style={{ ...monoStyle, fontSize: 13, color: t.INK }}>
+                        {formatCurrency(wallet.totalCurrentValue)}
+                      </div>
+                    </div>
+
+                    {/* P&L */}
+                    <div className="text-right min-w-[110px]">
+                      <div
+                        className="tabular-nums"
+                        style={{ ...monoStyle, fontSize: 13, fontWeight: 600, color: wUp ? t.MINT_DEEP : t.RED_DEEP }}
+                      >
+                        {wUp ? '+' : ''}{formatCurrency(wallet.totalProfit)}
+                      </div>
+                      <span
+                        className="inline-flex items-center mt-1 px-1.5 py-0.5 rounded"
+                        style={{
+                          background: wUp ? t.MINT_BG : t.RED_BG,
+                          color: wUp ? t.MINT_DEEP : t.RED_DEEP,
+                          ...monoStyle,
+                          fontSize: 10,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {wUp ? '▲' : '▼'} {wUp ? '+' : ''}{wPct}%
+                      </span>
+                    </div>
+
+                    <span
+                      className="material-symbols-outlined hidden sm:inline-block text-[20px] ml-1"
+                      style={{ color: t.SUBINK }}
+                      aria-hidden="true"
+                    >
+                      chevron_right
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <div className="px-6 py-14 md:px-8 text-center">
+            <div
+              className="mx-auto w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
+              style={{ background: t.MINT_BG, border: `1px solid ${t.MINT_CIRCLE_BORDER}` }}
+              aria-hidden="true"
+            >
+              <span className="material-symbols-outlined text-[26px]" style={{ color: t.MINT_DEEP }}>
+                account_balance_wallet
+              </span>
+            </div>
+            <h3 style={{ ...headlineStyle, fontSize: 20, fontWeight: 600, color: t.INK }}>
+              No wallets yet
+            </h3>
+            <p className="mt-2 text-[14px] max-w-sm mx-auto" style={{ color: t.SUBINK }}>
+              Add your first wallet to start tracking live valuations, cost basis and P&amp;L.
+            </p>
+            <button
+              onClick={() => setShowAddWallet(true)}
+              className="mt-6 inline-flex items-center gap-2 text-[14px] font-semibold px-5 py-3 rounded-full transition-all"
+              style={{ background: t.CTA_INK_BG, color: t.CTA_INK_FG, boxShadow: t.SH_CTA_INK }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = t.SH_CTA_INK_H; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = t.SH_CTA_INK; }}
+            >
+              <span className="material-symbols-outlined text-[18px]">add</span>
+              Add a wallet
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
