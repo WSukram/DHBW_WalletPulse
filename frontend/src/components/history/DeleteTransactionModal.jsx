@@ -51,11 +51,11 @@ const DeleteTransactionModal = ({ tx, deleting, onClose, onConfirm, formatEur, f
         fontFamily: bodyFontFamily,
       }}
       onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Delete transaction"
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-tx-title"
         className="w-full max-w-[440px]"
         style={{
           background: t.CARD,
@@ -82,7 +82,7 @@ const DeleteTransactionModal = ({ tx, deleting, onClose, onConfirm, formatEur, f
               <div style={{ ...monoStyle, fontSize: 10, letterSpacing: '0.22em', color: t.SUBINK, marginBottom: 4 }}>
                 DELETE · TRANSACTION
               </div>
-              <h3 style={{ ...headlineStyle, fontWeight: 600, fontSize: 22, color: t.INK, lineHeight: 1.15 }}>
+              <h3 id="delete-tx-title" style={{ ...headlineStyle, fontWeight: 600, fontSize: 22, color: t.INK, lineHeight: 1.15 }}>
                 Delete transaction?
               </h3>
             </div>

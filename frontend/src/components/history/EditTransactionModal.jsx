@@ -77,11 +77,11 @@ const EditTransactionModal = ({ tx, form, setForm, saving, errorMsg, onClose, on
         fontFamily: bodyFontFamily,
       }}
       onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Edit transaction"
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="edit-tx-title"
         className="w-full max-w-[460px]"
         style={{
           background: t.CARD,
@@ -101,7 +101,7 @@ const EditTransactionModal = ({ tx, form, setForm, saving, errorMsg, onClose, on
             <div style={{ ...monoStyle, fontSize: 10, letterSpacing: '0.22em', color: t.SUBINK, marginBottom: 6 }}>
               EDIT · TRANSACTION
             </div>
-            <h3 style={{ ...headlineStyle, fontWeight: 600, fontSize: 24, color: t.INK, lineHeight: 1.15 }}>
+            <h3 id="edit-tx-title" style={{ ...headlineStyle, fontWeight: 600, fontSize: 24, color: t.INK, lineHeight: 1.15 }}>
               Edit transaction
             </h3>
           </div>

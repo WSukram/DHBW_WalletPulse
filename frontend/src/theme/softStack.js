@@ -147,5 +147,3 @@ export const usePrefersDark = () => {
   }, []);
   return isDark;
 };
-
-export const useTheme = () => (usePrefersDark() ? DARK : LIGHT);

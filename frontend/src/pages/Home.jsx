@@ -646,11 +646,7 @@ const Home = () => {
                         className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
                         style={{ background: '#FFFFFF', border: `1px solid ${t.HAIR}`, boxShadow: t.SH_PILL }}
                       >
-                        {api.logo ? (
-                          <img src={api.logo} alt={api.name} className="w-7 h-7" loading="lazy" />
-                        ) : (
-                          <span className="material-symbols-outlined" style={{ fontSize: 26, color: '#FF6B35', fontVariationSettings: "'FILL' 1" }}>flare</span>
-                        )}
+                        <img src={api.logo} alt={api.name} className="w-7 h-7" loading="lazy" />
                       </span>
                       <div>
                         <h3 className="text-[22px] font-semibold" style={headlineStyle}>{api.name}</h3>
