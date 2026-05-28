@@ -73,17 +73,7 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     applyTheme(theme);
-  }, [theme]);
-
-  // When the user is on "System", follow live OS theme changes.
-  useEffect(() => {
-    if (theme !== 'System') return undefined;
-    if (typeof window === 'undefined' || !window.matchMedia) return undefined;
-    const mql = window.matchMedia('(prefers-color-scheme: dark)');
-    const onChange = () => applyTheme('System');
-    mql.addEventListener('change', onChange);
-    return () => mql.removeEventListener('change', onChange);
-  }, [theme]);
+  }, []);
 
   // Pull a live EUR→USD rate from frankfurter.app (free, no key) and the
   // current BTC/EUR price from our own backend. BTC moves quickly; FX moves

@@ -30,5 +30,5 @@ public class User {
 
     @Builder.Default
     @Column(nullable = false)
-    private String preferredTheme = "Dark";
+    private String preferredTheme = "System";
 }
