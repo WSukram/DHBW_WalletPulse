@@ -291,8 +291,9 @@ const Security = () => {
             </div>
             <form className="p-7 space-y-5" onSubmit={handlePasswordUpdate}>
               <div>
-                <label style={labelStyle}>Current password</label>
+                <label htmlFor="current-password" style={labelStyle}>Current password</label>
                 <input
+                  id="current-password"
                   type="password"
                   style={inputStyle}
                   placeholder="Enter current password"
@@ -305,8 +306,9 @@ const Security = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                  <label style={labelStyle}>New password</label>
+                  <label htmlFor="new-password" style={labelStyle}>New password</label>
                   <input
+                    id="new-password"
                     type="password"
                     style={inputStyle}
                     placeholder="Min. 12 characters"
@@ -318,8 +320,9 @@ const Security = () => {
                   />
                 </div>
                 <div>
-                  <label style={labelStyle}>Confirm new password</label>
+                  <label htmlFor="confirm-password" style={labelStyle}>Confirm new password</label>
                   <input
+                    id="confirm-password"
                     type="password"
                     style={inputStyle}
                     placeholder="Repeat new password"
@@ -438,6 +441,9 @@ const Security = () => {
           onClick={() => setShowDeleteModal(false)}
         >
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-modal-title"
             className="w-full max-w-[480px]"
             style={{
               background: t.CARD,
@@ -468,7 +474,7 @@ const Security = () => {
                   <div style={{ ...monoStyle, fontSize: 10, letterSpacing: '0.22em', color: t.SUBINK, marginBottom: 6 }}>
                     DANGER · DELETE
                   </div>
-                  <h3 style={{ ...headlineStyle, fontWeight: 600, fontSize: 24, color: t.INK, lineHeight: 1.15 }}>
+                  <h3 id="delete-modal-title" style={{ ...headlineStyle, fontWeight: 600, fontSize: 24, color: t.INK, lineHeight: 1.15 }}>
                     Delete account
                   </h3>
                 </div>
@@ -505,8 +511,9 @@ const Security = () => {
               </p>
 
               <div className="mb-5">
-                <label style={labelStyle}>Current password</label>
+                <label htmlFor="delete-password" style={labelStyle}>Current password</label>
                 <input
+                  id="delete-password"
                   type="password"
                   style={inputStyle}
                   placeholder="Enter your password to confirm"
