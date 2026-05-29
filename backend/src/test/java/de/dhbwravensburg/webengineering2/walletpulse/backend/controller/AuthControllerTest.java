@@ -30,7 +30,7 @@ class AuthControllerTest {
     }
 
     @Test
-    void register_validData_returns200AndToken() throws Exception {
+    void register_validData_returns201AndToken() throws Exception {
         Map<String, String> body = Map.of(
                 "firstName", "John",
                 "lastName", "Doe",
@@ -41,7 +41,7 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.token").isNotEmpty())
                 .andExpect(jsonPath("$.email").isNotEmpty());
     }
@@ -107,7 +107,7 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -128,7 +128,7 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(registerBody)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
         Map<String, String> loginBody = Map.of("email", email, "password", "securepass123");
 
@@ -151,7 +151,7 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(registerBody)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
         Map<String, String> loginBody = Map.of("email", email, "password", "wrongpassword");
 
