@@ -45,7 +45,7 @@ Database name (`walletpulse`) and user (`postgres`) are hardcoded in `docker-com
 ## Starting the Application
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 This starts the database, backend, and frontend containers with healthchecks. On first start, Spring Boot creates the database schema automatically.
@@ -53,7 +53,7 @@ This starts the database, backend, and frontend containers with healthchecks. On
 Stop the application with:
 
 ```bash
-docker-compose down
+docker compose down
 ```
 
 Start the application in detached mode with:
@@ -65,7 +65,7 @@ docker compose up -d
 To wipe all data and start fresh, run:
 
 ```bash
-docker-compose down -v && docker-compose up --build
+docker compose down -v && docker compose up --build
 ```
 
 ## Local Service URLs

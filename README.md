@@ -148,7 +148,7 @@ The frontend is a React SPA. Axios is configured once in `utils/api.js` with a b
 │   ├── src/main/resources/
 │   │   ├── application.properties  # Minimal config for test suite only (excluded from Docker)
 │   │   └── graphql/schema.graphqls # GraphQL schema
-│   ├── src/test/java/.../          # 38 tests (service, controller, smoke tests)
+│   ├── src/test/java/.../          # 42 tests (service, controller, smoke tests)
 │   ├── Dockerfile                  # Multi-stage: Maven → JRE
 │   └── pom.xml
 ├── frontend/
@@ -227,7 +227,7 @@ User
                └── totalAmount (sum of transactions)
                 │
                 └──► Transaction (OneToMany, cascadeAll)
-                      ├── date, amount, pricePerCoin (EUR)
+                      ├── date, amount, buyPrice (EUR)
                       └── source (MANUAL | IMPORTED), txHash
 
 HistoricalPrice (standalone cache)
@@ -258,7 +258,7 @@ Open `.env` and fill in your values. At minimum you must replace `JWT_SECRET`. S
 ### 2. Start everything
 
 ```bash
-docker-compose up --build -d
+docker compose up --build -d
 ```
 
 This starts PostgreSQL, the Spring Boot backend, and the React frontend in the correct order using healthchecks. On first run the images are built locally — this takes a few minutes.
@@ -269,7 +269,7 @@ This starts PostgreSQL, the Spring Boot backend, and the React frontend in the c
 | API Docs | http://localhost:3000/docs |
 | GraphiQL | http://localhost:3000/graphiql |
 
-After the initial build, subsequent runs are much faster. To stop the container without losing data, type `docker-compose down`. The PostgreSQL data is persisted in a Docker volume, so your wallets and transactions remain intact across restarts. To start the database, run `docker-compose up -d`. If you want to wipe all data and start fresh, run `docker-compose down -v` to remove the volume.
+After the initial build, subsequent runs are much faster. To stop the container without losing data, type `docker compose down`. The PostgreSQL data is persisted in a Docker volume, so your wallets and transactions remain intact across restarts. To start the database, run `docker compose up -d`. If you want to wipe all data and start fresh, run `docker compose down -v` to remove the volume.
 
 ### 3. Register an account
 
@@ -408,7 +408,7 @@ cd backend
 ./mvnw test
 ```
 
-38 tests across:
+42 tests across:
 
 | Class | What it tests |
 |---|---|

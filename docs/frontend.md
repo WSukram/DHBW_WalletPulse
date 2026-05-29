@@ -33,12 +33,12 @@ Protected routes are wrapped by `PrivateRoute` (redirects to `/login` if unauthe
 
 | Path | Page |
 |---|---|
-| `/dashboard` | Portfolio summary, total value, allocation chart |
+| `/dashboard` | Portfolio summary, total value |
 | `/wallet` | Per-wallet asset list and transaction history |
 | `/assets` | All assets grouped by coin across wallets |
 | `/history` | Full transaction history with CSV export |
 | `/analytics` | Historical portfolio value chart |
-| `/security` | Change password |
+| `/security` | Change password, display currency, theme preferences, account deletion |
 
 ## Key Files
 
@@ -60,7 +60,7 @@ Protected routes are wrapped by `PrivateRoute` (redirects to `/login` if unauthe
 
 | File | Purpose |
 |---|---|
-| `hooks/useLivePrices.js` | Fetches `GET /api/market/prices` (public) on mount and every 60 s. Used by `Home.jsx` and `AppContext` (for the BTC/EUR conversion rate). |
+| `hooks/useLivePrices.js` | Fetches `GET /api/market/prices` (public) on mount and every 60 s. Used by `Home.jsx`. |
 | `hooks/usePortfolioData.js` | Cascades `GET /api/wallets → GET /api/wallets/{id}/portfolio → GET /api/assets/{id}/transactions`. Returns `{ wallets, portfolios, transactions, isLoading, error, reload }`. Used by Analytics, Assets, and History. |
 | `hooks/usePageTitle.js` | One-liner that sets `document.title = '${title} · WalletPulse'`. |
 
@@ -72,7 +72,7 @@ Protected routes are wrapped by `PrivateRoute` (redirects to `/login` if unauthe
 
 The codebase uses **inline theme tokens** rather than utility class names for colors. Layout primitives (`flex`, `grid`, `gap-*`, `rounded-*`, responsive `md:` / `lg:` prefixes) still come from Tailwind. Surfaces, text, hairlines, shadows, and brand tints come from the `LIGHT`/`DARK` objects in `theme/softStack.js`.
 
-Dark mode is driven by the `.dark` class on `<html>`, which `AppContext` toggles in response to the user's preference (`Light` / `Dark` / `System`). When set to `System`, AppContext also listens to `matchMedia('(prefers-color-scheme: dark)')` so the app follows live OS theme changes.
+Dark mode is driven by the `.dark` class on `<html>`, which `AppContext` toggles in response to the user's preference (`Light` / `Dark` / `System`). The `.dark` class is the single source of truth — `usePrefersDark()` observes this class via `MutationObserver` with no live OS listener.
 
 Provider logos (CoinGecko, Etherscan, Helius, Blockstream) shown on the Home page live in `public/logos/` as PNGs.
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The backend has 38 tests written with JUnit 5 and Spring Boot Test. Tests use an H2 in-memory database configured with `MODE=PostgreSQL` — no running PostgreSQL instance is needed.
+The backend has 42 tests written with JUnit 5 and Spring Boot Test. Tests use an H2 in-memory database configured with `MODE=PostgreSQL` — no running PostgreSQL instance is needed.
 
 ## Running Tests
 
@@ -58,4 +58,4 @@ These tests load the full Spring context, start an embedded server, and exercise
 
 - The `shouldDeleteTransactionAndAssetWhenLastOne` and `shouldDeleteTransactionButKeepAssetWhenOthersRemain` tests verify the orphan-cleanup behaviour in `TransactionService`.
 - External API clients (`CoinGeckoClient`, `EtherscanClient`, etc.) are mocked in tests that exercise the services depending on them.
-- Controller integration tests stub out external API clients via `@MockitoBean` so HTTP-level behaviour can be exercised without real network calls.
+- Controller integration tests are full-context integration tests that exercise HTTP endpoints end-to-end. External API clients remain as real dependencies in the Spring context.

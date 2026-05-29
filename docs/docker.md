@@ -6,7 +6,7 @@
 
 `backend/Dockerfile` — two-stage build:
 
-1. **Builder**: `maven:3-eclipse-temurin-21` — runs `./mvnw package -DskipTests` to produce the JAR.
+1. **Builder**: `maven:3-eclipse-temurin-21` — runs `mvn package -DskipTests` to produce the JAR.
 2. **Runtime**: `eclipse-temurin:21-jre` (Ubuntu) — copies the JAR and runs it. `curl` is installed for the compose healthcheck.
 
 `backend/.dockerignore` excludes `application.properties` so the committed defaults never shadow environment variable secrets injected by Docker Compose.
