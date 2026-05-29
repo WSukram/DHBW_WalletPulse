@@ -1,2 +1,7 @@
 target/
 src/main/resources/application.properties
+.git
+*.md
+.env
+.idea
+*.iml
