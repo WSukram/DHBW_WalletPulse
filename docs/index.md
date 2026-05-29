@@ -16,7 +16,7 @@ WalletPulse is a crypto portfolio management application. Users track Bitcoin, E
 | Backend | Spring Boot 4, Spring Security, Spring GraphQL |
 | Database | PostgreSQL 15 |
 | Frontend | React 19, Vite |
-| Styling | Tailwind CSS v3, Material 3 design tokens |
+| Styling | Tailwind CSS v3, custom soft-stack design system (LIGHT/DARK tokens) |
 | API docs | Scalar (OpenAPI 3) |
 | Auth | Stateless JWT  |
 | Prices | CoinGecko API |

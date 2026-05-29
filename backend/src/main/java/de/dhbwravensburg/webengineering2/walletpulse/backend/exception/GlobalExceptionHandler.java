@@ -3,6 +3,9 @@ package de.dhbwravensburg.webengineering2.walletpulse.backend.exception;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import de.dhbwravensburg.webengineering2.walletpulse.backend.controller.dto.ErrorResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -15,35 +18,35 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     @ExceptionHandler(ResourceNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public Map<String, String> handleResourceNotFound(ResourceNotFoundException ex) {
-        return Map.of(
-                "error", ex.getMessage()
-        );
+    public ErrorResponse handleResourceNotFound(ResourceNotFoundException ex) {
+        return new ErrorResponse(ex.getMessage(), null);
     }
 
     @ExceptionHandler(BusinessException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleBusiness(BusinessException ex) {
-        return Map.of("error", ex.getMessage());
+    public ErrorResponse handleBusiness(BusinessException ex) {
+        return new ErrorResponse(ex.getMessage(), null);
     }
 
     @ExceptionHandler(ConflictException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public Map<String, String> handleConflict(ConflictException ex) {
-        return Map.of("error", ex.getMessage());
+    public ErrorResponse handleConflict(ConflictException ex) {
+        return new ErrorResponse(ex.getMessage(), null);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleIllegalArgument(IllegalArgumentException ex) {
-        return Map.of("error", ex.getMessage() != null ? ex.getMessage() : "Invalid request");
+    public ErrorResponse handleIllegalArgument(IllegalArgumentException ex) {
+        return new ErrorResponse(ex.getMessage() != null ? ex.getMessage() : "Invalid request", null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, Object> handleValidationErrors(MethodArgumentNotValidException ex) {
+    public ErrorResponse handleValidationErrors(MethodArgumentNotValidException ex) {
         Map<String, String> fieldErrors = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
@@ -52,30 +55,25 @@ public class GlobalExceptionHandler {
                         e -> e.getDefaultMessage() != null ? e.getDefaultMessage() : "invalid",
                         (first, second) -> first
                 ));
-        return Map.of("errors", fieldErrors);
+        return new ErrorResponse(null, fieldErrors);
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public Map<String, String> handleBadCredentials(BadCredentialsException ex) {
-        return Map.of("error", "Invalid email or password");
+    public ErrorResponse handleBadCredentials(BadCredentialsException ex) {
+        return new ErrorResponse("Invalid email or password", null);
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public Map<String, String> handleUsernameNotFound(UsernameNotFoundException ex) {
-        return Map.of("error", "Account no longer exists");
-    }
-
-    @ExceptionHandler(IllegalStateException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleIllegalState(IllegalStateException ex) {
-        return Map.of("error", ex.getMessage());
+    public ErrorResponse handleUsernameNotFound(UsernameNotFoundException ex) {
+        return new ErrorResponse("Account no longer exists", null);
     }
 
     @ExceptionHandler(RuntimeException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public Map<String, String> handleRuntime(RuntimeException ex) {
-        return Map.of("error", "An unexpected error occurred");
+    public ErrorResponse handleRuntime(RuntimeException ex) {
+        log.error("Unhandled exception", ex);
+        return new ErrorResponse("An unexpected error occurred", null);
     }
 }

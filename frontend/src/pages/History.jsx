@@ -12,7 +12,7 @@ import { LIGHT, DARK, headlineStyle, monoStyle, usePrefersDark } from '../theme/
 const formatDate = (dateStr) => {
   if (!dateStr) return '—';
   const d = new Date(dateStr);
-  return d.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
 const explorerUrl = (chainType, txHash) => {

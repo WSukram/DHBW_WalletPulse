@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import { useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
@@ -71,6 +71,7 @@ const Wallet = () => {
   const t = isDark ? DARK : LIGHT;
 
   const [portfolios, setPortfolios] = useState([]);
+  const portfoliosRef = useRef(portfolios);
   const [selectedWalletId, setSelectedWalletId] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [isLoadingList, setIsLoadingList] = useState(true);
@@ -106,6 +107,8 @@ const Wallet = () => {
   const [txForm, setTxForm] = useState({ coinId: '', amount: '', buyPrice: '', date: '' });
   const [savingTx, setSavingTx] = useState(false);
   const [txError, setTxError] = useState('');
+
+  useEffect(() => { portfoliosRef.current = portfolios; }, [portfolios]);
 
   const loadPortfolios = () =>
     axios.get('/api/wallets')
@@ -145,7 +148,7 @@ const Wallet = () => {
 
   useEffect(() => {
     if (!selectedWalletId) return;
-    const p = portfolios.find((p) => p.id === selectedWalletId);
+    const p = portfoliosRef.current.find((p) => p.id === selectedWalletId);
     if (!p) return;
     setIsLoadingDetail(true);
     loadTransactions(p)

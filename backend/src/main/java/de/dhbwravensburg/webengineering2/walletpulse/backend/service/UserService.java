@@ -38,6 +38,7 @@ public class UserService {
             throw new BusinessException("Current password is incorrect");
         }
         walletRepository.deleteAll(walletRepository.findAllByOwnerEmail(email));
+        walletRepository.flush();
         userRepository.delete(user);
     }
 

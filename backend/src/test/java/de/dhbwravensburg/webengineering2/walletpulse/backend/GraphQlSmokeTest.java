@@ -58,7 +58,7 @@ class GraphQlSmokeTest {
                                 "email", email,
                                 "password", "securepass123"
                         ))))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andReturn();
 
         String token = objectMapper.readTree(registerResult.getResponse().getContentAsString())

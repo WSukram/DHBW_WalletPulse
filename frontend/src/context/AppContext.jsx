@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -71,6 +71,19 @@ export const AppProvider = ({ children }) => {
   const themeRef = useRef(theme);
   const [rates, setRates] = useState(FALLBACK_RATES);
 
+  const clearSession = useCallback(() => {
+    localStorage.removeItem('wp_token');
+    localStorage.removeItem('wp_user');
+    localStorage.removeItem('wp_currency');
+    localStorage.removeItem('wp_theme');
+    delete axios.defaults.headers.common['Authorization'];
+    setCurrencyRaw('EUR');
+    currencyRef.current = 'EUR';
+    setThemeRaw('System');
+    themeRef.current = 'System';
+    setUser(null);
+  }, []);
+
   useEffect(() => {
     applyTheme(theme);
   }, []);
@@ -140,7 +153,7 @@ export const AppProvider = ({ children }) => {
     };
     schedule();
     return () => clearTimeout(timer);
-  }, [user]);
+  }, [user, clearSession, navigate]);
 
   // Auto-refresh the JWT shortly before it expires. We trigger a refresh on the
   // first request that finds less than two minutes of lifetime left and share
@@ -193,19 +206,6 @@ export const AppProvider = ({ children }) => {
     );
     return () => axios.interceptors.response.eject(interceptor);
   }, [navigate]);
-
-  const clearSession = () => {
-    localStorage.removeItem('wp_token');
-    localStorage.removeItem('wp_user');
-    localStorage.removeItem('wp_currency');
-    localStorage.removeItem('wp_theme');
-    delete axios.defaults.headers.common['Authorization'];
-    setCurrencyRaw('EUR');
-    currencyRef.current = 'EUR';
-    setThemeRaw('System');
-    themeRef.current = 'System';
-    setUser(null);
-  };
 
   const setCurrency = (c) => {
     setCurrencyRaw(c);
