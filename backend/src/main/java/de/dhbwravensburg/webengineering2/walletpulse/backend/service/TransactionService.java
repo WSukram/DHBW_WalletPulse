@@ -61,6 +61,7 @@ public class TransactionService {
         Transaction existing = getTransactionById(transactionId, ownerEmail);
         Asset asset = existing.getAsset();
         transactionRepository.delete(existing);
+        transactionRepository.flush();
         if (transactionRepository.countByAssetId(asset.getId()) == 0) {
             assetRepository.delete(asset);
         }

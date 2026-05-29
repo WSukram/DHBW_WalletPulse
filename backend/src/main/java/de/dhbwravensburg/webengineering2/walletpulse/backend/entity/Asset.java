@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -33,5 +34,6 @@ public class Asset {
     private Wallet wallet;
 
     @OneToMany(mappedBy = "asset", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Transaction> transactions;
+    @Builder.Default
+    private List<Transaction> transactions = new ArrayList<>();
 }

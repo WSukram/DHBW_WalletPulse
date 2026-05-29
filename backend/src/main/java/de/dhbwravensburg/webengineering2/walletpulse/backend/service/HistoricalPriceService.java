@@ -3,6 +3,7 @@ package de.dhbwravensburg.webengineering2.walletpulse.backend.service;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.api.CoinGeckoClient;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.api.CryptoCompareClient;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.HistoricalPrice;
+import de.dhbwravensburg.webengineering2.walletpulse.backend.exception.BusinessException;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.HistoricalPriceRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,7 +104,7 @@ public class HistoricalPriceService {
         }
 
         String symbol = COINGECKO_TO_CC_SYMBOL.get(coinId);
-        if (symbol == null) throw new RuntimeException("No price source available for unknown coin: " + coinId);
+        if (symbol == null) throw new BusinessException("No price source available for unknown coin: " + coinId);
         return cryptoCompareClient.getDailyCloseInEur(symbol, date);
     }
 }

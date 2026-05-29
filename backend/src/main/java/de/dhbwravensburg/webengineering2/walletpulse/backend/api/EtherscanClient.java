@@ -1,5 +1,6 @@
 package de.dhbwravensburg.webengineering2.walletpulse.backend.api;
 
+import de.dhbwravensburg.webengineering2.walletpulse.backend.exception.BusinessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +31,9 @@ public class EtherscanClient {
     }
 
     public List<Map<String, String>> getNormalTransactions(String address) {
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new BusinessException("Etherscan API key is not configured");
+        }
         String url = String.format(
                 "%s?chainid=1&module=account&action=txlist&address=%s&startblock=0&endblock=99999999&sort=asc&apikey=%s",
                 apiUrl, address, apiKey
@@ -38,6 +42,9 @@ public class EtherscanClient {
     }
 
     public List<Map<String, String>> getErc20Transfers(String address) {
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new BusinessException("Etherscan API key is not configured");
+        }
         String url = String.format(
                 "%s?chainid=1&module=account&action=tokentx&address=%s&startblock=0&endblock=99999999&sort=asc&apikey=%s",
                 apiUrl, address, apiKey

@@ -17,6 +17,7 @@ import java.util.Map;
 public class BlockstreamClient {
 
     private static final Logger log = LoggerFactory.getLogger(BlockstreamClient.class);
+    private static final int MAX_PAGES = 200;
 
     private final RestTemplate restTemplate;
 
@@ -30,8 +31,14 @@ public class BlockstreamClient {
     public List<Map<String, Object>> getTransactions(String address) {
         List<Map<String, Object>> all = new ArrayList<>();
         String lastSeenTxid = null;
+        int pageCount = 0;
 
         while (true) {
+            if (pageCount >= MAX_PAGES) {
+                log.warn("Blockstream pagination cap ({} pages) reached for address {}", MAX_PAGES, address);
+                break;
+            }
+            pageCount++;
             String url = apiUrl + "/address/" + address + "/txs";
             if (lastSeenTxid != null) {
                 url += "/chain/" + lastSeenTxid;

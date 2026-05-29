@@ -72,7 +72,7 @@ public class CoinGeckoClient {
         }
     }
 
-    @Cacheable(value = "marketPrices", key = "new java.util.TreeSet(#coinIds).toString()")
+    @Cacheable(value = "marketPrices", key = "#coinIds.toString()")
     public Map<String, MarketPrice> getMarketPrices(List<String> coinIds) {
         String ids = String.join(",", coinIds);
         String url = String.format("%s/simple/price?ids=%s&vs_currencies=eur&include_24hr_change=true", apiUrl, ids);

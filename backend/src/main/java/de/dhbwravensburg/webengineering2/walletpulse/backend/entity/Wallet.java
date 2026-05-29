@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -43,5 +44,6 @@ public class Wallet {
     @OneToMany(mappedBy = "wallet",
             cascade = CascadeType.ALL,
             orphanRemoval = true)
-    private List<Asset> assets;
+    @Builder.Default
+    private List<Asset> assets = new ArrayList<>();
 }

@@ -1,5 +1,6 @@
 package de.dhbwravensburg.webengineering2.walletpulse.backend.api;
 
+import de.dhbwravensburg.webengineering2.walletpulse.backend.exception.BusinessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +18,7 @@ import java.util.Map;
 public class HeliusClient {
 
     private static final Logger log = LoggerFactory.getLogger(HeliusClient.class);
+    private static final int MAX_PAGES = 200;
 
     private final RestTemplate restTemplate;
 
@@ -31,10 +33,19 @@ public class HeliusClient {
     }
 
     public List<Map<String, Object>> getTransactions(String address) {
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new BusinessException("Helius API key is not configured");
+        }
         List<Map<String, Object>> all = new ArrayList<>();
         String before = null;
+        int pageCount = 0;
 
         while (true) {
+            if (pageCount >= MAX_PAGES) {
+                log.warn("Helius pagination cap ({} pages) reached for address {}", MAX_PAGES, address);
+                break;
+            }
+            pageCount++;
             String url = apiUrl + "/addresses/" + address + "/transactions?api-key=" + apiKey + "&limit=100";
             if (before != null) {
                 url += "&before=" + before;

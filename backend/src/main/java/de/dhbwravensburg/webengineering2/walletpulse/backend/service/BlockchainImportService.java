@@ -2,6 +2,7 @@ package de.dhbwravensburg.webengineering2.walletpulse.backend.service;
 
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.ChainType;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.entity.Wallet;
+import de.dhbwravensburg.webengineering2.walletpulse.backend.exception.BusinessException;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.exception.ResourceNotFoundException;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.repository.WalletRepository;
 import de.dhbwravensburg.webengineering2.walletpulse.backend.service.blockchain.ChainImporter;
@@ -42,7 +43,7 @@ public class BlockchainImportService {
         Wallet wallet = walletRepository.findByIdAndOwnerEmail(walletId, ownerEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("Wallet with id " + walletId + " not found"));
         if (wallet.getChainType() == null || wallet.getChainAddress() == null) {
-            throw new IllegalStateException("Wallet has no chain address configured.");
+            throw new BusinessException("Wallet has no chain address configured.");
         }
         return wallet;
     }
@@ -60,7 +61,7 @@ public class BlockchainImportService {
 
         ChainImporter importer = importersByChain.get(wallet.getChainType());
         if (importer == null) {
-            throw new IllegalStateException("No importer registered for chain " + wallet.getChainType());
+            throw new RuntimeException("No importer registered for chain " + wallet.getChainType());
         }
 
         ImportResult result = importer.importTransactions(wallet);
